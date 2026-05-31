@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFXIV 潛水艇出航自動計時器</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --accent-color: #c792ea;
+            --text-color: #e0e0e0;
+            --success-color: #4caf50;
+        }
+        body.light-mode { --bg-color: #dfe6e9; --card-color: #ffffff; --text-color: #000000; }
+        body.light-mode .timer-card { border: 1px solid #b2bec3; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        body.light-mode .progress-bar-bg { background-color: #dfe6e9; }
+        body.light-mode .timer-name, body.light-mode .timer-countdown, body.light-mode .time-highlight { color: #000000; }
+        body.light-mode .delete-btn { background-color: #ffffff; border: 1px solid #636e72; color: #d63031; font-weight: normal; }
+        body.light-mode .delete-btn:hover { background-color: #f1f2f6; }
+        
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; }
+        
+        .header-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 20px; gap: 10px; }
+        h1 { color: var(--accent-color); font-size: 24px; margin: 0; }
+        .top-btns { display: flex; gap: 8px; align-items: center; }
+        .btn-top { cursor: pointer; background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; font-size: 13px; }
+        
+        #alarmSelect { background: #333; color: #fff; border: 1px solid #444; padding: 6px 8px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        
+        .upload-zone { border: 2px dashed #444; background-color: var(--card-color); padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 25px; }
+        .upload-zone:hover { border-color: var(--accent-color); background-color: #7a7a7a; }
+        #fileInput { display: none; }
+        .status { font-size: 14px; color: #aaa; margin-top: 10px; min-height: 20px; }
+        
+        .timer-list { display: flex; flex-direction: column; gap: 15px; }
+        .timer-card { background-color: var(--card-color); border: 1px solid #333; border-radius: 6px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; }
+        .timer-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; }
+        .timer-name { color: #82aaff; font-size: 16px; }
+        .timer-level { color: #ffcb6b; font-size: 13px; margin-left: 5px; }
+        .timer-countdown { color: #f78c6c; font-family: monospace; font-size: 16px; }
+        .progress-bar-bg { background-color: #333; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
+        .progress-bar { background: linear-gradient(90deg, #c792ea, #82aaff); height: 100%; width: 100%; transition: width 1s linear; }
+        
+        .progress-bar-bg.finished { background-color: var(--success-color) !important; }
+        .progress-bar.finished { display: none; }
+        
+        .timer-footer { display: flex; justify-content: space-between; font-size: 15px; margin-top: 8px; }
+        .time-highlight { font-weight: 800; color: #94bfff; font-size: 15px; }
+        .time-highlight.target { color: #ffb627; font-size: 15px; }
+        
+        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: center; }
+        .delete-btn { background-color: #333; border: 1px solid #444; color: #ff5370; cursor: pointer; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
+        .delete-btn:hover { background-color: #444; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-wrapper">
+        <h1>Submarine Voyager 自動計時器</h1>
+        <div class="top-btns">
+            <button class="btn-top" onclick="toggleTheme()">切換主題</button>
+            <select id="alarmSelect" onchange="changeAlarm(this.value)">
+                <option value="off">音效：關閉</option>
+                <option value="soft">音效：01 (柔和)</option>
+                <option value="sharp">音效：02 (清脆)</option>
+                <option value="ding">音效：03 (叮咚)</option>
+            </select>
+            <button class="btn-top" onclick="testAlarm()">測試</button>
+        </div>
+    </div>
+    
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <p>📂 點擊選擇圖片、拖曳圖片至此，或直接 Ctrl + V 貼上截圖</p>
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="status" id="statusText">正在初始化引擎...</div>
+    </div>
+    <div class="timer-list" id="timerList"></div>
+</div>
+
+<script>
+    let alarmMode = localStorage.getItem('sub_alarm_mode') || 'soft';
+    document.getElementById('alarmSelect').value = alarmMode;
+
+    // 請求通知權限
+    function requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    }
+
+    // 發送系統推播
+    function showNotification(name) {
+        if ("Notification" in window && Notification.permission === "granted") {
+            const n = new Notification("潛水艇回港通知", {
+                body: `${name} 已經回到港口了！`,
+                icon: "" // 可放圖示網址
+            });
+            setTimeout(() => n.close(), 3000); // 3秒後自動消失
+        }
+    }
+
+    function changeAlarm(val) {
+        alarmMode = val;
+        localStorage.setItem('sub_alarm_mode', val);
+        if (val !== 'off') playSound();
+        if (val !== 'off') requestNotificationPermission();
+    }
+
+    function playSound() {
+        if (alarmMode === 'off') return;
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        function playNote(freq, type, duration, time) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime + time);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + duration);
+            osc.start(ctx.currentTime + time);
+            osc.stop(ctx.currentTime + time + duration);
+        }
+        if (alarmMode === 'soft') {
+            playNote(523.25, 'triangle', 0.3, 0);
+            playNote(659.25, 'triangle', 0.3, 0.2);
+        } else if (alarmMode === 'sharp') {
+            playNote(880, 'square', 0.1, 0);
+            playNote(880, 'square', 0.1, 0.2);
+        } else if (alarmMode === 'ding') {
+            playNote(1046.5, 'sine', 0.5, 0);
+            playNote(1318.5, 'sine', 0.5, 0.1);
+        }
+    }
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const statusText = document.getElementById('statusText');
+    const timerList = document.getElementById('timerList');
+    let savedTimers = [];
+    let worker = null;
+
+    window.onload = function() {
+        if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode');
+        loadTimersFromStorage();
+        initOCR();
+        requestNotificationPermission();
+    };
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        localStorage.setItem('sub_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    }
+
+    function testAlarm() { 
+        playSound(); 
+        showNotification("測試潛水艇");
+    }
+
+    async function initOCR() {
+        try {
+            statusText.innerText = "⏳ 正在載入辨識引擎...";
+            worker = await Tesseract.createWorker('chi_tra');
+            statusText.innerText = "🟢 引擎初始化成功！請上傳截圖。";
+        } catch (e) { statusText.innerText = "❌ 初始化失敗，請重整。"; }
+    }
+
+    fileInput.addEventListener('change', (e) => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
+    document.addEventListener('paste', (e) => {
+        const cbd = e.clipboardData;
+        if (!cbd) return;
+        for (let i = 0; i < cbd.items.length; i++) {
+            if (cbd.items[i].type.indexOf('image') !== -1) { handleFile(cbd.items[i].getAsFile()); break; }
+        }
+    });
+
+    function handleFile(file) {
+        if (!file || !worker) return;
+        statusText.innerText = "🔍 正在分析圖片...";
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const ret = await worker.recognize(e.target.result);
+                parseTextToTimers(ret.data.text);
+            } catch (error) { statusText.innerText = "❌ 辨識失敗。"; }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function parseTextToTimers(text) {
+        const lines = text.split('\n');
+        let parsedCount = 0;
+        lines.forEach(line => {
+            let currentLine = line.replace(/\s+/g, '');
+            if (!currentLine) return;
+            const dayMatch = currentLine.match(/(\d{1,2})天/);
+            const hourMatch = currentLine.match(/(\d{1,2})小時/);
+            const minMatch = currentLine.match(/(\d{1,2})分鐘/);
+            if (!dayMatch && !hourMatch && !minMatch) return;
+            
+            let namePart = currentLine.split(/正在探索|剩餘時間|\d{1,2}天|\d{1,2}小時|\d{1,2}分鐘/)[0];
+            let cleanName = namePart.replace(/\[\d+級\]/g, '').replace(/請選擇|探索|所持/g, '').replace(/[\[\]]/g, '').trim();
+            let level = (currentLine.match(/(\d+)級/) || [])[1] ? (currentLine.match(/(\d+)級/)[1] + "級") : "";
+
+            const totalSeconds = ((dayMatch ? parseInt(dayMatch[1]) : 0) * 86400) + ((hourMatch ? parseInt(hourMatch[1]) : 0) * 3600) + ((minMatch ? parseInt(minMatch[1]) : 0) * 60);
+            if (totalSeconds > 0) {
+                saveOrUpdateTimer(cleanName, level, totalSeconds);
+                parsedCount++;
+            }
+        });
+        statusText.innerText = parsedCount > 0 ? `🎉 同步 ${parsedCount} 艘潛水艇！` : "⚠️ 找不到資料。";
+    }
+
+    function saveOrUpdateTimer(name, level, totalSeconds) {
+        const now = Date.now(); 
+        const endTime = now + (totalSeconds * 1000);
+        const existingIndex = savedTimers.findIndex(t => t.name === name);
+        if (existingIndex !== -1) { 
+            document.getElementById(`card-${savedTimers[existingIndex].id}`)?.remove(); 
+            savedTimers.splice(existingIndex, 1); 
+        }
+        const timerData = { id: 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds };
+        savedTimers.push(timerData); 
+        saveTimersToStorage(); 
+        createTimerCard(timerData);
+    }
+
+    function formatDateTime(timestamp) {
+        const date = new Date(timestamp);
+        return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    }
+
+    function createTimerCard(timer) {
+        const card = document.createElement('div');
+        card.className = 'timer-card'; 
+        card.id = `card-${timer.id}`;
+        card.innerHTML = `
+            <div class="timer-header">
+                <span class="timer-name">${timer.name}${timer.level ? ` <span class="timer-level">[${timer.level}]</span>` : ''}</span>
+                <span class="timer-countdown" id="count-${timer.id}">計算中...</span>
+            </div>
+            <div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div>
+            <div class="timer-footer">
+                <span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span>
+                <span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span>
+            </div>
+            <div class="delete-btn-wrapper"><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div>
+        `;
+        timerList.appendChild(card);
+        const interval = setInterval(() => {
+            if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); return; }
+            const remaining = timer.endTime - Date.now();
+            if (remaining <= 0) { 
+                document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！"; 
+                document.getElementById(`bg-${timer.id}`).classList.add('finished');
+                document.getElementById(`bar-${timer.id}`).classList.add('finished');
+                playSound();
+                showNotification(timer.name); // 觸發桌面推播
+                clearInterval(interval); 
+                return; 
+            }
+            const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), s = Math.floor((remaining % 60000) / 1000);
+            document.getElementById(`count-${timer.id}`).innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            document.getElementById(`bar-${timer.id}`).style.width = `${(remaining / (timer.totalSeconds * 1000)) * 100}%`;
+        }, 1000);
+    }
+
+    function deleteTimer(id) { savedTimers = savedTimers.filter(t => t.id !== id); saveTimersToStorage(); document.getElementById(`card-${id}`)?.remove(); }
+    function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); }
+    function loadTimersFromStorage() { const data = localStorage.getItem('ffxiv_submarine_timers'); if (data) { savedTimers = JSON.parse(data); savedTimers.forEach(timer => createTimerCard(timer)); } }
+</script>
+</body>
+</html>
