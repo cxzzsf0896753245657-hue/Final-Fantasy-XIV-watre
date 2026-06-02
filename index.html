@@ -15,12 +15,23 @@
             --edit-bg: #2a2a2a; 
             --edit-border: #444;
         }
-        body.light-mode { --bg-color: #dfe6e9; --card-color: #ffffff; --text-color: #000000; --edit-bg: #f1f2f6; --edit-border: #b2bec3; }
-        body.light-mode .timer-card { border: 1px solid #b2bec3; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        body.light-mode .progress-bar-bg { background-color: #dfe6e9; }
-        body.light-mode .timer-name, body.light-mode .timer-countdown, body.light-mode .time-highlight { color: #000000; }
-        body.light-mode .delete-btn, body.light-mode .edit-btn { background-color: #ffffff; border: 1px solid #636e72; color: #d63031; font-weight: normal; }
-        body.light-mode .delete-btn:hover, body.light-mode .edit-btn:hover { background-color: #f1f2f6; }
+        /* 亮色模式美化調整 */
+        body.light-mode { 
+            --bg-color: #eef2f5; 
+            --card-color: #ffffff; 
+            --text-color: #2d3436; 
+            --edit-bg: #f8f9fa; 
+            --edit-border: #dcdde1; 
+        }
+        body.light-mode .timer-card { border: 1px solid #dfe6e9; box-shadow: 0 4px 6px rgba(0,0,0,0.05); background-color: #ffffff; }
+        body.light-mode .progress-bar-bg { background-color: #e0e0e0; }
+        body.light-mode .collapsible-btn { background-color: #ffffff; border: 1px solid #dcdde1; color: #2d3436; }
+        body.light-mode .collapsible-btn:hover { background-color: #f1f2f6; }
+        body.light-mode .content { background-color: #ffffff; }
+        body.light-mode .btn-top, body.light-mode #alarmSelect { 
+            background: #dfe6e9; color: #2d3436; border: 1px solid #ced6e0; 
+        }
+        body.light-mode .delete-btn, body.light-mode .edit-btn { background-color: #f8f9fa; border: 1px solid #dcdde1; color: #636e72; }
         
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 600px; }
