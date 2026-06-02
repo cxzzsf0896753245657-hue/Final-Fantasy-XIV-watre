@@ -33,11 +33,24 @@
         #alarmSelect { background: #333; color: #fff; border: 1px solid #444; padding: 6px 8px; border-radius: 4px; font-size: 13px; cursor: pointer; }
         #volumeSlider { width: 80px; cursor: pointer; }
         
-        .upload-zone { border: 2px dashed #444; background-color: var(--card-color); padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 25px; }
+        .upload-zone { border: 2px dashed #444; background-color: var(--card-color); padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; }
         .upload-zone:hover { border-color: var(--accent-color); background-color: #7a7a7a; }
         #fileInput { display: none; }
         .status { font-size: 14px; color: #aaa; margin-top: 10px; min-height: 20px; }
         
+        .collapsible-wrapper { width: 100%; margin-bottom: 25px; }
+        .collapsible-btn { background: #2a2a2a; color: var(--text-color); border: 1px solid #444; padding: 8px 15px; width: 100%; text-align: left; cursor: pointer; border-radius: 6px; font-size: 15px; display: flex; align-items: center; gap: 10px; margin-bottom: 5px; transition: 0.3s; }
+        .collapsible-btn span { font-size: 20px; font-weight: bold; width: 20px; text-align: center; }
+        .collapsible-btn:hover { background: #3a3a3a; }
+        .content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: var(--card-color); border-radius: 0 0 6px 6px; }
+        
+        .thumb-container { padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: fit-content; }
+        .thumb-img { width: 100px; height: auto; cursor: pointer; border: 2px solid #444; display: block; }
+        .thumb-text { text-align: center; margin-top: 5px; color: var(--accent-color); font-weight: bold; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; }
+        .modal img { max-width: 90%; max-height: 90%; border: 2px solid #fff; }
+
         .timer-list { display: flex; flex-direction: column; gap: 15px; }
         .timer-card { background-color: var(--card-color); border: 1px solid #333; border-radius: 6px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; }
         .timer-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; }
@@ -46,19 +59,15 @@
         .timer-countdown { color: #f78c6c; font-family: monospace; font-size: 16px; }
         .progress-bar-bg { background-color: #333; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
         .progress-bar { background: linear-gradient(90deg, #c792ea, #82aaff); height: 100%; width: 100%; transition: width 1s linear; }
-        
         .progress-bar-bg.finished { background-color: var(--success-color) !important; }
         .progress-bar.finished { display: none; }
-        
         .timer-footer { display: flex; justify-content: space-between; font-size: 15px; margin-top: 8px; }
         .time-highlight { font-weight: 800; color: #94bfff; font-size: 15px; }
         .time-highlight.target { color: #ffb627; font-size: 15px; }
-        
         .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; }
         .delete-btn, .edit-btn { background-color: #333; border: 1px solid #444; color: #e0e0e0; cursor: pointer; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
         .delete-btn { color: #ff5370; }
         .delete-btn:hover, .edit-btn:hover { background-color: #444; }
-
         .edit-container { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
         .edit-group { display: flex; flex-direction: column; gap: 4px; }
         .edit-label { font-size: 11px; color: var(--accent-color); margin-left: 2px; } 
@@ -90,10 +99,50 @@
         <input type="file" id="fileInput" accept="image/*">
         <div class="status" id="statusText">正在初始化引擎...</div>
     </div>
+
+    <div class="collapsible-wrapper">
+        <button class="collapsible-btn" onclick="toggleCollapse('content1', this)"><span>+</span> 練級表</button>
+        <div id="content1" class="content">
+            <div class="thumb-container">
+                <img src="https://lh3.googleusercontent.com/d/16atvETx5oE-pz2A_Svs45-pu8iBozUP0" class="thumb-img" onclick="openModal(this.src)">
+                <div class="thumb-text">蒜女心經</div>
+            </div>
+        </div>
+        <button class="collapsible-btn" onclick="toggleCollapse('content2', this)"><span>+</span> 海圖</button>
+        <div id="content2" class="content">
+            <div style="display:flex; flex-wrap:wrap;">
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1rqb4ffiMkxNZNOdzfEgIgtDNci1r8AiX" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">1 - 溺沒海</div></div>
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1jQ-fxdQApBObUD6P7Fvip-sAPwYwpr5O" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">2 - 灰海</div></div>
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1kac6_l3-imrSudG-KvI89zxZXXOq9OHr" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">3 - 翠浪海</div></div>
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1fyaK8sqprffUXwCixmJbmElUI2QABhad" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">4 - 妖歌海</div></div>
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1seFiP33E4kIC9cAAIPzOV7kmXuIiE4qq" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">5 - 紫礁海</div></div>
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1PRrj73-Xs7njm0jCgggbgl3VQtnhphXz" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">6 - 南蒼茫海</div></div>
+                <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1dmXdI9zo2tqO_PRdlwd9gdadHB0KeZby" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">7 - 北洋海</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal" onclick="this.style.display='none'">
+        <img id="modalImg">
+    </div>
+
     <div class="timer-list" id="timerList"></div>
 </div>
 
 <script>
+    function openModal(src) { document.getElementById('modalImg').src = src; document.getElementById('imageModal').style.display = 'flex'; }
+    function toggleCollapse(id, btn) {
+        const content = document.getElementById(id);
+        const span = btn.querySelector('span');
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+            span.innerText = "+";
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+            span.innerText = "-";
+        }
+    }
+
     let alarmMode = localStorage.getItem('sub_alarm_mode') || 'soft';
     let volume = parseFloat(localStorage.getItem('sub_volume') || '0.5');
     document.getElementById('alarmSelect').value = alarmMode;
