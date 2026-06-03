@@ -15,7 +15,6 @@
             --edit-bg: #2a2a2a; 
             --edit-border: #444;
         }
-        /* 亮色模式美化調整 */
         body.light-mode { 
             --bg-color: #eef2f5; 
             --card-color: #ffffff; 
@@ -217,7 +216,41 @@
     }
 
     function formatDateTime(timestamp) { const date = new Date(timestamp); return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`; }
-    function createTimerCard(timer) { const card = document.createElement('div'); card.className = 'timer-card'; card.id = `card-${timer.id}`; card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="delete-btn-wrapper"><button class="edit-btn" id="edit-${timer.id}" onclick="toggleEdit('${timer.id}')">編輯</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div>`; timerList.appendChild(card); const interval = setInterval(() => { if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); return; } const remaining = timer.endTime - Date.now(); if (remaining <= 0) { document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！"; document.getElementById(`bg-${timer.id}`).classList.add('finished'); document.getElementById(`bar-${timer.id}`).classList.add('finished'); playSound(); showNotification(timer.name); clearInterval(interval); return; } const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), s = Math.floor((remaining % 60000) / 1000); document.getElementById(`count-${timer.id}`).innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; document.getElementById(`bar-${timer.id}`).style.width = `${(remaining / (timer.totalSeconds * 1000)) * 100}%`; }, 1000); }
+    
+    // 修改此函數以支援排序
+    function createTimerCard(timer) { 
+        const card = document.createElement('div'); 
+        card.className = 'timer-card'; 
+        card.id = `card-${timer.id}`; 
+        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="delete-btn-wrapper"><button class="edit-btn" id="edit-${timer.id}" onclick="toggleEdit('${timer.id}')">編輯</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div>`; 
+        
+        // 初始插入方式
+        timerList.appendChild(card); 
+        
+        const interval = setInterval(() => { 
+            if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); return; } 
+            const remaining = timer.endTime - Date.now(); 
+            if (remaining <= 0) { 
+                document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！"; 
+                document.getElementById(`bg-${timer.id}`).classList.add('finished'); 
+                document.getElementById(`bar-${timer.id}`).classList.add('finished'); 
+                
+                // 檢查是否已在頂部，若不在則移動
+                if (timerList.firstChild !== card) {
+                    timerList.prepend(card);
+                }
+                
+                playSound(); 
+                showNotification(timer.name); 
+                clearInterval(interval); 
+                return; 
+            } 
+            const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), s = Math.floor((remaining % 60000) / 1000); 
+            document.getElementById(`count-${timer.id}`).innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; 
+            document.getElementById(`bar-${timer.id}`).style.width = `${(remaining / (timer.totalSeconds * 1000)) * 100}%`; 
+        }, 1000); 
+    }
+    
     function deleteTimer(id) { savedTimers = savedTimers.filter(t => t.id !== id); saveTimersToStorage(); document.getElementById(`card-${id}`)?.remove(); }
     function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); }
     function loadTimersFromStorage() { const data = localStorage.getItem('ffxiv_submarine_timers'); if (data) { savedTimers = JSON.parse(data); savedTimers.forEach(timer => createTimerCard(timer)); } }
