@@ -130,6 +130,24 @@
                 <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1dmXdI9zo2tqO_PRdlwd9gdadHB0KeZby" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">7 - 北洋海</div></div>
             </div>
         </div>
+        <button class="collapsible-btn" onclick="toggleCollapse('content3', this)"><span>+</span> 鬧鐘巨集</button>
+        <div id="content3" class="content">
+            <div style="padding: 10px;">
+                <textarea id="macroOutput" style="width:100%; height:120px; border: 2px dashed #444; background:var(--edit-bg); color:var(--text-color); padding:10px; box-sizing:border-box; resize:none;" readonly></textarea>
+                <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:8px;">
+                    <select id="macroSoundSelect" class="btn-top">
+                        <option value="00">音效 00</option>
+                        <option value="01" selected>音效 01</option>
+                        <option value="02">音效 02</option>
+                        <option value="03">音效 03</option>
+                        <option value="04">音效 04</option>
+                        <option value="05">音效 05</option>
+                    </select>
+                    <input type="text" id="macroLeadTime" class="edit-input" value="0" style="width:40px; text-align:center;">
+                    <button class="btn-top" onclick="generateMacros()">產生</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="imageModal" class="modal" onclick="this.style.display='none'">
@@ -185,6 +203,31 @@
 
     function saveOrUpdateTimer(name, level, totalSeconds) { const now = Date.now(); const endTime = now + (totalSeconds * 1000); const existingIndex = savedTimers.findIndex(t => t.name === name); if (existingIndex !== -1) { document.getElementById(`card-${savedTimers[existingIndex].id}`)?.remove(); savedTimers.splice(existingIndex, 1); } const timerData = { id: 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds }; savedTimers.push(timerData); saveTimersToStorage(); createTimerCard(timerData); }
     
+    function generateMacros() {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+        const sound = document.getElementById('macroSoundSelect').value;
+        const lead = document.getElementById('macroLeadTime').value || "0";
+        let output = "/alarm clear\n";
+        savedTimers.forEach(t => {
+            const endDate = new Date(t.endTime);
+            const endDateStr = `${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
+            if (todayStr === endDateStr) {
+                const h = String(endDate.getHours()).padStart(2, '0');
+                const m = String(endDate.getMinutes()).padStart(2, '0');
+                output += `/alarm "${t.name}" 本 ${h}${m} ${lead} se${sound} mute\n`;
+            }
+        });
+        document.getElementById('macroOutput').value = output;
+        // 自動複製功能
+        navigator.clipboard.writeText(output).then(() => {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "已複製";
+            setTimeout(() => btn.innerText = originalText, 1500);
+        });
+    }
+
     function toggleEdit(id) { 
         const header = document.getElementById(`header-${id}`);
         const editBtn = document.getElementById(`edit-${id}`);
@@ -217,16 +260,12 @@
 
     function formatDateTime(timestamp) { const date = new Date(timestamp); return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`; }
     
-    // 修改此函數以支援排序
     function createTimerCard(timer) { 
         const card = document.createElement('div'); 
         card.className = 'timer-card'; 
         card.id = `card-${timer.id}`; 
         card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="delete-btn-wrapper"><button class="edit-btn" id="edit-${timer.id}" onclick="toggleEdit('${timer.id}')">編輯</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div>`; 
-        
-        // 初始插入方式
         timerList.appendChild(card); 
-        
         const interval = setInterval(() => { 
             if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); return; } 
             const remaining = timer.endTime - Date.now(); 
@@ -234,12 +273,7 @@
                 document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！"; 
                 document.getElementById(`bg-${timer.id}`).classList.add('finished'); 
                 document.getElementById(`bar-${timer.id}`).classList.add('finished'); 
-                
-                // 檢查是否已在頂部，若不在則移動
-                if (timerList.firstChild !== card) {
-                    timerList.prepend(card);
-                }
-                
+                if (timerList.firstChild !== card) { timerList.prepend(card); }
                 playSound(); 
                 showNotification(timer.name); 
                 clearInterval(interval); 
