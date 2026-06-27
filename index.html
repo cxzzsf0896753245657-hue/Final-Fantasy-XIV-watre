@@ -255,6 +255,7 @@
     const statusText = document.getElementById('statusText');
     const timerList = document.getElementById('timerList');
     let savedTimers = [];
+    let _timerIdCounter = 0;
     let worker = null;
 
     window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadTimersFromStorage(); initOCR(); };
@@ -279,10 +280,19 @@
                 dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
         return dp[m][n];
     }
+    // 取出名字末尾的序號：涵蓋「之一/之二」「一號/二號」「1號/2號」「第一/第二」等格式
+    function getSerialSuffix(name) {
+        const m = name.match(/[之第]([一二三四五六七八九十百\d]+)$|([一二三四五六七八九十百\d]+)[號]$|(\d+)$/);
+        return m ? (m[1] || m[2] || m[3]) : null;
+    }
     function findFuzzyMatch(name) {
         let bestIndex = -1, bestDist = Infinity;
-        const maxDist = Math.max(1, Math.floor(name.length * 0.3)); // 允許 30% 的字元差異
+        const maxDist = Math.max(1, Math.floor(name.length * 0.3)); // 原本 30% 門檻
+        const srcSerial = getSerialSuffix(name);
         savedTimers.forEach((t, i) => {
+            // 若兩艘船都有序號且序號不同，視為不同船，跳過模糊比對
+            const tgtSerial = getSerialSuffix(t.name);
+            if (srcSerial !== null && tgtSerial !== null && srcSerial !== tgtSerial) return;
             const dist = levenshtein(name, t.name);
             if (dist <= maxDist && dist < bestDist) { bestDist = dist; bestIndex = i; }
         });
@@ -306,13 +316,13 @@
             savedTimers = savedTimers.filter(t => t.name !== matchedName);
 
             // 用原本正確的名字建立新計時
-            const timerData = { id: 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds };
+            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
         } else {
             // 新船：新增
-            const timerData = { id: 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds };
+            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
