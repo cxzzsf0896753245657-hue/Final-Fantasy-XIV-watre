@@ -298,17 +298,18 @@
         if (existingIndex === -1) existingIndex = findFuzzyMatch(name);
 
         if (existingIndex !== -1) {
-            // 找到相符的船：保留原本名字，只更新時間和等級
-            const existing = savedTimers[existingIndex];
-            const oldId = existing.id;
-            existing.level = level;
-            existing.startTime = now;
-            existing.endTime = endTime;
-            existing.totalSeconds = totalSeconds;
+            const matchedName = savedTimers[existingIndex].name;
+
+            // 清除所有同名卡片（含已完成的），避免舊卡與新計時並存
+            const toRemove = savedTimers.filter(t => t.name === matchedName);
+            toRemove.forEach(t => document.getElementById(`card-${t.id}`)?.remove());
+            savedTimers = savedTimers.filter(t => t.name !== matchedName);
+
+            // 用原本正確的名字建立新計時
+            const timerData = { id: 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds };
+            savedTimers.push(timerData);
             saveTimersToStorage();
-            // 重繪該卡片
-            document.getElementById(`card-${oldId}`)?.remove();
-            createTimerCard(existing);
+            createTimerCard(timerData);
         } else {
             // 新船：新增
             const timerData = { id: 'timer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds };
@@ -381,6 +382,15 @@
         card.id = `card-${timer.id}`; 
         card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="delete-btn-wrapper"><button class="edit-btn" id="edit-${timer.id}" onclick="toggleEdit('${timer.id}')">編輯</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div>`; 
         timerList.appendChild(card); 
+        // 若已回港，直接顯示完成狀態，不啟動 interval
+        if (timer.endTime - Date.now() <= 0) {
+            document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！";
+            document.getElementById(`bg-${timer.id}`).classList.add('finished');
+            document.getElementById(`bar-${timer.id}`).classList.add('finished');
+            timerList.prepend(card);
+            return;
+        }
+
         const interval = setInterval(() => { 
             if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); return; } 
             const remaining = timer.endTime - Date.now(); 
