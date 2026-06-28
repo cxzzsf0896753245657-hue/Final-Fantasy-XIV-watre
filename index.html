@@ -34,9 +34,23 @@
         body.light-mode .upload-zone { background-color: #ffffff; border-color: #ced6e0; }
         body.light-mode .upload-zone:hover { background-color: #f1f2f6; }
         body.light-mode #fleetCount { background: #dfe6e9 !important; border-color: #ced6e0 !important; color: #7c5cbf !important; }
+        body.light-mode #sortSelect { background: #dfe6e9; color: #2d3436; border-color: #ced6e0; }
         body.light-mode #macroOutput { border-color: #ced6e0; }
         body.light-mode .collapsible-btn span { color: inherit; }
         body.light-mode .status { color: #636e72; }
+
+        /* ── 亮版配色柔化 ── */
+        body.light-mode { --accent-color: #7c5cbf; --success-color: #3a9e5f; }
+        body.light-mode .timer-name { color: #4a6fa5; }
+        body.light-mode .timer-level { color: #b07d2e; }
+        body.light-mode .timer-countdown { color: #c0623a; }
+        body.light-mode .time-highlight { color: #4a6fa5; }
+        body.light-mode .time-highlight.target { color: #b07d2e; }
+        body.light-mode .progress-bar { background: linear-gradient(90deg, #9b7fd4, #6fa3d4); }
+        body.light-mode .right-panel-title { color: #7c5cbf; }
+        body.light-mode h1 { color: #7c5cbf; }
+        body.light-mode .delete-btn { color: #c0392b; }
+        body.light-mode .timer-card { background-color: #f8f9fb; border: 1px solid #dde3ec; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
 
@@ -193,7 +207,16 @@
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color);">
-                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2025/06/25</div>
+                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2025/06/29</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>修正已回港船艦倒數結束後出現重複卡片的問題</li>
+                        <li>新增艦隊排序功能（回港時間、名稱、等級大小），排序偏好記憶於本機</li>
+                        <li>預設排序改為「回港時間 近→遠」</li>
+                        <li>修正序號比對邏輯，直接以中文數字結尾的船名現可正確區分</li>
+                        <li>新增純數字、純中文數字、純英文字母名稱不參與模糊比對的保護</li>
+                        <li>亮色主題配色全面柔化，降低視覺刺激感</li>
+                    </ul>
+                    <div style="color: var(--accent-color); font-weight: bold; margin: 12px 0 6px;">📋 2025/06/25</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>版面改為左右兩欄配置（左側操作區、右側艦隊計時）</li>
                         <li>右側計時卡片改為雙欄 Grid 排列</li>
@@ -215,7 +238,15 @@
 
     <!-- ══ RIGHT PANEL ══ -->
     <div class="right-panel">
-        <p class="right-panel-title">⚓ 潛水艇艦隊 <span id="fleetCount" style="font-size:13px; background:#333; color:#c792ea; border:1px solid #444; border-radius:12px; padding:2px 10px; margin-left:6px; vertical-align:middle;">0 艘</span></p>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <p class="right-panel-title" style="margin:0;">⚓ 潛水艇艦隊 <span id="fleetCount" style="font-size:12px; background:#333; color:#c792ea; border:1px solid #444; border-radius:10px; padding:2px 9px; margin-left:6px; vertical-align:middle;">0 艘</span></p>
+            <select id="sortSelect" class="btn-top" style="font-size:12px; margin:0;" onchange="applySortAndRender()">
+                <option value="name">排序：名稱 A→Z</option>
+                <option value="time_asc" selected>排序：回港時間 近→遠</option>
+                <option value="level_asc">排序：等級 小→大</option>
+                <option value="level_desc">排序：等級 大→小</option>
+            </select>
+        </div>
         <div class="timer-list" id="timerList"></div>
     </div>
 
@@ -240,6 +271,7 @@
     }
 
     let alarmMode = localStorage.getItem('sub_alarm_mode') || 'soft';
+    let currentSort = localStorage.getItem('sub_sort') || 'time_asc';
     let volume = parseFloat(localStorage.getItem('sub_volume') || '0.5');
     document.getElementById('alarmSelect').value = alarmMode;
     document.getElementById('volumeSlider').value = volume;
@@ -280,16 +312,26 @@
                 dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
         return dp[m][n];
     }
-    // 取出名字末尾的序號：涵蓋「之一/之二」「一號/二號」「1號/2號」「第一/第二」等格式
+    // 取出名字末尾的序號：涵蓋「之一/之二」「一號/二號」「1號/2號」「第一/第二」「利維六/利維七」等格式
     function getSerialSuffix(name) {
-        const m = name.match(/[之第]([一二三四五六七八九十百\d]+)$|([一二三四五六七八九十百\d]+)[號]$|(\d+)$/);
-        return m ? (m[1] || m[2] || m[3]) : null;
+        const m = name.match(/[之第]([一二三四五六七八九十百\d]+)$|([一二三四五六七八九十百\d]+)[號]$|([一二三四五六七八九十百]+)$|(\d+)$/);
+        return m ? (m[1] || m[2] || m[3] || m[4]) : null;
+    }
+    // 判斷名字是否為「純數字 / 純中文數字 / 純英文字母」，這類名字不做模糊比對
+    function isPureSimple(name) {
+        return /^[\d]+$/.test(name) ||                          // 純阿拉伯數字：123
+               /^[一二三四五六七八九十百千萬]+$/.test(name) ||  // 純中文數字：一二三
+               /^[A-Za-z]+$/.test(name);                        // 純英文字母：ABC
     }
     function findFuzzyMatch(name) {
+        // 純數字、純中文數字、純英文字母的名字，每個字元都是關鍵區分，不做模糊比對
+        if (isPureSimple(name)) return -1;
         let bestIndex = -1, bestDist = Infinity;
         const maxDist = Math.max(1, Math.floor(name.length * 0.3)); // 原本 30% 門檻
         const srcSerial = getSerialSuffix(name);
         savedTimers.forEach((t, i) => {
+            // 存檔的船名若也是純簡單型，同樣跳過
+            if (isPureSimple(t.name)) return;
             // 若兩艘船都有序號且序號不同，視為不同船，跳過模糊比對
             const tgtSerial = getSerialSuffix(t.name);
             if (srcSerial !== null && tgtSerial !== null && srcSerial !== tgtSerial) return;
@@ -328,6 +370,8 @@
             createTimerCard(timerData);
         }
         updateFleetCount();
+        // 新增/更新後重新套用排序
+        setTimeout(() => applySortAndRender(), 0);
     }
     
     function generateMacros() {
@@ -423,7 +467,63 @@
     function updateFleetCount() { const el = document.getElementById("fleetCount"); if (el) el.innerText = savedTimers.length + " 艘"; }
     function deleteTimer(id) { savedTimers = savedTimers.filter(t => t.id !== id); saveTimersToStorage(); document.getElementById(`card-${id}`)?.remove(); updateFleetCount(); }
     function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); }
-    function loadTimersFromStorage() { const data = localStorage.getItem("ffxiv_submarine_timers"); if (data) { savedTimers = JSON.parse(data); savedTimers.forEach(timer => createTimerCard(timer)); } updateFleetCount(); }
+    function getSortedTimers() {
+        const now = Date.now();
+        const sort = currentSort;
+        const finished = savedTimers.filter(t => t.endTime <= now);
+        const active   = savedTimers.filter(t => t.endTime > now);
+
+        function nameCompare(a, b) {
+            return a.name.localeCompare(b.name, 'zh-TW', { sensitivity: 'base' });
+        }
+        function levelNum(t) { return parseInt(t.level) || 0; }
+
+        if (sort === 'name') {
+            return [...savedTimers].sort(nameCompare);
+        }
+        if (sort === 'time_asc') {
+            // 已回港在最前，其餘依回港時間由近到遠，同時間再依名字
+            const sortedFinished = [...finished].sort(nameCompare);
+            const sortedActive   = [...active].sort((a, b) => a.endTime - b.endTime || nameCompare(a, b));
+            return [...sortedFinished, ...sortedActive];
+        }
+        if (sort === 'level_asc') {
+            return [...savedTimers].sort((a, b) => levelNum(a) - levelNum(b) || nameCompare(a, b));
+        }
+        if (sort === 'level_desc') {
+            return [...savedTimers].sort((a, b) => levelNum(b) - levelNum(a) || nameCompare(a, b));
+        }
+        return savedTimers;
+    }
+
+    function applySortAndRender() {
+        currentSort = document.getElementById('sortSelect').value;
+        localStorage.setItem('sub_sort', currentSort);
+        const list = document.getElementById('timerList');
+        // 重新按排序順序排列已存在的卡片（不重建，避免重置倒數）
+        const sorted = getSortedTimers();
+        sorted.forEach(t => {
+            const card = document.getElementById(`card-${t.id}`);
+            if (card) list.appendChild(card); // appendChild 會把已存在的移到最後，達到重排效果
+        });
+    }
+
+    function loadTimersFromStorage() {
+        // 先還原排序設定，再建立卡片，確保順序正確
+        const savedSort = localStorage.getItem('sub_sort');
+        if (savedSort) {
+            currentSort = savedSort;
+            const sel = document.getElementById('sortSelect');
+            if (sel) sel.value = savedSort;
+        }
+        const data = localStorage.getItem("ffxiv_submarine_timers");
+        if (data) {
+            savedTimers = JSON.parse(data);
+            const sorted = getSortedTimers();
+            sorted.forEach(timer => createTimerCard(timer));
+        }
+        updateFleetCount();
+    }
 </script>
 </body>
 </html>
