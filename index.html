@@ -136,6 +136,10 @@
         .edit-label { font-size: 11px; color: var(--accent-color); margin-left: 2px; } 
         .edit-input { background: var(--edit-bg); color: var(--text-color); border: 1px solid var(--edit-border); padding: 6px 10px; border-radius: 6px; font-size: 14px; outline: none; }
         .edit-input:focus { border-color: var(--accent-color); }
+        .link-drag-handle { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; font-size: 18px; color: var(--accent-color); padding: 4px 6px; line-height: 1; flex-shrink: 0; }
+        .link-drag-handle:active { cursor: grabbing; }
+        .link-item { transition: box-shadow 0.15s; }
+        .link-placeholder { flex-shrink: 0; }
     </style>
 </head>
 <body>
@@ -201,6 +205,23 @@
                         </select>
                         <input type="text" id="macroLeadTime" class="edit-input" value="0" style="width:40px; text-align:center;">
                         <button class="btn-top" onclick="generateMacros()">產生</button>
+                    </div>
+                </div>
+            </div>
+            <button class="collapsible-btn" onclick="toggleCollapse('content_links', this)"><span>+</span> 自訂連結</button>
+            <div id="content_links" class="content">
+                <div style="padding: 12px;">
+                    <div id="linkListContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+                    <div class="edit-container" style="flex-wrap:wrap;">
+                        <div class="edit-group">
+                            <span class="edit-label">名稱</span>
+                            <input type="text" class="edit-input" id="newLinkName" placeholder="連結名稱" style="width:130px;">
+                        </div>
+                        <div class="edit-group">
+                            <span class="edit-label">網址</span>
+                            <input type="text" class="edit-input" id="newLinkUrl" placeholder="https://..." style="width:200px;">
+                        </div>
+                        <button class="btn-top" onclick="addCustomLink()">新增</button>
                     </div>
                 </div>
             </div>
@@ -290,7 +311,209 @@
     let _timerIdCounter = 0;
     let worker = null;
 
-    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadTimersFromStorage(); initOCR(); };
+    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadTimersFromStorage(); loadCustomLinks(); initOCR(); };
+
+    // ── 自訂連結 ───────────────────────────────────────
+    const DEFAULT_LINKS = [
+        { name: "灰機 - 潛水艇", url: "https://ff14.huijiwiki.com/wiki/%E9%83%A8%E9%98%9F%E6%BD%9C%E6%B0%B4%E8%89%87" },
+        { name: "nbbjack潛艇模擬器", url: "https://5p.nbbjack.com/#/workshop" },
+        { name: "NGA潛水艇進階攻略", url: "https://ngabbs.com/read.php?tid=34842903&rand=923" },
+        { name: "巴哈姆特【攻略】潛水艇新手教學", url: "https://forum.gamer.com.tw/C.php?bsn=17608&snA=21771" },
+        { name: "NGA蒜女心經", url: "https://ngabbs.com/read.php?tid=34842903&rand=379" },
+        { name: "Mogship", url: "https://www.mogship.com/submarines/exp-calculator" }
+    ];
+    let customLinks = [];
+    let _linkIdCounter = 0;
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.innerText = str == null ? '' : str;
+        return div.innerHTML;
+    }
+
+    function normalizeUrl(url) {
+        if (!/^https?:\/\//i.test(url)) return 'https://' + url;
+        return url;
+    }
+
+    function loadCustomLinks() {
+        const data = localStorage.getItem('sub_custom_links');
+        if (data) {
+            try {
+                customLinks = JSON.parse(data);
+            } catch (e) {
+                customLinks = DEFAULT_LINKS.map(l => ({ ...l, id: 'link_' + (++_linkIdCounter) }));
+            }
+        } else {
+            customLinks = DEFAULT_LINKS.map(l => ({ ...l, id: 'link_' + (++_linkIdCounter) }));
+            saveCustomLinks();
+        }
+        renderCustomLinks();
+    }
+
+    function saveCustomLinks() { localStorage.setItem('sub_custom_links', JSON.stringify(customLinks)); }
+
+    function renderCustomLinks() {
+        const container = document.getElementById('linkListContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        if (customLinks.length === 0) {
+            container.innerHTML = '<div style="font-size:13px; color:#888; text-align:center; padding:8px;">尚無連結，請於下方新增</div>';
+            return;
+        }
+        customLinks.forEach((link) => {
+            const row = document.createElement('div');
+            row.className = 'link-item';
+            row.id = `link-${link.id}`;
+            row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--edit-bg); border:1px solid var(--edit-border); border-radius:6px; padding:8px 12px;';
+            row.innerHTML = `
+                <span class="link-drag-handle" onpointerdown="onLinkHandlePointerDown(event, '${link.id}')" title="按住拖曳排序">⠿</span>
+                <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-color); text-decoration:none; font-weight:bold; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="link-display-${link.id}">${escapeHtml(link.name)}</a>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button class="edit-btn" id="link-edit-btn-${link.id}" onclick="toggleEditLink('${link.id}')">編輯</button>
+                    <button class="delete-btn" onclick="deleteCustomLink('${link.id}')">刪除</button>
+                </div>`;
+            container.appendChild(row);
+        });
+        // 內容高度可能改變，若目前是展開狀態則同步調整
+        const contentEl = document.getElementById('content_links');
+        if (contentEl && contentEl.style.maxHeight) {
+            contentEl.style.maxHeight = contentEl.scrollHeight + "px";
+        }
+    }
+
+    function toggleEditLink(id) {
+        const link = customLinks.find(l => l.id === id);
+        if (!link) return;
+        const row = document.getElementById(`link-${id}`);
+        const editBtn = document.getElementById(`link-edit-btn-${id}`);
+        if (editBtn.innerText === "編輯") {
+            row.innerHTML = `
+                <div class="edit-container" style="flex-wrap:wrap; width:100%;">
+                    <div class="edit-group">
+                        <span class="edit-label">名稱</span>
+                        <input type="text" class="edit-input" id="link-edit-name-${id}" value="${escapeHtml(link.name)}" style="width:120px;">
+                    </div>
+                    <div class="edit-group">
+                        <span class="edit-label">網址</span>
+                        <input type="text" class="edit-input" id="link-edit-url-${id}" value="${escapeHtml(link.url)}" style="width:200px;">
+                    </div>
+                    <button class="btn-top" id="link-edit-btn-${id}" onclick="toggleEditLink('${id}')">儲存</button>
+                    <button class="delete-btn" onclick="deleteCustomLink('${id}')">刪除</button>
+                </div>`;
+            const contentEl = document.getElementById('content_links');
+            if (contentEl && contentEl.style.maxHeight) contentEl.style.maxHeight = contentEl.scrollHeight + "px";
+        } else {
+            const newName = document.getElementById(`link-edit-name-${id}`).value.trim();
+            const newUrl = document.getElementById(`link-edit-url-${id}`).value.trim();
+            if (newName) link.name = newName;
+            if (newUrl) link.url = normalizeUrl(newUrl);
+            saveCustomLinks();
+            renderCustomLinks();
+        }
+    }
+
+    function addCustomLink() {
+        const nameInput = document.getElementById('newLinkName');
+        const urlInput = document.getElementById('newLinkUrl');
+        const name = nameInput.value.trim();
+        let url = urlInput.value.trim();
+        if (!name || !url) { alert('請輸入名稱與網址'); return; }
+        url = normalizeUrl(url);
+        const id = 'link_' + Date.now() + '_' + (++_linkIdCounter) + '_' + Math.random().toString(36).substr(2, 5);
+        customLinks.push({ id, name, url });
+        saveCustomLinks();
+        renderCustomLinks();
+        nameInput.value = '';
+        urlInput.value = '';
+    }
+
+    let linkDragState = null;
+
+    function onLinkHandlePointerDown(e, id) {
+        e.preventDefault();
+        const row = document.getElementById(`link-${id}`);
+        const container = document.getElementById('linkListContainer');
+        if (!row || !container) return;
+
+        const rect = row.getBoundingClientRect();
+        const offsetY = e.clientY - rect.top;
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'link-placeholder';
+        placeholder.style.height = rect.height + 'px';
+        placeholder.style.border = '2px dashed var(--accent-color)';
+        placeholder.style.borderRadius = '6px';
+        placeholder.style.opacity = '0.4';
+        row.parentNode.insertBefore(placeholder, row);
+
+        row.style.position = 'fixed';
+        row.style.left = rect.left + 'px';
+        row.style.top = rect.top + 'px';
+        row.style.width = rect.width + 'px';
+        row.style.zIndex = '1000';
+        row.style.boxShadow = '0 6px 16px rgba(0,0,0,0.4)';
+        row.style.pointerEvents = 'none';
+
+        linkDragState = { id, row, container, offsetY, placeholder };
+
+        document.addEventListener('pointermove', onLinkPointerMove);
+        document.addEventListener('pointerup', onLinkPointerUp);
+        document.addEventListener('pointercancel', onLinkPointerUp);
+    }
+
+    function onLinkPointerMove(e) {
+        if (!linkDragState) return;
+        const { row, offsetY, container, placeholder } = linkDragState;
+        row.style.top = (e.clientY - offsetY) + 'px';
+
+        const siblings = Array.from(container.children).filter(el => el !== row && el !== placeholder);
+        let inserted = false;
+        for (const sib of siblings) {
+            const r = sib.getBoundingClientRect();
+            const midpoint = r.top + r.height / 2;
+            if (e.clientY < midpoint) {
+                container.insertBefore(placeholder, sib);
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted) container.appendChild(placeholder);
+    }
+
+    function onLinkPointerUp() {
+        if (!linkDragState) return;
+        const { id, row, container, placeholder } = linkDragState;
+
+        const orderedIds = Array.from(container.children)
+            .filter(el => el !== row)
+            .map(el => (el === placeholder ? id : el.id.replace('link-', '')));
+
+        customLinks.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+
+        row.style.position = '';
+        row.style.left = '';
+        row.style.top = '';
+        row.style.width = '';
+        row.style.zIndex = '';
+        row.style.boxShadow = '';
+        row.style.pointerEvents = '';
+        placeholder.remove();
+
+        document.removeEventListener('pointermove', onLinkPointerMove);
+        document.removeEventListener('pointerup', onLinkPointerUp);
+        document.removeEventListener('pointercancel', onLinkPointerUp);
+        linkDragState = null;
+
+        saveCustomLinks();
+        renderCustomLinks();
+    }
+
+    function deleteCustomLink(id) {
+        customLinks = customLinks.filter(l => l.id !== id);
+        saveCustomLinks();
+        renderCustomLinks();
+    }
     function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('sub_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); }
     function testAlarm() { playSound(); showNotification("測試潛水艇"); }
     async function initOCR() { try { statusText.innerText = "⏳ 正在載入辨識引擎..."; worker = await Tesseract.createWorker('chi_tra'); statusText.innerText = "🟢 引擎初始化成功！請上傳截圖。"; } catch (e) { statusText.innerText = "❌ 初始化失敗，請重整。"; } }
