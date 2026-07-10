@@ -141,6 +141,24 @@
         .link-item { transition: box-shadow 0.15s; }
         .link-placeholder { flex-shrink: 0; }
 
+        /* ── 海圖跑點 ── */
+        .map-block { padding: 10px 12px 14px; }
+        .map-entry { margin-bottom: 14px; }
+        .map-entry:last-child { margin-bottom: 0; }
+        .map-entry-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .map-entry-title { font-size:13px; font-weight:bold; color:var(--accent-color); }
+        .map-entry-actions { display:flex; gap:6px; }
+        .map-node-btn { background:none; border:none; font-size:11px; color:#888; cursor:pointer; padding:2px 4px; border-radius:4px; }
+        .map-node-btn:hover { color:var(--accent-color); }
+        .map-nodes { display:flex; flex-wrap:wrap; gap:5px; }
+        .map-node { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; border:1px solid #444; background:var(--edit-bg); color:var(--text-color); font-size:11px; font-weight:bold; cursor:pointer; user-select:none; transition:all 0.15s; }
+        .map-node:hover { border-color:var(--accent-color); color:var(--accent-color); }
+        .map-node.on { background:var(--accent-color); border-color:var(--accent-color); color:#fff; }
+        body.light-mode .map-node { background:#f1f2f6; border-color:#dcdde1; color:#2d3436; }
+        body.light-mode .map-node.on { background:var(--accent-color); border-color:var(--accent-color); color:#fff; }
+        .map-divider { border:none; border-top:1px solid #333; margin:12px 0; }
+        body.light-mode .map-divider { border-color:#dde3ec; }
+
         /* ── 群組 / 標籤 ── */
         .group-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
         .group-tab { display:inline-flex; align-items:center; gap:5px; background:#2a2a2a; border:1px solid #444; color:var(--text-color); padding:4px 10px; border-radius:14px; font-size:12px; cursor:pointer; user-select:none; }
@@ -230,6 +248,8 @@
                     <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1PRrj73-Xs7njm0jCgggbgl3VQtnhphXz" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">6 - 南蒼茫海</div></div>
                     <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1dmXdI9zo2tqO_PRdlwd9gdadHB0KeZby" class="thumb-img" onclick="openModal(this.src)"><div class="thumb-text">7 - 北洋海</div></div>
                 </div>
+                <hr class="map-divider">
+                <div class="map-block" id="mapNodeBlock"></div>
             </div>
             <button class="collapsible-btn" onclick="toggleCollapse('content3', this)"><span>+</span> 鬧鐘巨集</button>
             <div id="content3" class="content">
@@ -271,8 +291,9 @@
                 <div style="padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color);">
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/10</div>
                     <ul style="margin: 0; padding-left: 18px;">
+                        <li>「海圖」區塊新增跑點記錄：每張海圖依節點數顯示可勾選按鈕（A、B、C...），點擊切換已探索狀態，並顯示目前進度（已選/總數），支援單張海圖「全選」「全清」；記錄會保存在本機</li>
                         <li>船艇性能改為全自動計算：依「船艇等級」查表取得基礎值，加上四個部位配件等第的加成，即時算出探索性能／收集性能／巡航速度／航行距離／恩惠，等級或配件一有變動就重新計算</li>
-                        <li>移除「截圖辨識性能」OCR 功能與手動輸入性能欄位，性能欄位改為唯讀顯示；船艇等級低於 51 級時，等級基礎值視為 0，只計算配件加成</li>
+                        <li>移除「截圖辨識性能」OCR 功能與手動輸入性能欄位，性能欄位改為不可編輯的顯示徽章；船艇等級低於 51 級時，等級基礎值視為 0，只計算配件加成</li>
                         <li>新增群組／標籤功能：可建立、重新命名、刪除自訂群組，OCR 辨識依目前群組範圍比對，新船自動歸入當前群組</li>
                         <li>新增「手動新增船艇」功能：可直接輸入船名、等級、群組與回港時間</li>
                         <li>新增單船「船艇設定」Modal：可設定四部位配件等級（船體／船尾／船首／艦橋），以及修改回港時間</li>
@@ -472,7 +493,7 @@
     let customGroups = [];
     let activeGroup = GROUP_ALL;
 
-    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadGroups(); loadTimersFromStorage(); loadCustomLinks(); initOCR(); initSubConfigModal(); };
+    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadGroups(); loadTimersFromStorage(); loadCustomLinks(); initOCR(); initSubConfigModal(); initMapNodes(); };
 
     function loadGroups() {
         const data = localStorage.getItem('sub_groups');
@@ -1230,6 +1251,114 @@
         renderGroupTabs();
         applyGroupFilter();
         updateFleetCount();
+    }
+
+    // ══ 海圖跑點 ══════════════════════════════════════════════
+
+    // 產生節點清單：連續字母 A~Z 後接 AA AB ... 到指定數量
+    function genNodes(count) {
+        const nodes = [];
+        for (let i = 0; i < count; i++) {
+            if (i < 26) {
+                nodes.push(String.fromCharCode(65 + i));
+            } else {
+                const first = String.fromCharCode(65 + Math.floor((i - 26) / 26));
+                const second = String.fromCharCode(65 + ((i - 26) % 26));
+                nodes.push(first + second);
+            }
+        }
+        return nodes;
+    }
+
+    const MAP_DATA = [
+        { id: 1, name: '1 - 溺沒海',   nodes: genNodes(30) },
+        { id: 2, name: '2 - 灰海',     nodes: genNodes(20) },
+        { id: 3, name: '3 - 翠浪海',   nodes: genNodes(20) },
+        { id: 4, name: '4 - 妖歌海',   nodes: genNodes(20) },
+        { id: 5, name: '5 - 紫礁海',   nodes: genNodes(20) },
+        { id: 6, name: '6 - 南蒼茫海', nodes: genNodes(20) },
+        { id: 7, name: '7 - 北洋海',   nodes: genNodes(13) },
+    ];
+
+    // 儲存格式：{ "1": ["A","C",...], "2": [...], ... }
+    let mapNodeState = {};
+
+    function loadMapNodeState() {
+        try {
+            const data = localStorage.getItem('sub_map_nodes');
+            mapNodeState = data ? JSON.parse(data) : {};
+        } catch (e) { mapNodeState = {}; }
+    }
+
+    function saveMapNodeState() {
+        localStorage.setItem('sub_map_nodes', JSON.stringify(mapNodeState));
+    }
+
+    function isNodeOn(mapId, node) {
+        return (mapNodeState[mapId] || []).includes(node);
+    }
+
+    function toggleMapNode(mapId, node, el) {
+        if (!mapNodeState[mapId]) mapNodeState[mapId] = [];
+        const arr = mapNodeState[mapId];
+        const idx = arr.indexOf(node);
+        if (idx === -1) { arr.push(node); el.classList.add('on'); }
+        else { arr.splice(idx, 1); el.classList.remove('on'); }
+        saveMapNodeState();
+        // 更新計數顯示
+        const countEl = document.getElementById(`map-count-${mapId}`);
+        if (countEl) countEl.innerText = `(${arr.length}/${MAP_DATA.find(m=>m.id===mapId).nodes.length})`;
+    }
+
+    function setAllMapNodes(mapId, on) {
+        const map = MAP_DATA.find(m => m.id === mapId);
+        if (!map) return;
+        mapNodeState[mapId] = on ? [...map.nodes] : [];
+        saveMapNodeState();
+        renderMapNodes();
+        // 重新展開高度
+        const contentEl = document.getElementById('content2');
+        if (contentEl && contentEl.style.maxHeight) contentEl.style.maxHeight = contentEl.scrollHeight + 'px';
+    }
+
+    function renderMapNodes() {
+        const block = document.getElementById('mapNodeBlock');
+        if (!block) return;
+        block.innerHTML = '';
+        MAP_DATA.forEach((map, idx) => {
+            const onNodes = (mapNodeState[map.id] || []);
+            const total = map.nodes.length;
+            const count = onNodes.length;
+
+            const entry = document.createElement('div');
+            entry.className = 'map-entry';
+            entry.innerHTML = `
+                <div class="map-entry-header">
+                    <span class="map-entry-title">${map.name} <span id="map-count-${map.id}" style="font-size:11px; color:#888; font-weight:normal;">(${count}/${total})</span></span>
+                    <div class="map-entry-actions">
+                        <button class="map-node-btn" onclick="setAllMapNodes(${map.id}, true)">全選</button>
+                        <button class="map-node-btn" onclick="setAllMapNodes(${map.id}, false)">全清</button>
+                    </div>
+                </div>
+                <div class="map-nodes" id="map-nodes-${map.id}"></div>
+                ${idx < MAP_DATA.length - 1 ? '<hr class="map-divider">' : ''}
+            `;
+            block.appendChild(entry);
+
+            const nodesEl = document.getElementById(`map-nodes-${map.id}`);
+            map.nodes.forEach(node => {
+                const btn = document.createElement('span');
+                btn.className = 'map-node' + (isNodeOn(map.id, node) ? ' on' : '');
+                btn.innerText = node;
+                btn.onclick = () => toggleMapNode(map.id, node, btn);
+                nodesEl.appendChild(btn);
+            });
+        });
+    }
+
+    function initMapNodes() {
+        loadMapNodeState();
+        renderMapNodes();
     }
 </script>
 </body>
