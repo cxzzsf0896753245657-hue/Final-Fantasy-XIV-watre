@@ -80,13 +80,13 @@
         .header-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 20px; gap: 10px; }
         h1 { color: var(--accent-color); font-size: 24px; margin: 0; text-align: center; }
         .top-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
-        .btn-top { cursor: pointer; background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; font-size: 13px; }
+        .btn-top { cursor: pointer; background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
         
-        #alarmSelect { background: #333; color: #fff; border: 1px solid #444; padding: 6px 8px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        #alarmSelect { background: #333; color: #fff; border: 1px solid #444; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; }
         #volumeSlider { width: 80px; cursor: pointer; }
         
         .upload-zone { border: 2px dashed #444; background-color: var(--card-color); padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; }
-        .upload-zone:hover { border-color: var(--accent-color); background-color: #7a7a7a; }
+        .upload-zone:hover { border-color: var(--accent-color); background-color: rgba(199,146,234,0.08); }
         #fileInput { display: none; }
         .status { font-size: 14px; color: #aaa; margin-top: 10px; min-height: 20px; }
         
@@ -127,8 +127,8 @@
         .timer-footer { display: flex; justify-content: space-between; font-size: 15px; margin-top: 8px; }
         .time-highlight { font-weight: 800; color: #94bfff; font-size: 15px; }
         .time-highlight.target { color: #ffb627; font-size: 15px; }
-        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; }
-        .delete-btn, .edit-btn { background-color: #333; border: 1px solid #444; color: #e0e0e0; cursor: pointer; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
+        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: space-between; align-items:center; gap: 10px; }
+        .delete-btn, .edit-btn { background-color: #333; border: 1px solid #444; color: #e0e0e0; cursor: pointer; padding: 4px 12px; border-radius: 6px; font-size: 12px; }
         .delete-btn { color: #ff5370; }
         .delete-btn:hover, .edit-btn:hover { background-color: #444; }
         .edit-container { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
@@ -140,6 +140,51 @@
         .link-drag-handle:active { cursor: grabbing; }
         .link-item { transition: box-shadow 0.15s; }
         .link-placeholder { flex-shrink: 0; }
+
+        /* ── 群組 / 標籤 ── */
+        .group-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+        .group-tab { display:inline-flex; align-items:center; gap:5px; background:#2a2a2a; border:1px solid #444; color:var(--text-color); padding:4px 10px; border-radius:14px; font-size:12px; cursor:pointer; user-select:none; }
+        .group-tab.active { background: var(--accent-color); color:#fff; border-color: var(--accent-color); font-weight:bold; }
+        .group-tab-x { font-size:10px; opacity:0.55; padding:0 2px; }
+        .group-tab-x:hover { opacity:1; color:#ff5370; }
+        .group-tab-edit { font-size:11px; opacity:0.55; padding:0 2px; }
+        .group-tab-edit:hover { opacity:1; color: var(--accent-color); }
+        .group-tab-add { background:transparent; border:1px dashed #666; color:var(--accent-color); }
+        body.light-mode .group-tab { background:#f1f2f6; border:1px solid #dcdde1; color:#2d3436; }
+        body.light-mode .group-tab.active { background: var(--accent-color); color:#fff; }
+        body.light-mode .group-tab-add { border:1px dashed #b2bec3; }
+        .card-group-select { background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); border-radius:6px; font-size:11px; padding:3px 6px; max-width:110px; cursor:pointer; }
+
+        /* ── 船艇設定 Modal ── */
+        .sub-modal-overlay { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+        .sub-modal-box { background: var(--card-color); border:1px solid var(--edit-border); border-radius:8px; padding:20px; width:900px; max-width:95vw; max-height:85vh; overflow-y:auto; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        .sub-modal-title { color: var(--accent-color); font-size:16px; font-weight:bold; margin:0 0 14px 0; display:flex; justify-content:space-between; align-items:center; }
+        .sub-modal-close { cursor:pointer; background:none; border:none; color:var(--text-color); font-size:18px; line-height:1; }
+        .sub-modal-section-title { font-size:13px; color:var(--accent-color); font-weight:bold; margin:14px 0 8px; border-left:3px solid var(--accent-color); padding-left:8px; }
+        .sub-modal-section-title:first-of-type { margin-top:0; }
+        .sub-part-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+        .sub-part-item { display:flex; flex-direction:column; gap:4px; flex:0 0 auto; }
+        .sub-part-item label { font-size:11px; color: var(--accent-color); margin-left:2px; }
+        .sub-part-item select { background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); padding:6px 10px; border-radius:6px; font-size:14px; width:165px; outline:none; }
+        .sub-part-item select:focus { border-color: var(--accent-color); }
+        /* 素質欄位：wrap 排列，樣式與 edit-input 統一，移除 spinner */
+        .sub-stat-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px; }
+        .sub-stat-ocr-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+        .sub-stat-ocr-status { font-size:12px; color:#888; }
+        .sub-stat-updated { font-size:11px; color:#888; margin-top:8px; text-align:right; }
+        .sub-stat-item { display:flex; flex-direction:column; gap:4px; flex:0 0 auto; }
+        .sub-stat-item label { font-size:11px; color: var(--accent-color); margin-left:2px; }
+        .sub-stat-item input { width:110px; box-sizing:border-box; background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); padding:6px 10px; border-radius:6px; font-size:14px; outline:none; -moz-appearance:textfield; appearance:textfield; }
+        .sub-stat-item input::-webkit-outer-spin-button,
+        .sub-stat-item input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .sub-stat-item input:focus { border-color: var(--accent-color); }
+        .sub-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+        /* 卡片次要操作按鈕：與 delete-btn 同風格，僅顏色區分 */
+        .sub-config-btn { background-color:#333; border:1px solid #444; color:#c792ea; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:12px; }
+        .sub-config-btn:hover { background-color:#444; }
+        body.light-mode .sub-config-btn { background-color:#f8f9fa; border:1px solid #dcdde1; color:#7c5cbf; }
+        .sub-config-summary { font-size:12px; color:#888; margin-top:6px; line-height:1.6; }
+        body.light-mode .sub-config-summary { color:#888; }
     </style>
 </head>
 <body>
@@ -195,7 +240,7 @@
                 <div style="padding: 10px;">
                     <textarea id="macroOutput" style="width:100%; height:120px; border: 2px dashed #444; background:var(--edit-bg); color:var(--text-color); padding:10px; box-sizing:border-box; resize:none;" readonly></textarea>
                     <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:8px;">
-                        <select id="macroSoundSelect" class="btn-top">
+                        <select id="macroSoundSelect" class="edit-input" style="padding:6px 8px;">
                             <option value="00">音效 00</option>
                             <option value="01" selected>音效 01</option>
                             <option value="02">音效 02</option>
@@ -228,7 +273,15 @@
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color);">
-                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2025/06/29</div>
+                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/10</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>新增群組／標籤功能：可建立、重新命名、刪除自訂群組，OCR 辨識依目前群組範圍比對，新船自動歸入當前群組</li>
+                        <li>新增「手動新增船艇」功能：可直接輸入船名、等級、群組與回港時間</li>
+                        <li>新增單船「船艇設定」Modal：可設定四部位配件等級（船體／船尾／船首／艦橋）、五項素質數值，以及修改回港時間；OCR 截圖可自動累加素質增量</li>
+                        <li>OCR 重新辨識同一艘船時，保留原本手動設定的配件與素質，不會被清空</li>
+                        <li>整體 UI 一致性調整：按鈕圓角、輸入框樣式、標題列元素垂直對齊統一；右側標題列寬度不足時自動換行，各按鈕寬度固定不縮放</li>
+                    </ul>
+                    <div style="color: var(--accent-color); font-weight: bold; margin: 12px 0 6px;">📋 2025/06/29</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>修正已回港船艦倒數結束後出現重複卡片的問題</li>
                         <li>新增艦隊排序功能（回港時間、名稱、等級大小），排序偏好記憶於本機</li>
@@ -259,15 +312,19 @@
 
     <!-- ══ RIGHT PANEL ══ -->
     <div class="right-panel">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-            <p class="right-panel-title" style="margin:0;">⚓ 潛水艇艦隊 <span id="fleetCount" style="font-size:12px; background:#333; color:#c792ea; border:1px solid #444; border-radius:10px; padding:2px 9px; margin-left:6px; vertical-align:middle;">0 艘</span></p>
-            <select id="sortSelect" class="btn-top" style="font-size:12px; margin:0;" onchange="applySortAndRender()">
-                <option value="name">排序：名稱 A→Z</option>
-                <option value="time_asc" selected>排序：回港時間 近→遠</option>
-                <option value="level_asc">排序：等級 小→大</option>
-                <option value="level_desc">排序：等級 大→小</option>
-            </select>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+            <div class="right-panel-title" style="margin:0; white-space:nowrap; flex-shrink:0;">⚓ 潛水艇艦隊 <span id="fleetCount" style="font-size:12px; background:#333; color:#c792ea; border:1px solid #444; border-radius:6px; padding:2px 9px; margin-left:6px; vertical-align:middle; display:inline-block; min-width:48px; text-align:center;">0 艘</span></div>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button class="btn-top" onclick="openAddShipModal()" style="width: 90px; white-space: nowrap; flex-shrink: 0;">＋ 手動新增</button>
+                <select id="sortSelect" class="btn-top" style="font-size:12px; margin:0;" onchange="applySortAndRender()">
+                    <option value="name">排序：名稱 A→Z</option>
+                    <option value="time_asc" selected>排序：回港時間 近→遠</option>
+                    <option value="level_asc">排序：等級 小→大</option>
+                    <option value="level_desc">排序：等級 大→小</option>
+                </select>
+            </div>
         </div>
+        <div id="groupTabsContainer" class="group-tabs"></div>
         <div class="timer-list" id="timerList"></div>
     </div>
 
@@ -275,6 +332,110 @@
 
 <div id="imageModal" class="modal" onclick="this.style.display='none'">
     <img id="modalImg">
+</div>
+
+<!-- ══ 船艇設定 Modal ══ -->
+<div id="subConfigModal" class="sub-modal-overlay">
+    <div class="sub-modal-box" onclick="event.stopPropagation()">
+        <div class="sub-modal-title">
+            <span id="subConfigModalTitle">船艇設定</span>
+            <button class="sub-modal-close" onclick="closeSubConfigModal()">✕</button>
+        </div>
+
+        <div class="sub-modal-section-title">船艇資訊</div>
+        <div class="edit-container" style="margin-bottom:14px; flex-wrap:wrap;">
+            <div class="edit-group">
+                <span class="edit-label">船名</span>
+                <input type="text" class="edit-input" id="cfg-name" style="width:170px;">
+            </div>
+            <div class="edit-group">
+                <span class="edit-label">等級</span>
+                <input type="text" class="edit-input" id="cfg-level" style="width:70px;">
+            </div>
+            <div class="edit-group">
+                <span class="edit-label">回港時間</span>
+                <input type="datetime-local" class="edit-input" id="cfg-endtime" style="width:200px;">
+            </div>
+        </div>
+
+        <div class="sub-modal-section-title">配件（部位等級）</div>
+        <div class="sub-part-grid">
+            <div class="sub-part-item"><label>船體</label><select id="cfg-part-hull"></select></div>
+            <div class="sub-part-item"><label>船尾</label><select id="cfg-part-stern"></select></div>
+            <div class="sub-part-item"><label>船首</label><select id="cfg-part-bow"></select></div>
+            <div class="sub-part-item"><label>艦橋</label><select id="cfg-part-bridge"></select></div>
+        </div>
+
+        <div class="sub-modal-section-title">素質</div>
+        <div class="sub-stat-ocr-row">
+            <button class="btn-top" id="statOcrBtn" onclick="document.getElementById('statOcrInput').click()" style="white-space:nowrap; flex-shrink:0;">📷 截圖辨識素質（累加至下方數值）</button>
+            <input type="file" id="statOcrInput" accept="image/*" style="display:none;">
+            <span class="sub-stat-ocr-status" id="statOcrStatus">或直接 Ctrl+V 貼上截圖</span>
+        </div>
+        <div class="sub-stat-grid">
+            <div class="sub-stat-item"><label>探索性能</label><input type="text" inputmode="numeric" id="cfg-stat-explore"></div>
+            <div class="sub-stat-item"><label>收集性能</label><input type="text" inputmode="numeric" id="cfg-stat-gather"></div>
+            <div class="sub-stat-item"><label>巡航速度</label><input type="text" inputmode="numeric" id="cfg-stat-speed"></div>
+            <div class="sub-stat-item"><label>航行距離</label><input type="text" inputmode="numeric" id="cfg-stat-range"></div>
+            <div class="sub-stat-item"><label>恩惠</label><input type="text" inputmode="numeric" id="cfg-stat-favor"></div>
+        </div>
+        <div class="sub-stat-updated" id="statUpdatedAt"></div>
+
+        <div class="sub-modal-actions">
+            <button class="btn-top" onclick="closeSubConfigModal()">取消</button>
+            <button class="btn-top" style="background:var(--accent-color); color:#fff; border-color:var(--accent-color);" onclick="saveSubConfigModal()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ 群組 新增/重新命名 Modal ══ -->
+<div id="groupModal" class="sub-modal-overlay" onclick="closeGroupModal()">
+    <div class="sub-modal-box" style="width:320px;" onclick="event.stopPropagation()">
+        <div class="sub-modal-title">
+            <span id="groupModalTitle">新增群組</span>
+            <button class="sub-modal-close" onclick="closeGroupModal()">✕</button>
+        </div>
+        <div class="edit-group" style="width:100%; margin-bottom:18px;">
+            <span class="edit-label">群組名稱</span>
+            <input type="text" class="edit-input" id="groupModalInput" style="width:100%; box-sizing:border-box;" placeholder="例如：本傳角色、副本角色..." maxlength="20" onkeydown="if(event.key==='Enter'){event.preventDefault(); submitGroupModal();}">
+        </div>
+        <div class="sub-modal-actions">
+            <button class="btn-top" onclick="closeGroupModal()">取消</button>
+            <button class="btn-top" style="background:var(--accent-color); color:#fff; border-color:var(--accent-color);" onclick="submitGroupModal()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ 手動新增船艇 Modal ══ -->
+<div id="addShipModal" class="sub-modal-overlay" onclick="closeAddShipModal()">
+    <div class="sub-modal-box" style="width:380px;" onclick="event.stopPropagation()">
+        <div class="sub-modal-title">
+            <span>手動新增船艇</span>
+            <button class="sub-modal-close" onclick="closeAddShipModal()">✕</button>
+        </div>
+        <div class="edit-group" style="width:100%; margin-bottom:12px;">
+            <span class="edit-label">船名</span>
+            <input type="text" class="edit-input" id="addShipName" style="width:100%; box-sizing:border-box;" placeholder="輸入船艇名稱">
+        </div>
+        <div class="edit-container" style="margin-bottom:12px;">
+            <div class="edit-group">
+                <span class="edit-label">等級</span>
+                <input type="text" class="edit-input" id="addShipLevel" style="width:80px;">
+            </div>
+            <div class="edit-group" style="flex:1; min-width:0;">
+                <span class="edit-label">群組</span>
+                <select class="edit-input" id="addShipGroup" style="width:100%;"></select>
+            </div>
+        </div>
+        <div class="edit-group" style="width:100%; margin-bottom:18px;">
+            <span class="edit-label">回港時間</span>
+            <input type="datetime-local" class="edit-input" id="addShipEndTime" style="width:100%; box-sizing:border-box;">
+        </div>
+        <div class="sub-modal-actions">
+            <button class="btn-top" onclick="closeAddShipModal()">取消</button>
+            <button class="btn-top" style="background:var(--accent-color); color:#fff; border-color:var(--accent-color);" onclick="submitAddShipModal()">新增</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -310,8 +471,185 @@
     let savedTimers = [];
     let _timerIdCounter = 0;
     let worker = null;
+    let workerInitPromise = null;
 
-    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadTimersFromStorage(); loadCustomLinks(); initOCR(); };
+    // ── 群組 / 標籤 ───────────────────────────────────────
+    const GROUP_ALL = "全部";
+    const DEFAULT_GROUP = "未分類";
+    let customGroups = [];
+    let activeGroup = GROUP_ALL;
+
+    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadGroups(); loadTimersFromStorage(); loadCustomLinks(); initOCR(); initSubConfigModal(); };
+
+    function loadGroups() {
+        const data = localStorage.getItem('sub_groups');
+        if (data) { try { customGroups = JSON.parse(data); } catch (e) { customGroups = []; } }
+        const savedActive = localStorage.getItem('sub_active_group');
+        if (savedActive) activeGroup = savedActive;
+    }
+    function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); }
+    function saveActiveGroup() { localStorage.setItem('sub_active_group', activeGroup); }
+    function allGroupNames() { return [DEFAULT_GROUP, ...customGroups]; }
+
+    function renderGroupTabs() {
+        const container = document.getElementById('groupTabsContainer');
+        if (!container) return;
+        const tabs = [GROUP_ALL, ...allGroupNames()];
+        container.innerHTML = tabs.map(g => {
+            const isActive = g === activeGroup;
+            const editable = (g !== GROUP_ALL && g !== DEFAULT_GROUP);
+            return `<span class="group-tab${isActive ? ' active' : ''}" onclick="setActiveGroup('${escapeHtml(g)}')">${escapeHtml(g)}${editable ? `<span class="group-tab-edit" onclick="event.stopPropagation(); openRenameGroupModal('${escapeHtml(g)}')" title="重新命名">✎</span><span class="group-tab-x" onclick="event.stopPropagation(); deleteGroup('${escapeHtml(g)}')" title="刪除群組">✕</span>` : ''}</span>`;
+        }).join('') + `<span class="group-tab group-tab-add" onclick="promptAddGroup()">＋ 新增</span>`;
+    }
+
+    function setActiveGroup(g) {
+        activeGroup = g;
+        saveActiveGroup();
+        renderGroupTabs();
+        applyGroupFilter();
+    }
+
+    // ── 群組 新增/重新命名 Modal ──
+    let groupModalMode = 'add'; // 'add' | 'rename'
+    let groupModalOriginalName = null;
+
+    function promptAddGroup() {
+        groupModalMode = 'add';
+        groupModalOriginalName = null;
+        document.getElementById('groupModalTitle').innerText = '新增群組';
+        document.getElementById('groupModalInput').value = '';
+        document.getElementById('groupModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('groupModalInput').focus(), 50);
+    }
+
+    function openRenameGroupModal(name) {
+        groupModalMode = 'rename';
+        groupModalOriginalName = name;
+        document.getElementById('groupModalTitle').innerText = '重新命名群組';
+        document.getElementById('groupModalInput').value = name;
+        document.getElementById('groupModal').style.display = 'flex';
+        setTimeout(() => { const el = document.getElementById('groupModalInput'); el.focus(); el.select(); }, 50);
+    }
+
+    function closeGroupModal() {
+        document.getElementById('groupModal').style.display = 'none';
+    }
+
+    function submitGroupModal() {
+        const input = document.getElementById('groupModalInput');
+        const name = input.value.trim();
+        if (!name) { alert('請輸入群組名稱'); return; }
+        if (name === GROUP_ALL) { alert('這個名稱是保留字，請換一個'); return; }
+
+        if (groupModalMode === 'add') {
+            if (allGroupNames().includes(name)) { alert('這個群組名稱已經存在'); return; }
+            customGroups.push(name);
+            saveGroups();
+            renderGroupTabs();
+            refreshAllCardGroupSelects();
+        } else {
+            const oldName = groupModalOriginalName;
+            if (name !== oldName) {
+                if (allGroupNames().includes(name)) { alert('這個群組名稱已經存在'); return; }
+                customGroups = customGroups.map(g => g === oldName ? name : g);
+                saveGroups();
+                savedTimers.forEach(t => { if (t.group === oldName) t.group = name; });
+                saveTimersToStorage();
+                if (activeGroup === oldName) { activeGroup = name; saveActiveGroup(); }
+                renderGroupTabs();
+                refreshAllCardGroupSelects();
+                applyGroupFilter();
+            }
+        }
+        closeGroupModal();
+    }
+
+    // ── 手動新增船艇 ──
+    function toDatetimeLocalString(date) {
+        const pad = n => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function openAddShipModal() {
+        document.getElementById('addShipName').value = '';
+        document.getElementById('addShipLevel').value = '';
+        document.getElementById('addShipGroup').innerHTML = groupSelectOptionsHtml(activeGroup !== GROUP_ALL ? activeGroup : DEFAULT_GROUP);
+        const defaultEnd = new Date(Date.now() + 18 * 3600 * 1000);
+        document.getElementById('addShipEndTime').value = toDatetimeLocalString(defaultEnd);
+        document.getElementById('addShipModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('addShipName').focus(), 50);
+    }
+
+    function closeAddShipModal() {
+        document.getElementById('addShipModal').style.display = 'none';
+    }
+
+    function submitAddShipModal() {
+        const name = document.getElementById('addShipName').value.trim();
+        const level = document.getElementById('addShipLevel').value.trim();
+        const group = document.getElementById('addShipGroup').value || DEFAULT_GROUP;
+        const endTimeStr = document.getElementById('addShipEndTime').value;
+        if (!name) { alert('請輸入船名'); return; }
+        if (!endTimeStr) { alert('請選擇回港時間'); return; }
+        const endTime = new Date(endTimeStr).getTime();
+        if (isNaN(endTime)) { alert('回港時間格式錯誤'); return; }
+        const now = Date.now();
+        const totalSeconds = Math.round((endTime - now) / 1000);
+        const timerData = {
+            id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5),
+            name, level, startTime: now, endTime, totalSeconds,
+            parts: createEmptyParts(), stats: createEmptyStats(), statsUpdatedAt: null,
+            group
+        };
+        savedTimers.push(timerData);
+        saveTimersToStorage();
+        createTimerCard(timerData);
+        updateFleetCount();
+        applyGroupFilter();
+        setTimeout(() => applySortAndRender(), 0);
+        closeAddShipModal();
+    }
+
+    function deleteGroup(name) {
+        if (!confirm(`確定要刪除群組「${name}」嗎？此群組內的船艇會被移到「${DEFAULT_GROUP}」`)) return;
+        customGroups = customGroups.filter(g => g !== name);
+        saveGroups();
+        savedTimers.forEach(t => { if (t.group === name) t.group = DEFAULT_GROUP; });
+        saveTimersToStorage();
+        if (activeGroup === name) { activeGroup = GROUP_ALL; saveActiveGroup(); }
+        renderGroupTabs();
+        refreshAllCardGroupSelects();
+        applyGroupFilter();
+    }
+
+    function groupSelectOptionsHtml(selected) {
+        return allGroupNames().map(g => `<option value="${escapeHtml(g)}" ${g === selected ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('');
+    }
+
+    function refreshAllCardGroupSelects() {
+        savedTimers.forEach(t => {
+            const sel = document.getElementById(`group-select-${t.id}`);
+            if (sel) sel.innerHTML = groupSelectOptionsHtml(t.group || DEFAULT_GROUP);
+        });
+    }
+
+    function changeCardGroup(id, newGroup) {
+        const t = savedTimers.find(x => x.id === id);
+        if (!t) return;
+        t.group = newGroup;
+        saveTimersToStorage();
+        applyGroupFilter();
+    }
+
+    function applyGroupFilter() {
+        savedTimers.forEach(t => {
+            const card = document.getElementById(`card-${t.id}`);
+            if (!card) return;
+            const g = t.group || DEFAULT_GROUP;
+            card.style.display = (activeGroup === GROUP_ALL || g === activeGroup) ? '' : 'none';
+        });
+        updateFleetCount();
+    }
 
     // ── 自訂連結 ───────────────────────────────────────
     const DEFAULT_LINKS = [
@@ -516,14 +854,14 @@
     }
     function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('sub_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); }
     function testAlarm() { playSound(); showNotification("測試潛水艇"); }
-    async function initOCR() { try { statusText.innerText = "⏳ 正在載入辨識引擎..."; worker = await Tesseract.createWorker('chi_tra'); statusText.innerText = "🟢 引擎初始化成功！請上傳截圖。"; } catch (e) { statusText.innerText = "❌ 初始化失敗，請重整。"; } }
+    async function initOCR() { try { statusText.innerText = "⏳ 正在載入辨識引擎..."; workerInitPromise = Tesseract.createWorker('chi_tra'); worker = await workerInitPromise; statusText.innerText = "🟢 引擎初始化成功！請上傳截圖。"; } catch (e) { statusText.innerText = "❌ 初始化失敗，請重整。"; } }
     fileInput.addEventListener('change', (e) => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
-    document.addEventListener('paste', (e) => { const cbd = e.clipboardData; if (!cbd) return; for (let i = 0; i < cbd.items.length; i++) { if (cbd.items[i].type.indexOf('image') !== -1) { handleFile(cbd.items[i].getAsFile()); break; } } });
+    document.addEventListener('paste', (e) => { const cbd = e.clipboardData; if (!cbd) return; for (let i = 0; i < cbd.items.length; i++) { if (cbd.items[i].type.indexOf('image') !== -1) { const pastedFile = cbd.items[i].getAsFile(); if (currentConfigTimerId) { handleStatOcrFile(pastedFile); } else { handleFile(pastedFile); } break; } } });
 
     function handleFile(file) { if (!file || !worker) return; statusText.innerText = "🔍 正在分析圖片..."; const reader = new FileReader(); reader.onload = async function(e) { try { const ret = await worker.recognize(e.target.result); parseTextToTimers(ret.data.text); } catch (error) { statusText.innerText = "❌ 辨識失敗。"; } }; reader.readAsDataURL(file); }
-    function parseTextToTimers(text) { const lines = text.split('\n'); let parsedCount = 0; lines.forEach(line => { let currentLine = line.replace(/\s+/g, ''); if (!currentLine) return; const dayMatch = currentLine.match(/(\d{1,2})天/); const hourMatch = currentLine.match(/(\d{1,2})小時/); const minMatch = currentLine.match(/(\d{1,2})分鐘/); if (!dayMatch && !hourMatch && !minMatch) return; let namePart = currentLine.split(/正在探索|剩餘時間|\d{1,2}天|\d{1,2}小時|\d{1,2}分鐘/)[0]; let cleanName = namePart.replace(/\[\d+級\]/g, '').replace(/正在探.{0,2}[：:]*|剩.{0,2}時間|素狐餘時間|餘時間|請選擇|探索|所持/g, '').replace(/[\[\]：:]/g, '').trim(); let level = (currentLine.match(/(\d+)級/) || [])[1] ? (currentLine.match(/(\d+)級/)[1] + "級") : ""; const totalSeconds = ((dayMatch ? parseInt(dayMatch[1]) : 0) * 86400) + ((hourMatch ? parseInt(hourMatch[1]) : 0) * 3600) + ((minMatch ? parseInt(minMatch[1]) : 0) * 60); if (totalSeconds > 0) { saveOrUpdateTimer(cleanName, level, totalSeconds); parsedCount++; } }); statusText.innerText = parsedCount > 0 ? `🎉 同步 ${parsedCount} 艘潛水艇！` : "⚠️ 找不到資料。"; }
+    function parseTextToTimers(text) { const lines = text.split('\n'); let parsedCount = 0; lines.forEach(line => { let currentLine = line.replace(/\s+/g, ''); if (!currentLine) return; const dayMatch = currentLine.match(/(\d{1,2})天/); const hourMatch = currentLine.match(/(\d{1,2})小時/); const minMatch = currentLine.match(/(\d{1,2})分鐘/); if (!dayMatch && !hourMatch && !minMatch) return; let namePart = currentLine.split(/正在探索|剩餘時間|\d{1,2}天|\d{1,2}小時|\d{1,2}分鐘/)[0]; let cleanName = namePart.replace(/\[\d+級\]/g, '').replace(/正在探.{0,2}[：:]*|剩.{0,2}時間|素狐餘時間|餘時間|請選擇|探索|所持/g, '').replace(/[\[\]：:]/g, '').trim(); let level = (currentLine.match(/(\d+)級/) || [])[1] ? (currentLine.match(/(\d+)級/)[1] + "級") : ""; const totalSeconds = ((dayMatch ? parseInt(dayMatch[1]) : 0) * 86400) + ((hourMatch ? parseInt(hourMatch[1]) : 0) * 3600) + ((minMatch ? parseInt(minMatch[1]) : 0) * 60); if (totalSeconds > 0) { saveOrUpdateTimer(cleanName, level, totalSeconds); parsedCount++; } }); statusText.innerText = parsedCount > 0 ? `🎉 同步 ${parsedCount} 艘潛水艇！${activeGroup !== GROUP_ALL ? `（範圍：${activeGroup}）` : ''}` : "⚠️ 找不到資料。"; }
 
     // ── 模糊比對：Levenshtein Distance ───────────────────────
     function levenshtein(a, b) {
@@ -546,13 +884,14 @@
                /^[一二三四五六七八九十百千萬]+$/.test(name) ||  // 純中文數字：一二三
                /^[A-Za-z]+$/.test(name);                        // 純英文字母：ABC
     }
-    function findFuzzyMatch(name) {
+    function findFuzzyMatch(name, pool) {
+        pool = pool || savedTimers;
         // 純數字、純中文數字、純英文字母的名字，每個字元都是關鍵區分，不做模糊比對
         if (isPureSimple(name)) return -1;
         let bestIndex = -1, bestDist = Infinity;
         const maxDist = Math.max(1, Math.floor(name.length * 0.3)); // 原本 30% 門檻
         const srcSerial = getSerialSuffix(name);
-        savedTimers.forEach((t, i) => {
+        pool.forEach((t, i) => {
             // 存檔的船名若也是純簡單型，同樣跳過
             if (isPureSimple(t.name)) return;
             // 若兩艘船都有序號且序號不同，視為不同船，跳過模糊比對
@@ -568,31 +907,42 @@
         const now = Date.now();
         const endTime = now + (totalSeconds * 1000);
 
-        // 先嘗試完全比對，再嘗試模糊比對
-        let existingIndex = savedTimers.findIndex(t => t.name === name);
-        if (existingIndex === -1) existingIndex = findFuzzyMatch(name);
+        // 依目前選定的群組篩選比對範圍：選「全部」時不限範圍，選特定群組時只在該群組內比對
+        const pool = (activeGroup === GROUP_ALL) ? savedTimers : savedTimers.filter(t => (t.group || DEFAULT_GROUP) === activeGroup);
 
-        if (existingIndex !== -1) {
-            const matchedName = savedTimers[existingIndex].name;
+        // 先嘗試完全比對，再嘗試模糊比對（皆限定在 pool 範圍內）
+        let poolIndex = pool.findIndex(t => t.name === name);
+        if (poolIndex === -1) poolIndex = findFuzzyMatch(name, pool);
 
-            // 清除所有同名卡片（含已完成的），避免舊卡與新計時並存
-            const toRemove = savedTimers.filter(t => t.name === matchedName);
+        if (poolIndex !== -1) {
+            const matched = pool[poolIndex];
+            const matchedName = matched.name;
+            const matchedGroup = matched.group || DEFAULT_GROUP;
+            // 保留原本手動設定的配件與素質，OCR 流程不會覆寫這兩個欄位
+            const prevParts = matched.parts || createEmptyParts();
+            const prevStats = matched.stats || createEmptyStats();
+            const prevStatsUpdatedAt = matched.statsUpdatedAt || null;
+
+            // 清除同群組內同名卡片（含已完成的），避免舊卡與新計時並存；不影響其他群組內的同名船
+            const toRemove = savedTimers.filter(t => t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup);
             toRemove.forEach(t => document.getElementById(`card-${t.id}`)?.remove());
-            savedTimers = savedTimers.filter(t => t.name !== matchedName);
+            savedTimers = savedTimers.filter(t => !(t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup));
 
-            // 用原本正確的名字建立新計時
-            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds };
+            // 用原本正確的名字建立新計時，並帶回原本的配件/素質設定與群組
+            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds, parts: prevParts, stats: prevStats, statsUpdatedAt: prevStatsUpdatedAt, group: matchedGroup };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
         } else {
-            // 新船：新增
-            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds };
+            // 新船：新增（配件/素質預設為空，待使用者手動設定）。若目前正篩選在特定群組，新船直接歸入該群組
+            const newGroup = (activeGroup === GROUP_ALL) ? DEFAULT_GROUP : activeGroup;
+            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds, parts: createEmptyParts(), stats: createEmptyStats(), statsUpdatedAt: null, group: newGroup };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
         }
         updateFleetCount();
+        applyGroupFilter();
         // 新增/更新後重新套用排序
         setTimeout(() => applySortAndRender(), 0);
     }
@@ -621,45 +971,208 @@
         });
     }
 
-    function toggleEdit(id) { 
-        const header = document.getElementById(`header-${id}`);
-        const editBtn = document.getElementById(`edit-${id}`);
-        const t = savedTimers.find(x => x.id === id);
-        if (editBtn.innerText === "編輯") {
-            const nameVal = document.getElementById(`name-${id}`).innerText;
-            const levelVal = document.getElementById(`level-${id}`).innerText.replace(/[\[\]]/g, '');
-            header.innerHTML = `
-                <div class="edit-container">
-                    <div class="edit-group">
-                        <span class="edit-label">名稱</span>
-                        <input type="text" class="edit-input" id="edit-name-${id}" value="${nameVal}" style="width:140px;">
-                    </div>
-                    <div class="edit-group">
-                        <span class="edit-label">等級</span>
-                        <input type="text" class="edit-input" id="edit-level-${id}" value="${levelVal}" style="width:50px;">
-                    </div>
-                </div>`;
-            editBtn.innerText = "儲存";
-        } else {
-            const newName = document.getElementById(`edit-name-${id}`).value;
-            const newLevel = document.getElementById(`edit-level-${id}`).value;
-            const isFinished = t && Date.now() > t.endTime;
-            const displayTime = isFinished ? "🌟 已回港！" : document.getElementById(`count-${id}`)?.innerText;
-            header.innerHTML = `<span class="timer-name"><span id="name-${id}">${newName}</span> <span class="timer-level" id="level-${id}">${newLevel ? `[${newLevel}]` : ''}</span></span><span class="timer-countdown" id="count-${id}">${displayTime}</span>`;
-            editBtn.innerText = "編輯";
-            if(t) { t.name = newName; t.level = newLevel; saveTimersToStorage(); }
-        }
+    function formatDateTime(timestamp) { const date = new Date(timestamp); return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`; }
+
+    // ══ 船艇素質／配件設定 ══════════════════════════════════
+
+    const PART_GRADES = [
+        { value: "", label: "（未設定）" },
+        { value: "1", label: "1 - 鯊魚級" },
+        { value: "1改", label: "1改 - 鯊魚級（改）" },
+        { value: "2", label: "2 - 甲鱟級" },
+        { value: "2改", label: "2改 - 甲鱟級（改）" },
+        { value: "3", label: "3 - 鬚鯨級" },
+        { value: "3改", label: "3改 - 鬚鯨級（改）" },
+        { value: "4", label: "4 - 腔棘魚級" },
+        { value: "4改", label: "4改 - 腔棘魚級（改）" },
+        { value: "5", label: "5 - 希爾德拉級" },
+        { value: "5改", label: "5改 - 希爾德拉級（改）" }
+    ];
+    const PART_KEYS = ["hull", "stern", "bow", "bridge"];
+    const PART_LABELS = { hull: "船體", stern: "船尾", bow: "船首", bridge: "艦橋" };
+    const STAT_KEYS = ["explore", "gather", "speed", "range", "favor"];
+    const STAT_LABELS = { explore: "探索", gather: "收集", speed: "航速", range: "航距", favor: "恩惠" };
+    const STAT_LOG_LABEL_TO_KEY = { "探索性能": "explore", "收集性能": "gather", "巡航速度": "speed", "航行距離": "range", "恩惠": "favor" };
+
+    function isShipNameMatch(a, b) {
+        if (!a || !b) return false;
+        const na = a.trim(), nb = b.trim();
+        if (na.toLowerCase() === nb.toLowerCase()) return true;
+        const maxDist = Math.max(1, Math.floor(nb.length * 0.34));
+        return levenshtein(na, nb) <= maxDist;
     }
 
-    function formatDateTime(timestamp) { const date = new Date(timestamp); return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`; }
+    // 解析遊戲內「潛水艇「船名」的OO上升了N」升級紀錄，回傳各素質的累加增量
+    // 改為整段文字攤平後用全域比對，避免因為 OCR 換行位置跑掉而漏抓；
+    // 並加大字元間的容錯範圍，同時處理常見的 OCR 誤讀字（惠→恵、距離→距离）
+    function parseStatLogText(text, shipName) {
+        const deltas = { explore: 0, gather: 0, speed: 0, range: 0, favor: 0 };
+        let matchedCount = 0;
+        const flat = text.replace(/\s+/g, '');
+        const labelAlt = "(探索性能|收集性能|巡航速度|航行距離|航行距离|恩惠|恩恵)";
+        const regex = new RegExp(`[「『\\[]([^」』\\]]{1,20})[」』\\]].{0,6}?${labelAlt}.{0,4}?(\\d{1,3})`, 'g');
+        let m;
+        while ((m = regex.exec(flat)) !== null) {
+            const [, name, rawLabel, deltaStr] = m;
+            if (!isShipNameMatch(name, shipName)) continue;
+            const label = rawLabel.replace('距离', '距離').replace('恩恵', '恩惠');
+            const key = STAT_LOG_LABEL_TO_KEY[label];
+            if (key) { deltas[key] += parseInt(deltaStr, 10); matchedCount++; }
+        }
+        return { deltas, matchedCount };
+    }
+
+    function createEmptyParts() { return { hull: "", stern: "", bow: "", bridge: "" }; }
+    function createEmptyStats() { return { explore: "", gather: "", speed: "", range: "", favor: "" }; }
+
+    function initSubConfigModal() {
+        PART_KEYS.forEach(key => {
+            const sel = document.getElementById(`cfg-part-${key}`);
+            sel.innerHTML = PART_GRADES.map(g => `<option value="${g.value}">${g.label}</option>`).join('');
+        });
+        document.getElementById('subConfigModal').addEventListener('click', closeSubConfigModal);
+        document.getElementById('statOcrInput').addEventListener('change', (e) => {
+            if (e.target.files.length) handleStatOcrFile(e.target.files[0]);
+            e.target.value = '';
+        });
+    }
+
+    let currentConfigTimerId = null;
+    let pendingStatsUpdatedAt = null;
+
+    async function handleStatOcrFile(file) {
+        const statusEl = document.getElementById('statOcrStatus');
+        if (!file) return;
+        const t = savedTimers.find(x => x.id === currentConfigTimerId);
+        if (!t) return;
+        if (!worker) {
+            if (!workerInitPromise) { statusEl.innerText = '❌ 引擎尚未啟動，請重新整理頁面'; return; }
+            statusEl.innerText = '⏳ 引擎準備中，就緒後會自動繼續辨識...';
+            try { await workerInitPromise; } catch (e) { statusEl.innerText = '❌ 引擎初始化失敗，請重新整理頁面'; return; }
+        }
+        statusEl.innerText = '🔍 辨識中...';
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const ret = await worker.recognize(e.target.result);
+                const { deltas, matchedCount } = parseStatLogText(ret.data.text, t.name);
+                if (matchedCount === 0) {
+                    statusEl.innerText = `⚠️ 找不到符合「${t.name}」的升級紀錄`;
+                    return;
+                }
+                STAT_KEYS.forEach(key => {
+                    if (deltas[key]) {
+                        const input = document.getElementById(`cfg-stat-${key}`);
+                        const current = parseFloat(input.value) || 0;
+                        input.value = current + deltas[key];
+                    }
+                });
+                pendingStatsUpdatedAt = Date.now();
+                statusEl.innerText = `✅ 已累加 ${matchedCount} 筆紀錄，記得按「儲存」才會生效`;
+                document.getElementById('statUpdatedAt').innerText = '最後更新：剛剛（尚未儲存）';
+            } catch (err) {
+                statusEl.innerText = '❌ 辨識失敗，請重試';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function openSubConfigModal(id) {
+        const t = savedTimers.find(x => x.id === id);
+        if (!t) return;
+        currentConfigTimerId = id;
+        pendingStatsUpdatedAt = null;
+        const parts = t.parts || createEmptyParts();
+        const stats = t.stats || createEmptyStats();
+        document.getElementById('subConfigModalTitle').innerText = `船艇設定 - ${t.name}`;
+        document.getElementById('cfg-name').value = t.name || "";
+        document.getElementById('cfg-level').value = t.level || "";
+        document.getElementById('cfg-endtime').value = toDatetimeLocalString(new Date(t.endTime));
+        PART_KEYS.forEach(key => { document.getElementById(`cfg-part-${key}`).value = parts[key] || ""; });
+        STAT_KEYS.forEach(key => { document.getElementById(`cfg-stat-${key}`).value = stats[key] || ""; });
+        document.getElementById('statOcrStatus').innerText = '或直接 Ctrl+V 貼上截圖';
+        document.getElementById('statUpdatedAt').innerText = t.statsUpdatedAt ? `最後更新：${formatDateTime(t.statsUpdatedAt)}` : '尚未透過截圖更新過素質';
+        document.getElementById('subConfigModal').style.display = 'flex';
+    }
+
+    function closeSubConfigModal() {
+        document.getElementById('subConfigModal').style.display = 'none';
+        currentConfigTimerId = null;
+        pendingStatsUpdatedAt = null;
+    }
+
+    function saveSubConfigModal() {
+        if (!currentConfigTimerId) return;
+        const t = savedTimers.find(x => x.id === currentConfigTimerId);
+        if (!t) return;
+        const newName = document.getElementById('cfg-name').value.trim();
+        const newLevel = document.getElementById('cfg-level').value.trim();
+        if (!newName) { alert('船名不能是空的'); return; }
+        const newEndTimeStr = document.getElementById('cfg-endtime').value;
+        if (!newEndTimeStr) { alert('回港時間不能是空的'); return; }
+        const newEndTime = new Date(newEndTimeStr).getTime();
+        if (isNaN(newEndTime)) { alert('回港時間格式錯誤'); return; }
+        t.name = newName;
+        t.level = newLevel;
+        // 若回港時間有變動，重新計算相關欄位
+        if (newEndTime !== t.endTime) {
+            t.endTime = newEndTime;
+            t.totalSeconds = Math.round((newEndTime - t.startTime) / 1000);
+            // 同步卡片上的回港時間顯示
+            const card = document.getElementById(`card-${t.id}`);
+            if (card) {
+                const footerSpans = card.querySelectorAll('.time-highlight.target');
+                if (footerSpans.length) footerSpans[0].innerText = formatDateTime(newEndTime);
+            }
+        }
+        const parts = createEmptyParts();
+        PART_KEYS.forEach(key => { parts[key] = document.getElementById(`cfg-part-${key}`).value; });
+        const stats = createEmptyStats();
+        STAT_KEYS.forEach(key => { stats[key] = document.getElementById(`cfg-stat-${key}`).value; });
+        t.parts = parts;
+        t.stats = stats;
+        if (pendingStatsUpdatedAt) t.statsUpdatedAt = pendingStatsUpdatedAt;
+        pendingStatsUpdatedAt = null;
+        saveTimersToStorage();
+        // 同步卡片上顯示的船名與等級
+        const nameEl = document.getElementById(`name-${t.id}`);
+        const levelEl = document.getElementById(`level-${t.id}`);
+        if (nameEl) nameEl.innerText = t.name;
+        if (levelEl) levelEl.innerText = t.level ? `[${t.level}]` : '';
+        updateConfigSummary(t.id);
+        closeSubConfigModal();
+    }
+
+    function formatConfigSummary(t) {
+        const parts = t.parts || createEmptyParts();
+        const stats = t.stats || createEmptyStats();
+        const partStr = PART_KEYS.map(k => parts[k]).some(v => v) ? PART_KEYS.map(k => parts[k] || "-").join("") : "";
+        const statPairs = STAT_KEYS.filter(k => stats[k] !== "" && stats[k] != null).map(k => `${STAT_LABELS[k]}${stats[k]}`);
+        const lines = [];
+        if (partStr) lines.push(`配件：${partStr}`);
+        if (statPairs.length) lines.push(`素質：${statPairs.join(' / ')}`);
+        if (t.statsUpdatedAt) lines.push(`素質更新：${formatDateTime(t.statsUpdatedAt)}`);
+        return lines.join('<br>');
+    }
+
+    function updateConfigSummary(id) {
+        const el = document.getElementById(`config-summary-${id}`);
+        if (!el) return;
+        const t = savedTimers.find(x => x.id === id);
+        if (!t) return;
+        const summary = formatConfigSummary(t);
+        el.innerHTML = summary;
+        el.style.display = summary ? 'block' : 'none';
+    }
     
     function createTimerCard(timer) { 
         const card = document.createElement('div'); 
         card.className = 'timer-card'; 
         card.id = `card-${timer.id}`; 
-        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="delete-btn-wrapper"><button class="edit-btn" id="edit-${timer.id}" onclick="toggleEdit('${timer.id}')">編輯</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div>`; 
+        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div style="display:flex; gap:8px;"><button class="sub-config-btn" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div></div>`; 
         timerList.appendChild(card); 
-        // 若已回港，直接顯示完成狀態，不啟動 interval
+        updateConfigSummary(timer.id);
+        applyGroupFilter();
         if (timer.endTime - Date.now() <= 0) {
             document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！";
             document.getElementById(`bg-${timer.id}`).classList.add('finished');
@@ -687,7 +1200,16 @@
         }, 1000); 
     }
     
-    function updateFleetCount() { const el = document.getElementById("fleetCount"); if (el) el.innerText = savedTimers.length + " 艘"; }
+    function updateFleetCount() {
+        const el = document.getElementById("fleetCount");
+        if (!el) return;
+        if (activeGroup === GROUP_ALL) {
+            el.innerText = savedTimers.length + " 艘";
+        } else {
+            const visible = savedTimers.filter(t => (t.group || DEFAULT_GROUP) === activeGroup).length;
+            el.innerText = visible + " / " + savedTimers.length + " 艘";
+        }
+    }
     function deleteTimer(id) { savedTimers = savedTimers.filter(t => t.id !== id); saveTimersToStorage(); document.getElementById(`card-${id}`)?.remove(); updateFleetCount(); }
     function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); }
     function getSortedTimers() {
@@ -742,9 +1264,18 @@
         const data = localStorage.getItem("ffxiv_submarine_timers");
         if (data) {
             savedTimers = JSON.parse(data);
+            // 舊資料相容：補上缺少的群組欄位
+            savedTimers.forEach(t => { if (!t.group) t.group = DEFAULT_GROUP; });
+            // 若資料裡有 customGroups 清單裡沒有的群組名稱，補進清單，避免下拉選單顯示不到
+            const groupsInUse = new Set(savedTimers.map(t => t.group).filter(g => g && g !== DEFAULT_GROUP));
+            let groupsChanged = false;
+            groupsInUse.forEach(g => { if (!customGroups.includes(g)) { customGroups.push(g); groupsChanged = true; } });
+            if (groupsChanged) saveGroups();
             const sorted = getSortedTimers();
             sorted.forEach(timer => createTimerCard(timer));
         }
+        renderGroupTabs();
+        applyGroupFilter();
         updateFleetCount();
     }
 </script>
