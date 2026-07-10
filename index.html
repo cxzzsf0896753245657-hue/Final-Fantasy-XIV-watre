@@ -167,7 +167,7 @@
         .sub-part-item label { font-size:11px; color: var(--accent-color); margin-left:2px; }
         .sub-part-item select { background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); padding:6px 10px; border-radius:6px; font-size:14px; width:165px; outline:none; }
         .sub-part-item select:focus { border-color: var(--accent-color); }
-        /* 素質欄位：wrap 排列，樣式與 edit-input 統一，移除 spinner */
+        /* 性能欄位：wrap 排列，樣式與 edit-input 統一，移除 spinner */
         .sub-stat-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px; }
         .sub-stat-ocr-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
         .sub-stat-ocr-status { font-size:12px; color:#888; }
@@ -277,8 +277,8 @@
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>新增群組／標籤功能：可建立、重新命名、刪除自訂群組，OCR 辨識依目前群組範圍比對，新船自動歸入當前群組</li>
                         <li>新增「手動新增船艇」功能：可直接輸入船名、等級、群組與回港時間</li>
-                        <li>新增單船「船艇設定」Modal：可設定四部位配件等級（船體／船尾／船首／艦橋）、五項素質數值，以及修改回港時間；OCR 截圖可自動累加素質增量</li>
-                        <li>OCR 重新辨識同一艘船時，保留原本手動設定的配件與素質，不會被清空</li>
+                        <li>新增單船「船艇設定」Modal：可設定四部位配件等級（船體／船尾／船首／艦橋）、五項性能數值，以及修改回港時間；OCR 截圖可自動累加性能增量</li>
+                        <li>OCR 重新辨識同一艘船時，保留原本手動設定的配件與性能，不會被清空</li>
                         <li>整體 UI 一致性調整：按鈕圓角、輸入框樣式、標題列元素垂直對齊統一；右側標題列寬度不足時自動換行，各按鈕寬度固定不縮放</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin: 12px 0 6px;">📋 2025/06/29</div>
@@ -368,7 +368,7 @@
 
         <div class="sub-modal-section-title">性能</div>
         <div class="sub-stat-ocr-row">
-            <button class="btn-top" id="statOcrBtn" onclick="document.getElementById('statOcrInput').click()" style="white-space:nowrap; flex-shrink:0;">📷 截圖辨識素質（累加至下方數值）</button>
+            <button class="btn-top" id="statOcrBtn" onclick="document.getElementById('statOcrInput').click()" style="white-space:nowrap; flex-shrink:0;">📷 截圖辨識性能（累加至下方數值）</button>
             <input type="file" id="statOcrInput" accept="image/*" style="display:none;">
             <span class="sub-stat-ocr-status" id="statOcrStatus">或直接 Ctrl+V 貼上截圖</span>
         </div>
@@ -918,7 +918,7 @@
             const matched = pool[poolIndex];
             const matchedName = matched.name;
             const matchedGroup = matched.group || DEFAULT_GROUP;
-            // 保留原本手動設定的配件與素質，OCR 流程不會覆寫這兩個欄位
+            // 保留原本手動設定的配件與性能，OCR 流程不會覆寫這兩個欄位
             const prevParts = matched.parts || createEmptyParts();
             const prevStats = matched.stats || createEmptyStats();
             const prevStatsUpdatedAt = matched.statsUpdatedAt || null;
@@ -928,13 +928,13 @@
             toRemove.forEach(t => document.getElementById(`card-${t.id}`)?.remove());
             savedTimers = savedTimers.filter(t => !(t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup));
 
-            // 用原本正確的名字建立新計時，並帶回原本的配件/素質設定與群組
+            // 用原本正確的名字建立新計時，並帶回原本的配件/性能設定與群組
             const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds, parts: prevParts, stats: prevStats, statsUpdatedAt: prevStatsUpdatedAt, group: matchedGroup };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
         } else {
-            // 新船：新增（配件/素質預設為空，待使用者手動設定）。若目前正篩選在特定群組，新船直接歸入該群組
+            // 新船：新增（配件/性能預設為空，待使用者手動設定）。若目前正篩選在特定群組，新船直接歸入該群組
             const newGroup = (activeGroup === GROUP_ALL) ? DEFAULT_GROUP : activeGroup;
             const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds, parts: createEmptyParts(), stats: createEmptyStats(), statsUpdatedAt: null, group: newGroup };
             savedTimers.push(timerData);
@@ -973,7 +973,7 @@
 
     function formatDateTime(timestamp) { const date = new Date(timestamp); return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`; }
 
-    // ══ 船艇素質／配件設定 ══════════════════════════════════
+    // ══ 船艇性能／配件設定 ══════════════════════════════════
 
     const PART_GRADES = [
         { value: "", label: "（未設定）" },
@@ -1002,7 +1002,7 @@
         return levenshtein(na, nb) <= maxDist;
     }
 
-    // 解析遊戲內「潛水艇「船名」的OO上升了N」升級紀錄，回傳各素質的累加增量
+    // 解析遊戲內「潛水艇「船名」的OO上升了N」升級紀錄，回傳各性能的累加增量
     // 改為整段文字攤平後用全域比對，避免因為 OCR 換行位置跑掉而漏抓；
     // 並加大字元間的容錯範圍，同時處理常見的 OCR 誤讀字（惠→恵、距離→距离）
     function parseStatLogText(text, shipName) {
@@ -1091,7 +1091,7 @@
         PART_KEYS.forEach(key => { document.getElementById(`cfg-part-${key}`).value = parts[key] || ""; });
         STAT_KEYS.forEach(key => { document.getElementById(`cfg-stat-${key}`).value = stats[key] || ""; });
         document.getElementById('statOcrStatus').innerText = '或直接 Ctrl+V 貼上截圖';
-        document.getElementById('statUpdatedAt').innerText = t.statsUpdatedAt ? `最後更新：${formatDateTime(t.statsUpdatedAt)}` : '尚未透過截圖更新過素質';
+        document.getElementById('statUpdatedAt').innerText = t.statsUpdatedAt ? `最後更新：${formatDateTime(t.statsUpdatedAt)}` : '尚未透過截圖更新過性能';
         document.getElementById('subConfigModal').style.display = 'flex';
     }
 
@@ -1150,8 +1150,8 @@
         const statPairs = STAT_KEYS.filter(k => stats[k] !== "" && stats[k] != null).map(k => `${STAT_LABELS[k]}${stats[k]}`);
         const lines = [];
         if (partStr) lines.push(`配件：${partStr}`);
-        if (statPairs.length) lines.push(`素質：${statPairs.join(' / ')}`);
-        if (t.statsUpdatedAt) lines.push(`素質更新：${formatDateTime(t.statsUpdatedAt)}`);
+        if (statPairs.length) lines.push(`性能：${statPairs.join(' / ')}`);
+        if (t.statsUpdatedAt) lines.push(`性能更新：${formatDateTime(t.statsUpdatedAt)}`);
         return lines.join('<br>');
     }
 
