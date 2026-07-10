@@ -169,15 +169,10 @@
         .sub-part-item select:focus { border-color: var(--accent-color); }
         /* 性能欄位：wrap 排列，樣式與 edit-input 統一，移除 spinner */
         .sub-stat-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px; }
-        .sub-stat-ocr-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
-        .sub-stat-ocr-status { font-size:12px; color:#888; }
         .sub-stat-updated { font-size:11px; color:#888; margin-top:8px; text-align:right; }
         .sub-stat-item { display:flex; flex-direction:column; gap:4px; flex:0 0 auto; }
         .sub-stat-item label { font-size:11px; color: var(--accent-color); margin-left:2px; }
-        .sub-stat-item input { width:110px; box-sizing:border-box; background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); padding:6px 10px; border-radius:6px; font-size:14px; outline:none; -moz-appearance:textfield; appearance:textfield; }
-        .sub-stat-item input::-webkit-outer-spin-button,
-        .sub-stat-item input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .sub-stat-item input:focus { border-color: var(--accent-color); }
+        .sub-stat-value { width:110px; box-sizing:border-box; background: rgba(199,146,234,0.08); color: var(--accent-color); border:1px dashed var(--edit-border); padding:6px 10px; border-radius:6px; font-size:15px; font-weight:800; text-align:center; user-select:none; }
         .sub-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
         /* 卡片次要操作按鈕：與 delete-btn 同風格，僅顏色區分 */
         .sub-config-btn { background-color:#333; border:1px solid #444; color:#c792ea; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:12px; }
@@ -185,6 +180,7 @@
         body.light-mode .sub-config-btn { background-color:#f8f9fa; border:1px solid #dcdde1; color:#7c5cbf; }
         .sub-config-summary { font-size:12px; color:#888; margin-top:6px; line-height:1.6; }
         body.light-mode .sub-config-summary { color:#888; }
+        body.light-mode .sub-stat-value { background: rgba(124,92,191,0.08); }
     </style>
 </head>
 <body>
@@ -275,10 +271,12 @@
                 <div style="padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color);">
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/10</div>
                     <ul style="margin: 0; padding-left: 18px;">
+                        <li>船艇性能改為全自動計算：依「船艇等級」查表取得基礎值，加上四個部位配件等第的加成，即時算出探索性能／收集性能／巡航速度／航行距離／恩惠，等級或配件一有變動就重新計算</li>
+                        <li>移除「截圖辨識性能」OCR 功能與手動輸入性能欄位，性能欄位改為唯讀顯示；船艇等級低於 51 級時，等級基礎值視為 0，只計算配件加成</li>
                         <li>新增群組／標籤功能：可建立、重新命名、刪除自訂群組，OCR 辨識依目前群組範圍比對，新船自動歸入當前群組</li>
                         <li>新增「手動新增船艇」功能：可直接輸入船名、等級、群組與回港時間</li>
-                        <li>新增單船「船艇設定」Modal：可設定四部位配件等級（船體／船尾／船首／艦橋）、五項性能數值，以及修改回港時間；OCR 截圖可自動累加性能增量</li>
-                        <li>OCR 重新辨識同一艘船時，保留原本手動設定的配件與性能，不會被清空</li>
+                        <li>新增單船「船艇設定」Modal：可設定四部位配件等級（船體／船尾／船首／艦橋），以及修改回港時間</li>
+                        <li>OCR 重新辨識同一艘船時，保留原本手動設定的配件，不會被清空</li>
                         <li>整體 UI 一致性調整：按鈕圓角、輸入框樣式、標題列元素垂直對齊統一；右側標題列寬度不足時自動換行，各按鈕寬度固定不縮放</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin: 12px 0 6px;">📋 2025/06/29</div>
@@ -366,20 +364,15 @@
             <div class="sub-part-item"><label>艦橋</label><select id="cfg-part-bridge"></select></div>
         </div>
 
-        <div class="sub-modal-section-title">性能</div>
-        <div class="sub-stat-ocr-row">
-            <button class="btn-top" id="statOcrBtn" onclick="document.getElementById('statOcrInput').click()" style="white-space:nowrap; flex-shrink:0;">📷 截圖辨識性能（累加至下方數值）</button>
-            <input type="file" id="statOcrInput" accept="image/*" style="display:none;">
-            <span class="sub-stat-ocr-status" id="statOcrStatus">或直接 Ctrl+V 貼上截圖</span>
-        </div>
+        <div class="sub-modal-section-title">性能（依等級＋配件自動計算）</div>
         <div class="sub-stat-grid">
-            <div class="sub-stat-item"><label>探索性能</label><input type="text" inputmode="numeric" id="cfg-stat-explore"></div>
-            <div class="sub-stat-item"><label>收集性能</label><input type="text" inputmode="numeric" id="cfg-stat-gather"></div>
-            <div class="sub-stat-item"><label>巡航速度</label><input type="text" inputmode="numeric" id="cfg-stat-speed"></div>
-            <div class="sub-stat-item"><label>航行距離</label><input type="text" inputmode="numeric" id="cfg-stat-range"></div>
-            <div class="sub-stat-item"><label>恩惠</label><input type="text" inputmode="numeric" id="cfg-stat-favor"></div>
+            <div class="sub-stat-item"><label>探索性能</label><div class="sub-stat-value" id="cfg-stat-explore">0</div></div>
+            <div class="sub-stat-item"><label>收集性能</label><div class="sub-stat-value" id="cfg-stat-gather">0</div></div>
+            <div class="sub-stat-item"><label>巡航速度</label><div class="sub-stat-value" id="cfg-stat-speed">0</div></div>
+            <div class="sub-stat-item"><label>航行距離</label><div class="sub-stat-value" id="cfg-stat-range">0</div></div>
+            <div class="sub-stat-item"><label>恩惠</label><div class="sub-stat-value" id="cfg-stat-favor">0</div></div>
         </div>
-        <div class="sub-stat-updated" id="statUpdatedAt"></div>
+        <div class="sub-stat-updated" id="statUpdatedAt">等級低於 51 時，等級基礎值視為 0，僅計算配件加成</div>
 
         <div class="sub-modal-actions">
             <button class="btn-top" onclick="closeSubConfigModal()">取消</button>
@@ -598,7 +591,7 @@
         const timerData = {
             id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5),
             name, level, startTime: now, endTime, totalSeconds,
-            parts: createEmptyParts(), stats: createEmptyStats(), statsUpdatedAt: null,
+            parts: createEmptyParts(),
             group
         };
         savedTimers.push(timerData);
@@ -858,7 +851,7 @@
     fileInput.addEventListener('change', (e) => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
-    document.addEventListener('paste', (e) => { const cbd = e.clipboardData; if (!cbd) return; for (let i = 0; i < cbd.items.length; i++) { if (cbd.items[i].type.indexOf('image') !== -1) { const pastedFile = cbd.items[i].getAsFile(); if (currentConfigTimerId) { handleStatOcrFile(pastedFile); } else { handleFile(pastedFile); } break; } } });
+    document.addEventListener('paste', (e) => { const cbd = e.clipboardData; if (!cbd) return; for (let i = 0; i < cbd.items.length; i++) { if (cbd.items[i].type.indexOf('image') !== -1) { const pastedFile = cbd.items[i].getAsFile(); handleFile(pastedFile); break; } } });
 
     function handleFile(file) { if (!file || !worker) return; statusText.innerText = "🔍 正在分析圖片..."; const reader = new FileReader(); reader.onload = async function(e) { try { const ret = await worker.recognize(e.target.result); parseTextToTimers(ret.data.text); } catch (error) { statusText.innerText = "❌ 辨識失敗。"; } }; reader.readAsDataURL(file); }
     function parseTextToTimers(text) { const lines = text.split('\n'); let parsedCount = 0; lines.forEach(line => { let currentLine = line.replace(/\s+/g, ''); if (!currentLine) return; const dayMatch = currentLine.match(/(\d{1,2})天/); const hourMatch = currentLine.match(/(\d{1,2})小時/); const minMatch = currentLine.match(/(\d{1,2})分鐘/); if (!dayMatch && !hourMatch && !minMatch) return; let namePart = currentLine.split(/正在探索|剩餘時間|\d{1,2}天|\d{1,2}小時|\d{1,2}分鐘/)[0]; let cleanName = namePart.replace(/\[\d+級\]/g, '').replace(/正在探.{0,2}[：:]*|剩.{0,2}時間|素狐餘時間|餘時間|請選擇|探索|所持/g, '').replace(/[\[\]：:]/g, '').trim(); let level = (currentLine.match(/(\d+)級/) || [])[1] ? (currentLine.match(/(\d+)級/)[1] + "級") : ""; const totalSeconds = ((dayMatch ? parseInt(dayMatch[1]) : 0) * 86400) + ((hourMatch ? parseInt(hourMatch[1]) : 0) * 3600) + ((minMatch ? parseInt(minMatch[1]) : 0) * 60); if (totalSeconds > 0) { saveOrUpdateTimer(cleanName, level, totalSeconds); parsedCount++; } }); statusText.innerText = parsedCount > 0 ? `🎉 同步 ${parsedCount} 艘潛水艇！${activeGroup !== GROUP_ALL ? `（範圍：${activeGroup}）` : ''}` : "⚠️ 找不到資料。"; }
@@ -918,25 +911,23 @@
             const matched = pool[poolIndex];
             const matchedName = matched.name;
             const matchedGroup = matched.group || DEFAULT_GROUP;
-            // 保留原本手動設定的配件與性能，OCR 流程不會覆寫這兩個欄位
+            // 保留原本手動設定的配件，OCR 流程不會覆寫此欄位；性能一律於顯示當下自動計算
             const prevParts = matched.parts || createEmptyParts();
-            const prevStats = matched.stats || createEmptyStats();
-            const prevStatsUpdatedAt = matched.statsUpdatedAt || null;
 
             // 清除同群組內同名卡片（含已完成的），避免舊卡與新計時並存；不影響其他群組內的同名船
             const toRemove = savedTimers.filter(t => t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup);
             toRemove.forEach(t => document.getElementById(`card-${t.id}`)?.remove());
             savedTimers = savedTimers.filter(t => !(t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup));
 
-            // 用原本正確的名字建立新計時，並帶回原本的配件/性能設定與群組
-            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds, parts: prevParts, stats: prevStats, statsUpdatedAt: prevStatsUpdatedAt, group: matchedGroup };
+            // 用原本正確的名字建立新計時，並帶回原本的配件設定與群組
+            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds, parts: prevParts, group: matchedGroup };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
         } else {
-            // 新船：新增（配件/性能預設為空，待使用者手動設定）。若目前正篩選在特定群組，新船直接歸入該群組
+            // 新船：新增（配件預設為空，待使用者手動設定；性能會自動計算）。若目前正篩選在特定群組，新船直接歸入該群組
             const newGroup = (activeGroup === GROUP_ALL) ? DEFAULT_GROUP : activeGroup;
-            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds, parts: createEmptyParts(), stats: createEmptyStats(), statsUpdatedAt: null, group: newGroup };
+            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds, parts: createEmptyParts(), group: newGroup };
             savedTimers.push(timerData);
             saveTimersToStorage();
             createTimerCard(timerData);
@@ -992,113 +983,75 @@
     const PART_LABELS = { hull: "船體", stern: "船尾", bow: "船首", bridge: "艦橋" };
     const STAT_KEYS = ["explore", "gather", "speed", "range", "favor"];
     const STAT_LABELS = { explore: "探索", gather: "收集", speed: "航速", range: "航距", favor: "恩惠" };
-    const STAT_LOG_LABEL_TO_KEY = { "探索性能": "explore", "收集性能": "gather", "巡航速度": "speed", "航行距離": "range", "恩惠": "favor" };
 
-    function isShipNameMatch(a, b) {
-        if (!a || !b) return false;
-        const na = a.trim(), nb = b.trim();
-        if (na.toLowerCase() === nb.toLowerCase()) return true;
-        const maxDist = Math.max(1, Math.floor(nb.length * 0.34));
-        return levenshtein(na, nb) <= maxDist;
-    }
+    // ── 等級基礎值表（51~145 級，[探查, 收集, 速度, 距離, 恩惠]）。表外等級一律視為 0 ──
+    const LEVEL_STAT_TABLE = {"51":[2,1,0,0,0],"52":[2,3,0,1,0],"53":[2,3,1,2,1],"54":[3,4,1,3,1],"55":[3,7,3,3,1],"56":[4,7,3,5,1],"57":[4,7,3,7,2],"58":[4,8,3,8,3],"59":[5,8,4,9,3],"60":[5,10,5,10,5],"61":[7,10,6,10,6],"62":[7,10,8,12,7],"63":[8,11,8,12,9],"64":[8,12,10,14,9],"65":[10,15,10,15,10],"66":[13,17,11,15,10],"67":[13,19,13,17,10],"68":[16,19,15,17,12],"69":[16,23,15,19,13],"70":[20,25,15,20,15],"71":[23,29,15,20,15],"72":[26,29,15,20,15],"73":[26,33,17,22,17],"74":[26,35,18,23,19],"75":[30,40,20,23,20],"76":[30,45,20,23,24],"77":[34,45,21,26,25],"78":[36,45,23,29,27],"79":[38,45,25,33,28],"80":[40,50,25,35,30],"81":[40,50,30,37,32],"82":[42,50,32,40,34],"83":[43,53,32,44,35],"84":[44,53,32,49,38],"85":[48,58,33,49,39],"86":[50,58,36,49,43],"87":[50,60,36,53,46],"88":[50,64,36,56,48],"89":[50,64,40,60,49],"90":[55,70,40,60,50],"91":[57,70,41,62,52],"92":[57,70,43,64,53],"93":[58,72,43,66,54],"94":[58,74,45,68,54],"95":[60,80,45,70,55],"96":[61,82,46,72,55],"97":[61,84,46,74,55],"98":[63,84,48,76,57],"99":[63,88,48,78,58],"100":[65,90,50,80,60],"101":[66,92,52,82,60],"102":[67,92,54,84,60],"103":[68,94,56,86,62],"104":[68,96,58,88,64],"105":[70,100,60,90,65],"106":[72,100,61,91,66],"107":[72,100,63,92,67],"108":[73,101,63,93,69],"109":[73,102,65,94,69],"110":[75,105,65,95,70],"111":[76,106,66,96,70],"112":[76,107,66,97,70],"113":[78,107,68,98,72],"114":[78,109,68,99,73],"115":[80,110,70,100,75],"116":[81,111,71,101,75],"117":[82,111,72,102,75],"118":[83,112,73,103,77],"119":[83,113,74,104,79],"120":[85,115,75,105,80],"121":[87,115,76,106,81],"122":[87,115,78,107,82],"123":[88,116,78,108,84],"124":[88,117,80,109,84],"125":[90,120,80,110,85],"126":[91,121,81,111,85],"127":[91,122,81,112,85],"128":[93,122,83,113,87],"129":[93,124,83,114,88],"130":[95,125,85,115,90],"131":[96,126,86,116,90],"132":[97,126,87,117,90],"133":[98,127,88,118,92],"134":[98,128,89,119,94],"135":[100,130,90,120,95],"136":[102,130,91,121,96],"137":[102,130,93,122,97],"138":[103,131,93,123,99],"139":[103,132,95,124,99],"140":[105,135,95,125,100],"141":[106,136,96,126,100],"142":[106,137,96,127,100],"143":[108,137,98,128,102],"144":[108,139,98,129,103],"145":[110,140,100,130,105]};
 
-    // 解析遊戲內「潛水艇「船名」的OO上升了N」升級紀錄，回傳各性能的累加增量
-    // 改為整段文字攤平後用全域比對，避免因為 OCR 換行位置跑掉而漏抓；
-    // 並加大字元間的容錯範圍，同時處理常見的 OCR 誤讀字（惠→恵、距離→距离）
-    function parseStatLogText(text, shipName) {
-        const deltas = { explore: 0, gather: 0, speed: 0, range: 0, favor: 0 };
-        let matchedCount = 0;
-        const flat = text.replace(/\s+/g, '');
-        const labelAlt = "(探索性能|收集性能|巡航速度|航行距離|航行距离|恩惠|恩恵)";
-        const regex = new RegExp(`[「『\\[]([^」』\\]]{1,20})[」』\\]].{0,6}?${labelAlt}.{0,4}?(\\d{1,3})`, 'g');
-        let m;
-        while ((m = regex.exec(flat)) !== null) {
-            const [, name, rawLabel, deltaStr] = m;
-            if (!isShipNameMatch(name, shipName)) continue;
-            const label = rawLabel.replace('距离', '距離').replace('恩恵', '恩惠');
-            const key = STAT_LOG_LABEL_TO_KEY[label];
-            if (key) { deltas[key] += parseInt(deltaStr, 10); matchedCount++; }
-        }
-        return { deltas, matchedCount };
+    // ── 部位配件加成表（各部位 × 10 個等第，[探索性能, 收集性能, 巡航速度, 航行距離, 恩惠]） ──
+    const PART_STAT_TABLE = {
+        hull:   {"1":[-10,30,20,40,20],"1改":[-5,40,25,45,35],"2":[15,10,0,60,15],"2改":[20,15,5,65,25],"3":[-15,55,35,15,20],"3改":[-10,55,40,20,30],"4":[40,-10,25,40,25],"4改":[40,-5,30,40,30],"5":[10,75,30,-15,5],"5改":[10,80,30,-15,10]},
+        stern:  {"1":[-30,20,60,30,15],"1改":[-25,25,70,35,25],"2":[15,0,30,40,25],"2改":[20,5,35,45,35],"3":[15,20,0,55,15],"3改":[20,20,5,60,20],"4":[10,25,35,25,25],"4改":[10,25,40,30,30],"5":[20,60,35,-15,5],"5改":[20,60,35,-10,10]},
+        bow:    {"1":[50,40,10,-20,15],"1改":[55,50,15,-15,25],"2":[60,20,20,-15,15],"2改":[65,25,25,-10,20],"3":[25,60,-15,20,15],"3改":[25,65,-10,25,25],"4":[60,10,-10,0,0],"4改":[70,15,-10,30,5],"5":[45,30,-15,40,40],"5改":[45,30,-10,40,40]},
+        bridge: {"1":[20,20,20,20,20],"1改":[25,25,30,25,35],"2":[25,5,25,30,30],"2改":[30,10,30,35,40],"3":[0,25,20,45,40],"3改":[0,30,25,50,45],"4":[55,20,35,-15,50],"4改":[60,20,35,-10,55],"5":[55,20,-5,30,60],"5改":[60,20,-5,30,60]}
+    };
+
+    // 依等級 + 四個部位等第，自動計算五項性能。表外等級／未設定的部位一律視為 0
+    function computeStats(level, parts) {
+        parts = parts || createEmptyParts();
+        const levelKey = String(parseInt(level, 10));
+        const base = LEVEL_STAT_TABLE[levelKey] || [0, 0, 0, 0, 0];
+        const totals = [...base];
+        PART_KEYS.forEach(key => {
+            const grade = parts[key];
+            if (!grade) return;
+            const bonus = (PART_STAT_TABLE[key] && PART_STAT_TABLE[key][grade]) || [0, 0, 0, 0, 0];
+            for (let i = 0; i < 5; i++) totals[i] += bonus[i];
+        });
+        const result = {};
+        STAT_KEYS.forEach((key, i) => { result[key] = totals[i]; });
+        return result;
     }
 
     function createEmptyParts() { return { hull: "", stern: "", bow: "", bridge: "" }; }
-    function createEmptyStats() { return { explore: "", gather: "", speed: "", range: "", favor: "" }; }
+
+    // 依目前 Modal 中的等級／配件下拉即時重新計算並顯示性能
+    function refreshComputedStats() {
+        const level = document.getElementById('cfg-level').value.trim();
+        const parts = createEmptyParts();
+        PART_KEYS.forEach(key => { parts[key] = document.getElementById(`cfg-part-${key}`).value; });
+        const stats = computeStats(level, parts);
+        STAT_KEYS.forEach(key => { document.getElementById(`cfg-stat-${key}`).innerText = stats[key]; });
+    }
 
     function initSubConfigModal() {
         PART_KEYS.forEach(key => {
             const sel = document.getElementById(`cfg-part-${key}`);
             sel.innerHTML = PART_GRADES.map(g => `<option value="${g.value}">${g.label}</option>`).join('');
+            sel.addEventListener('change', refreshComputedStats);
         });
+        document.getElementById('cfg-level').addEventListener('input', refreshComputedStats);
         document.getElementById('subConfigModal').addEventListener('click', closeSubConfigModal);
-        document.getElementById('statOcrInput').addEventListener('change', (e) => {
-            if (e.target.files.length) handleStatOcrFile(e.target.files[0]);
-            e.target.value = '';
-        });
     }
 
     let currentConfigTimerId = null;
-    let pendingStatsUpdatedAt = null;
-
-    async function handleStatOcrFile(file) {
-        const statusEl = document.getElementById('statOcrStatus');
-        if (!file) return;
-        const t = savedTimers.find(x => x.id === currentConfigTimerId);
-        if (!t) return;
-        if (!worker) {
-            if (!workerInitPromise) { statusEl.innerText = '❌ 引擎尚未啟動，請重新整理頁面'; return; }
-            statusEl.innerText = '⏳ 引擎準備中，就緒後會自動繼續辨識...';
-            try { await workerInitPromise; } catch (e) { statusEl.innerText = '❌ 引擎初始化失敗，請重新整理頁面'; return; }
-        }
-        statusEl.innerText = '🔍 辨識中...';
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            try {
-                const ret = await worker.recognize(e.target.result);
-                const { deltas, matchedCount } = parseStatLogText(ret.data.text, t.name);
-                if (matchedCount === 0) {
-                    statusEl.innerText = `⚠️ 找不到符合「${t.name}」的升級紀錄`;
-                    return;
-                }
-                STAT_KEYS.forEach(key => {
-                    if (deltas[key]) {
-                        const input = document.getElementById(`cfg-stat-${key}`);
-                        const current = parseFloat(input.value) || 0;
-                        input.value = current + deltas[key];
-                    }
-                });
-                pendingStatsUpdatedAt = Date.now();
-                statusEl.innerText = `✅ 已累加 ${matchedCount} 筆紀錄，記得按「儲存」才會生效`;
-                document.getElementById('statUpdatedAt').innerText = '最後更新：剛剛（尚未儲存）';
-            } catch (err) {
-                statusEl.innerText = '❌ 辨識失敗，請重試';
-            }
-        };
-        reader.readAsDataURL(file);
-    }
 
     function openSubConfigModal(id) {
         const t = savedTimers.find(x => x.id === id);
         if (!t) return;
         currentConfigTimerId = id;
-        pendingStatsUpdatedAt = null;
         const parts = t.parts || createEmptyParts();
-        const stats = t.stats || createEmptyStats();
         document.getElementById('subConfigModalTitle').innerText = `船艇設定 - ${t.name}`;
         document.getElementById('cfg-name').value = t.name || "";
         document.getElementById('cfg-level').value = t.level || "";
         document.getElementById('cfg-endtime').value = toDatetimeLocalString(new Date(t.endTime));
         PART_KEYS.forEach(key => { document.getElementById(`cfg-part-${key}`).value = parts[key] || ""; });
-        STAT_KEYS.forEach(key => { document.getElementById(`cfg-stat-${key}`).value = stats[key] || ""; });
-        document.getElementById('statOcrStatus').innerText = '或直接 Ctrl+V 貼上截圖';
-        document.getElementById('statUpdatedAt').innerText = t.statsUpdatedAt ? `最後更新：${formatDateTime(t.statsUpdatedAt)}` : '尚未透過截圖更新過性能';
+        refreshComputedStats();
         document.getElementById('subConfigModal').style.display = 'flex';
     }
 
     function closeSubConfigModal() {
         document.getElementById('subConfigModal').style.display = 'none';
         currentConfigTimerId = null;
-        pendingStatsUpdatedAt = null;
     }
 
     function saveSubConfigModal() {
@@ -1127,12 +1080,9 @@
         }
         const parts = createEmptyParts();
         PART_KEYS.forEach(key => { parts[key] = document.getElementById(`cfg-part-${key}`).value; });
-        const stats = createEmptyStats();
-        STAT_KEYS.forEach(key => { stats[key] = document.getElementById(`cfg-stat-${key}`).value; });
         t.parts = parts;
-        t.stats = stats;
-        if (pendingStatsUpdatedAt) t.statsUpdatedAt = pendingStatsUpdatedAt;
-        pendingStatsUpdatedAt = null;
+        delete t.stats;
+        delete t.statsUpdatedAt;
         saveTimersToStorage();
         // 同步卡片上顯示的船名與等級
         const nameEl = document.getElementById(`name-${t.id}`);
@@ -1145,13 +1095,16 @@
 
     function formatConfigSummary(t) {
         const parts = t.parts || createEmptyParts();
-        const stats = t.stats || createEmptyStats();
         const partStr = PART_KEYS.map(k => parts[k]).some(v => v) ? PART_KEYS.map(k => parts[k] || "-").join("") : "";
-        const statPairs = STAT_KEYS.filter(k => stats[k] !== "" && stats[k] != null).map(k => `${STAT_LABELS[k]}${stats[k]}`);
+        const hasAnyPart = PART_KEYS.some(k => parts[k]);
+        const hasLevel = !!LEVEL_STAT_TABLE[String(parseInt(t.level, 10))];
         const lines = [];
         if (partStr) lines.push(`配件：${partStr}`);
-        if (statPairs.length) lines.push(`性能：${statPairs.join(' / ')}`);
-        if (t.statsUpdatedAt) lines.push(`性能更新：${formatDateTime(t.statsUpdatedAt)}`);
+        if (hasAnyPart || hasLevel) {
+            const stats = computeStats(t.level, parts);
+            const statPairs = STAT_KEYS.map(k => `${STAT_LABELS[k]}${stats[k]}`);
+            lines.push(`性能：${statPairs.join(' / ')}`);
+        }
         return lines.join('<br>');
     }
 
