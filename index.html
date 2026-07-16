@@ -67,6 +67,33 @@
 
         html { overflow-y: scroll; scrollbar-gutter: stable; }
 
+        /* ── 贊助按鈕 ── */
+        #sponsorBtn {
+            position: fixed;
+            top: 12px;
+            right: 18px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #f6a623, #f97316);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(249,115,22,0.45);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        #sponsorBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(249,115,22,0.6);
+        }
+
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
 
         /* ── Two-column layout ── */
@@ -4538,6 +4565,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         }).join('');
     }
 </script>
+<a id="sponsorBtn" href="https://ganknow.com/cxz089675/tip" target="_blank" rel="noopener">🐟 贊助貓罐頭</a>
 <div id="rpGlobalTip"></div>
 <script>
 (function() {
