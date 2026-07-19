@@ -234,6 +234,10 @@
         .group-tab-edit { font-size:11px; opacity:0.55; padding:0 2px; }
         .group-tab-edit:hover { opacity:1; color: var(--accent-color); }
         .group-tab-add { background:transparent; border:1px dashed #666; color:var(--accent-color); }
+        .group-tab-draggable { cursor: grab; }
+        .group-tab-draggable:active { cursor: grabbing; }
+        .group-tab-dragging { opacity: 0.4; pointer-events: none; }
+        .group-tab-placeholder { display:inline-flex; border: 2px dashed var(--accent-color); border-radius: 14px; opacity: 0.45; flex-shrink: 0; }
         body.light-mode .group-tab { background:#f1f2f6; border:1px solid #dcdde1; color:#2d3436; }
         body.light-mode .group-tab.active { background: var(--accent-color); color:#fff; }
         body.light-mode .group-tab-add { border:1px dashed #b2bec3; }
@@ -1339,7 +1343,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
-                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/18</div>
+                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/19</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>增加可移動標籤功能
+                    </ul>
+                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/18</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>修改配件製作數據，正確顯示數量
                         <li>新增⚙️ 配件規劃中可勾選航點，並直接點選路線規劃跳轉至路線進行預估
@@ -2187,12 +2195,156 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     function renderGroupTabs() {
         const container = document.getElementById('groupTabsContainer');
         if (!container) return;
-        const tabs = [GROUP_ALL, ...allGroupNames()];
-        container.innerHTML = tabs.map(g => {
-            const isActive = g === activeGroup;
-            const editable = (g !== GROUP_ALL && g !== DEFAULT_GROUP);
-            return `<span class="group-tab${isActive ? ' active' : ''}" onclick="setActiveGroup('${escapeHtml(g)}')">${escapeHtml(g)}${editable ? `<span class="group-tab-edit" onclick="event.stopPropagation(); openRenameGroupModal('${escapeHtml(g)}')" title="重新命名">✎</span><span class="group-tab-x" onclick="event.stopPropagation(); deleteGroup('${escapeHtml(g)}')" title="刪除群組">✕</span>` : ''}</span>`;
-        }).join('') + `<span class="group-tab group-tab-add" onclick="promptAddGroup()">＋ 新增</span>`;
+
+        container.innerHTML = '';
+
+        // ── 固定標籤（全部、未分類）──
+        [GROUP_ALL, DEFAULT_GROUP].forEach(g => {
+            const span = document.createElement('span');
+            span.className = 'group-tab' + (g === activeGroup ? ' active' : '');
+            span.textContent = g;
+            span.onclick = () => setActiveGroup(g);
+            container.appendChild(span);
+        });
+
+        // ── 可拖曳的自訂群組標籤 ──
+        customGroups.forEach(g => {
+            const span = document.createElement('span');
+            span.className = 'group-tab group-tab-draggable' + (g === activeGroup ? ' active' : '');
+            span.id = `gtab-${CSS.escape(g)}`;
+            span.dataset.group = g;
+
+            span.innerHTML =
+                escapeHtml(g) +
+                `<span class="group-tab-edit" title="重新命名">✎</span>` +
+                `<span class="group-tab-x" title="刪除群組">✕</span>`;
+
+            span.querySelector('.group-tab-edit').onclick = (e) => { e.stopPropagation(); openRenameGroupModal(g); };
+            span.querySelector('.group-tab-x').onclick   = (e) => { e.stopPropagation(); deleteGroup(g); };
+            span.onclick = () => setActiveGroup(g);
+
+            // ── Pointer-based drag（與自訂連結相同機制）──
+            span.addEventListener('pointerdown', (e) => {
+                // 只有主按鍵（左鍵）才啟動拖曳；點 edit/x 按鈕不啟動
+                if (e.button !== 0) return;
+                if (e.target.classList.contains('group-tab-edit') || e.target.classList.contains('group-tab-x')) return;
+                onGroupTabPointerDown(e, g);
+            });
+
+            container.appendChild(span);
+        });
+
+        // ── 新增按鈕 ──
+        const addBtn = document.createElement('span');
+        addBtn.className = 'group-tab group-tab-add';
+        addBtn.textContent = '＋ 新增';
+        addBtn.onclick = promptAddGroup;
+        container.appendChild(addBtn);
+    }
+
+    // ── 群組標籤 Pointer 拖曳（水平，仿自訂連結設計）──
+    let groupTabDragState = null;
+
+    function onGroupTabPointerDown(e, groupName) {
+        e.preventDefault();
+        const container = document.getElementById('groupTabsContainer');
+        const span = document.getElementById(`gtab-${CSS.escape(groupName)}`);
+        if (!span || !container) return;
+
+        const rect = span.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+
+        // 建立佔位符（虛線框，與自訂連結佔位一致）
+        const placeholder = document.createElement('span');
+        placeholder.className = 'group-tab group-tab-placeholder';
+        placeholder.style.width = rect.width + 'px';
+        placeholder.style.height = rect.height + 'px';
+        placeholder.style.minWidth = rect.width + 'px';
+        span.parentNode.insertBefore(placeholder, span);
+
+        // 浮動拖曳中的標籤
+        span.style.position = 'fixed';
+        span.style.left = rect.left + 'px';
+        span.style.top = rect.top + 'px';
+        span.style.width = rect.width + 'px';
+        span.style.zIndex = '1000';
+        span.style.boxShadow = '0 6px 16px rgba(0,0,0,0.4)';
+        span.style.pointerEvents = 'none';
+        span.classList.add('group-tab-dragging');
+
+        groupTabDragState = { groupName, span, container, offsetX, placeholder };
+
+        document.addEventListener('pointermove', onGroupTabPointerMove);
+        document.addEventListener('pointerup', onGroupTabPointerUp);
+        document.addEventListener('pointercancel', onGroupTabPointerUp);
+    }
+
+    function onGroupTabPointerMove(e) {
+        if (!groupTabDragState) return;
+        const { span, offsetX, container, placeholder } = groupTabDragState;
+        span.style.left = (e.clientX - offsetX) + 'px';
+
+        // 找出游標下方最近的可拖曳兄弟標籤，決定佔位符插入位置
+        const siblings = Array.from(container.children).filter(el =>
+            el !== span && el !== placeholder && el.classList.contains('group-tab-draggable')
+        );
+        let inserted = false;
+        for (const sib of siblings) {
+            const r = sib.getBoundingClientRect();
+            const midpoint = r.left + r.width / 2;
+            if (e.clientX < midpoint) {
+                container.insertBefore(placeholder, sib);
+                inserted = true;
+                break;
+            }
+        }
+        // 若沒插在任何兄弟前面，放到「＋ 新增」按鈕之前（即所有自訂標籤最後）
+        if (!inserted) {
+            const addBtn = container.querySelector('.group-tab-add');
+            if (addBtn) container.insertBefore(placeholder, addBtn);
+            else container.appendChild(placeholder);
+        }
+    }
+
+    function onGroupTabPointerUp() {
+        if (!groupTabDragState) return;
+        const { groupName, span, container, placeholder } = groupTabDragState;
+
+        // 依佔位符在 DOM 中的位置，重建 customGroups 順序
+        const draggableTabs = Array.from(container.children).filter(el =>
+            el !== span && el.classList.contains('group-tab-draggable') || el === placeholder
+        );
+        const newOrder = draggableTabs.map(el =>
+            el === placeholder ? groupName : el.dataset.group
+        ).filter(Boolean);
+
+        // 只更新 customGroups 中有出現在 newOrder 的項目（其餘保留位置，理論上不存在）
+        customGroups.sort((a, b) => {
+            const ai = newOrder.indexOf(a), bi = newOrder.indexOf(b);
+            if (ai === -1 && bi === -1) return 0;
+            if (ai === -1) return 1;
+            if (bi === -1) return -1;
+            return ai - bi;
+        });
+
+        // 還原樣式
+        span.style.position = '';
+        span.style.left = '';
+        span.style.top = '';
+        span.style.width = '';
+        span.style.zIndex = '';
+        span.style.boxShadow = '';
+        span.style.pointerEvents = '';
+        span.classList.remove('group-tab-dragging');
+        placeholder.remove();
+
+        document.removeEventListener('pointermove', onGroupTabPointerMove);
+        document.removeEventListener('pointerup', onGroupTabPointerUp);
+        document.removeEventListener('pointercancel', onGroupTabPointerUp);
+        groupTabDragState = null;
+
+        saveGroups();
+        renderGroupTabs();
     }
 
     function setActiveGroup(g) {
