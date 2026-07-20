@@ -234,8 +234,13 @@
         .group-tab-edit { font-size:11px; opacity:0.55; padding:0 2px; }
         .group-tab-edit:hover { opacity:1; color: var(--accent-color); }
         .group-tab-add { background:transparent; border:1px dashed #666; color:var(--accent-color); }
-        .group-tab-draggable { cursor: grab; }
-        .group-tab-draggable:active { cursor: grabbing; }
+        .group-tab-handle {
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: grab; padding: 0 4px 0 0; opacity: 0.45; font-size: 11px;
+            line-height: 1; user-select: none; flex-shrink: 0;
+        }
+        .group-tab-handle:active { cursor: grabbing; }
+        .group-tab-handle:hover { opacity: 0.9; }
         .group-tab-dragging { opacity: 0.4; pointer-events: none; }
         .group-tab-placeholder { display:inline-flex; border: 2px dashed var(--accent-color); border-radius: 14px; opacity: 0.45; flex-shrink: 0; }
         body.light-mode .group-tab { background:#f1f2f6; border:1px solid #dcdde1; color:#2d3436; }
@@ -1374,8 +1379,6 @@ document.addEventListener('DOMContentLoaded', function() {
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/20</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>增加可上下調整等級功能
-                        <li>增加關鍵字篩選道具功能
-                        <li>調整用字
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/19</div>
                     <ul style="margin: 0; padding-left: 18px;">
@@ -2273,21 +2276,40 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             span.className = 'group-tab group-tab-draggable' + (g === activeGroup ? ' active' : '');
             span.id = `gtab-${CSS.escape(g)}`;
             span.dataset.group = g;
+            span.style.cursor = 'default';
 
-            span.innerHTML =
-                escapeHtml(g) +
-                `<span class="group-tab-edit" title="重新命名">✎</span>` +
-                `<span class="group-tab-x" title="刪除群組">✕</span>`;
+            // 拖曳把手
+            const handle = document.createElement('span');
+            handle.className = 'group-tab-handle';
+            handle.innerHTML = '⠿';
+            handle.title = '拖曳排序';
 
-            span.querySelector('.group-tab-edit').onclick = (e) => { e.stopPropagation(); openRenameGroupModal(g); };
-            span.querySelector('.group-tab-x').onclick   = (e) => { e.stopPropagation(); deleteGroup(g); };
-            span.onclick = () => setActiveGroup(g);
+            // 標籤名稱（點擊切換）
+            const label = document.createElement('span');
+            label.textContent = g;
+            label.style.cursor = 'pointer';
+            label.onclick = (e) => { e.stopPropagation(); setActiveGroup(g); };
 
-            // ── Pointer-based drag（與自訂連結相同機制）──
-            span.addEventListener('pointerdown', (e) => {
-                // 只有主按鍵（左鍵）才啟動拖曳；點 edit/x 按鈕不啟動
+            const editBtn = document.createElement('span');
+            editBtn.className = 'group-tab-edit';
+            editBtn.title = '重新命名';
+            editBtn.innerHTML = '✎';
+            editBtn.onclick = (e) => { e.stopPropagation(); openRenameGroupModal(g); };
+
+            const delBtn = document.createElement('span');
+            delBtn.className = 'group-tab-x';
+            delBtn.title = '刪除群組';
+            delBtn.innerHTML = '✕';
+            delBtn.onclick = (e) => { e.stopPropagation(); deleteGroup(g); };
+
+            span.appendChild(handle);
+            span.appendChild(label);
+            span.appendChild(editBtn);
+            span.appendChild(delBtn);
+
+            // 只有把手觸發拖曳
+            handle.addEventListener('pointerdown', (e) => {
                 if (e.button !== 0) return;
-                if (e.target.classList.contains('group-tab-edit') || e.target.classList.contains('group-tab-x')) return;
                 onGroupTabPointerDown(e, g);
             });
 
