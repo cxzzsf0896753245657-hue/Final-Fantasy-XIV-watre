@@ -554,7 +554,7 @@
         .dt-trigger-text.has-value { color: var(--text-color); font-weight: 600; }
 
         .dt-popup {
-            position: absolute; z-index: 1200; display: none; flex-direction: column;
+            position: fixed; z-index: 99999; display: none; flex-direction: column;
             background: var(--card-color); border: 1px solid var(--edit-border); border-radius: 12px;
             box-shadow: 0 12px 28px rgba(0,0,0,0.45); overflow: hidden; width: 372px;
         }
@@ -1368,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.2.2 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.2.1 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
             <div class="top-btns">
                 <button class="btn-top" onclick="toggleTheme()">切換主題</button>
                 <button class="btn-top" onclick="requestNotificationPermission()">啟用通知</button>
@@ -2637,13 +2637,14 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             popup.style.display = 'flex';
 
             const rect = anchorEl.getBoundingClientRect();
-            let top = rect.bottom + window.scrollY + 6;
-            let left = rect.left + window.scrollX;
+            let top = rect.bottom + 6;
+            let left = rect.left;
             const popW = popup.offsetWidth || 372;
-            const maxLeft = window.scrollX + document.documentElement.clientWidth - popW - 10;
+            const popH = popup.offsetHeight || 320;
+            const maxLeft = document.documentElement.clientWidth - popW - 10;
             if (left > maxLeft) left = Math.max(10, maxLeft);
-            const maxTop = window.scrollY + document.documentElement.clientHeight - popup.offsetHeight - 10;
-            if (top > maxTop) top = Math.max(10, rect.top + window.scrollY - popup.offsetHeight - 6);
+            const maxTop = document.documentElement.clientHeight - popH - 10;
+            if (top > maxTop) top = Math.max(10, rect.top - popH - 6);
             popup.style.top = top + 'px';
             popup.style.left = left + 'px';
 
