@@ -619,8 +619,15 @@
         .dt-btn-confirm:hover { opacity: 0.9; }
 
         @media (max-width: 420px) {
-            .dt-popup { width: 320px; }
-            .dt-time { flex-basis: 110px; }
+            .dt-popup { width: calc(100vw - 16px); min-width: unset; }
+            .dt-popup-inner { flex-direction: column; }
+            .dt-cal { flex: none; width: 100%; border-right: none; border-bottom: 1px solid var(--edit-border); box-sizing: border-box; }
+            .dt-cal-weekdays { grid-template-columns: repeat(7, 1fr); }
+            .dt-cal-grid { grid-template-columns: repeat(7, 1fr); }
+            .dt-day { width: 100%; }
+            .dt-time { flex: none; width: 100%; padding: 10px 14px; border-top: none; box-sizing: border-box; }
+            .dt-time-cols { height: 120px; }
+            .dt-time-col { padding: 44px 0; }
         }
 
         /* ══════════════ 自訂地點選擇彈窗（依海圖分組） ══════════════ */
@@ -1461,37 +1468,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/25</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>性能數值（探索性能、收集性能等）移到與「選擇船艇」同一行，不再佔用額外空間</li>
+                        <li>修正船艇設定無法點選日期的問題，並調整外觀設計</li>
                         <li>船體／船尾／船首／艦橋下拉選單改為自訂樣式，滑鼠移到選項上時，上方性能數值會即時預覽「選了這個會變多少」，離開或取消不影響實際數值</li>
                         <li>滑鼠停留在配件選項上時，會顯示該配件的各項加成數值</li>
                         <li>點選上方分頁（路線規劃、配件規劃等）時，頁面自動捲回最上方</li>
-                        <li>修正船艇設定無法點選日期的問題，並調整外觀設計</li>
                     </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/24</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>修正上傳截圖後路線規劃等級不同步問題</li>
-                        <li>增加選擇船艇時依照標籤分類功能</li>
-                        <li>增加路線規劃搜尋數量、增加路線規畫結果排序功能</li>
-                        <li>修改分頁選單UI設計，改為下滑時置頂</li>
+                        <li>修正上傳截圖後路線規劃等級不同步問題
+                        <li>增加選擇船艇時依照標籤分類功能
+                        <li>增加路線規劃搜尋數量、增加路線規畫結果排序功能
+                        <li>修改分頁選單UI設計，改為下滑時置頂
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/20</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>增加可上下調整等級功能</li>
+                        <li>增加可上下調整等級功能
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/19</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>增加可移動標籤功能</li>
+                        <li>增加可移動標籤功能
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/18</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>修改配件製作數據，正確顯示數量</li>
-                        <li>新增⚙️ 配件規劃中可勾選航點，並直接點選路線規劃跳轉至路線進行預估</li>
+                        <li>修改配件製作數據，正確顯示數量
+                        <li>新增⚙️ 配件規劃中可勾選航點，並直接點選路線規劃跳轉至路線進行預估
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/17</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>新增⚙️ 配件規劃中常用配件規劃功能，可選擇預設最常使用配置進行預覽</li>
-                        <li>新增⚙️ 配件規劃中針對物品的獲得機率與獲得數量等數據</li>
-                        <li>調整練級表圖片，改為1-50等一張50-85等一張圖</li>
+                        <li>新增⚙️ 配件規劃中常用配件規劃功能，可選擇預設最常使用配置進行預覽
+                        <li>新增⚙️ 配件規劃中針對物品的獲得機率與獲得數量等數據
+                        <li>調整練級表圖片，改為1-50等一張50-85等一張圖
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/15</div>
                     <ul style="margin: 0; padding-left: 18px;">
