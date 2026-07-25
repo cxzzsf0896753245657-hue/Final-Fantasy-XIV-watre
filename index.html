@@ -556,11 +556,12 @@
         .dt-popup {
             position: fixed; z-index: 99999; display: none; flex-direction: column;
             background: var(--card-color); border: 1px solid var(--edit-border); border-radius: 12px;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.45); overflow: hidden; width: 372px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.45); overflow: hidden; width: fit-content; min-width: 320px;
+            max-width: calc(100vw - 16px);
         }
         body.light-mode .dt-popup { box-shadow: 0 12px 28px rgba(0,0,0,0.15); }
-        .dt-popup-inner { display: flex; }
-        .dt-cal { flex: 1 1 auto; padding: 14px 14px 10px; border-right: 1px solid var(--edit-border); }
+        .dt-popup-inner { display: flex; overflow: hidden; min-height: 0; }
+        .dt-cal { flex: 0 0 236px; width: 236px; padding: 14px 14px 10px; border-right: 1px solid var(--edit-border); }
         .dt-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .dt-cal-title { font-size: 14px; font-weight: 800; color: var(--accent-color); }
         .dt-cal-nav { display: flex; gap: 4px; }
@@ -570,12 +571,14 @@
             display: flex; align-items: center; justify-content: center;
         }
         .dt-cal-nav button:hover { border-color: var(--accent-color); color: var(--accent-color); }
-        .dt-cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; font-size: 11px; color: #888; margin-bottom: 4px; }
-        .dt-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+        .dt-cal-weekdays { display: grid; grid-template-columns: repeat(7, 28px); gap: 2px; text-align: center; font-size: 11px; color: #888; margin-bottom: 4px; }
+        .dt-cal-grid { display: grid; grid-template-columns: repeat(7, 28px); gap: 2px; }
         .dt-day {
-            aspect-ratio: 1/1; border: none; background: transparent; color: var(--text-color);
-            font-size: 12.5px; border-radius: 6px; cursor: pointer; display: flex;
+            width: 28px; height: 28px; flex-shrink: 0;
+            border: none; background: transparent; color: var(--text-color);
+            font-size: 12px; border-radius: 6px; cursor: pointer; display: flex;
             align-items: center; justify-content: center; transition: background 0.15s;
+            box-sizing: border-box;
         }
         .dt-day:hover { background: rgba(199,146,234,0.15); }
         .dt-day-other { color: #666; }
@@ -586,7 +589,7 @@
         .dt-link-btn { background: none; border: none; color: var(--accent-color); font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 2px 4px; }
         .dt-link-btn:hover { text-decoration: underline; }
 
-        .dt-time { flex: 0 0 130px; padding: 14px 8px 10px; }
+        .dt-time { flex: 0 0 130px; padding: 14px 8px 10px; display: flex; flex-direction: column; justify-content: flex-start; }
         .dt-time-cols { display: flex; gap: 4px; position: relative; height: 190px; }
         .dt-time-cols::before {
             content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 32px;
@@ -595,8 +598,9 @@
         }
         .dt-time-col {
             flex: 1; overflow-y: auto; scroll-behavior: smooth; position: relative; z-index: 1;
-            padding: 79px 0; scrollbar-width: thin;
+            padding: 79px 0; scrollbar-width: none;
         }
+        .dt-time-col::-webkit-scrollbar { display: none; }
 
         .dt-time-item {
             height: 32px; display: flex; align-items: center; justify-content: center;
@@ -1368,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.2.1 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.2.2 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
             <div class="top-btns">
                 <button class="btn-top" onclick="toggleTheme()">切換主題</button>
                 <button class="btn-top" onclick="requestNotificationPermission()">啟用通知</button>
@@ -1461,32 +1465,33 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li>船體／船尾／船首／艦橋下拉選單改為自訂樣式，滑鼠移到選項上時，上方性能數值會即時預覽「選了這個會變多少」，離開或取消不影響實際數值</li>
                         <li>滑鼠停留在配件選項上時，會顯示該配件的各項加成數值</li>
                         <li>點選上方分頁（路線規劃、配件規劃等）時，頁面自動捲回最上方</li>
+                        <li>修正船艇設定無法點選日期的問題，並調整外觀設計</li>
                     </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/24</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>修正上傳截圖後路線規劃等級不同步問題
-                        <li>增加選擇船艇時依照標籤分類功能
-                        <li>增加路線規劃搜尋數量、增加路線規畫結果排序功能
-                        <li>修改分頁選單UI設計，改為下滑時置頂
+                        <li>修正上傳截圖後路線規劃等級不同步問題</li>
+                        <li>增加選擇船艇時依照標籤分類功能</li>
+                        <li>增加路線規劃搜尋數量、增加路線規畫結果排序功能</li>
+                        <li>修改分頁選單UI設計，改為下滑時置頂</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/20</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>增加可上下調整等級功能
+                        <li>增加可上下調整等級功能</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/19</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>增加可移動標籤功能
+                        <li>增加可移動標籤功能</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/18</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>修改配件製作數據，正確顯示數量
-                        <li>新增⚙️ 配件規劃中可勾選航點，並直接點選路線規劃跳轉至路線進行預估
+                        <li>修改配件製作數據，正確顯示數量</li>
+                        <li>新增⚙️ 配件規劃中可勾選航點，並直接點選路線規劃跳轉至路線進行預估</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/17</div>
                     <ul style="margin: 0; padding-left: 18px;">
-                        <li>新增⚙️ 配件規劃中常用配件規劃功能，可選擇預設最常使用配置進行預覽
-                        <li>新增⚙️ 配件規劃中針對物品的獲得機率與獲得數量等數據
-                        <li>調整練級表圖片，改為1-50等一張50-85等一張圖
+                        <li>新增⚙️ 配件規劃中常用配件規劃功能，可選擇預設最常使用配置進行預覽</li>
+                        <li>新增⚙️ 配件規劃中針對物品的獲得機率與獲得數量等數據</li>
+                        <li>調整練級表圖片，改為1-50等一張50-85等一張圖</li>
                     </ul>
                     <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/15</div>
                     <ul style="margin: 0; padding-left: 18px;">
@@ -2637,16 +2642,26 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             popup.style.display = 'flex';
 
             const rect = anchorEl.getBoundingClientRect();
-            let top = rect.bottom + 6;
+            const vw = document.documentElement.clientWidth;
+            const vh = document.documentElement.clientHeight;
+            const MARGIN = 8;
+            const GAP = 6;
+            const popW = Math.min(popup.offsetWidth || 372, vw - MARGIN * 2);
+            const popH = popup.offsetHeight || 360;
+
+            // 水平：對齊錨點左邊，不夠就往左推
             let left = rect.left;
-            const popW = popup.offsetWidth || 372;
-            const popH = popup.offsetHeight || 320;
-            const maxLeft = document.documentElement.clientWidth - popW - 10;
-            if (left > maxLeft) left = Math.max(10, maxLeft);
-            const maxTop = document.documentElement.clientHeight - popH - 10;
-            if (top > maxTop) top = Math.max(10, rect.top - popH - 6);
-            popup.style.top = top + 'px';
+            if (left + popW > vw - MARGIN) left = vw - popW - MARGIN;
+            if (left < MARGIN) left = MARGIN;
+
+            // 垂直：優先放下方，放不下放上方，都不夠就貼頂
+            let top = rect.bottom + GAP;
+            if (top + popH > vh - MARGIN) top = rect.top - GAP - popH;
+            if (top < MARGIN) top = MARGIN;
+
             popup.style.left = left + 'px';
+            popup.style.top  = top + 'px';
+            popup.style.maxHeight = '';
 
             setTimeout(() => document.addEventListener('mousedown', DTPicker._outsideHandler), 0);
         },
@@ -2689,6 +2704,11 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
                 cells.push({ day: next, other: true, date: new Date(y, m + 1, next) });
                 next++;
             }
+            // 強制補滿 42 格（6 行），避免不同月份高度不一致
+            while (cells.length < 42) {
+                cells.push({ day: next, other: true, date: new Date(y, m + 1, next) });
+                next++;
+            }
 
             grid.innerHTML = cells.map(c => {
                 const isToday = c.date.getTime() === today.getTime();
@@ -2700,6 +2720,12 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
                 if (isSel) cls += ' dt-day-selected';
                 return `<button type="button" class="${cls}" onclick="DTPicker.pickDay(${c.date.getFullYear()},${c.date.getMonth()},${c.date.getDate()})">${c.day}</button>`;
             }).join('');
+            // 同步時間欄高度與月曆格子高度
+            requestAnimationFrame(() => {
+                const grid = document.getElementById('dtCalGrid');
+                const timeCols = document.querySelector('.dt-time-cols');
+                if (grid && timeCols) timeCols.style.height = grid.offsetHeight + 'px';
+            });
         },
 
         pickDay(y, m, d) {
