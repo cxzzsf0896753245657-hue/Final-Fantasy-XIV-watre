@@ -376,6 +376,35 @@
             padding: 7px 11px; border-radius: 7px; font-size: 13.5px; outline: none;
         }
         .rp-field select:focus, .rp-field input:focus { border-color: var(--accent-color); }
+
+        /* ── 自訂配件下拉 ── */
+        .part-sel-wrap { position: relative; display: inline-block; }
+        .part-sel-trigger {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--edit-bg); color: var(--text-color);
+            border: 1px solid var(--edit-border);
+            padding: 7px 11px; border-radius: 7px; font-size: 13.5px;
+            cursor: pointer; user-select: none; min-width: 140px; gap: 8px;
+            font-family: inherit;
+        }
+        .part-sel-trigger:after { content: '▾'; font-size: 11px; opacity: 0.6; flex-shrink: 0; }
+        .part-sel-wrap.open .part-sel-trigger { border-color: var(--accent-color); }
+        .part-sel-dropdown {
+            display: none; position: absolute; top: calc(100% + 3px); left: 0;
+            min-width: 100%; max-height: 260px; overflow-y: auto;
+            background: var(--edit-bg); border: 1px solid var(--accent-color);
+            border-radius: 8px; z-index: 8000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+        }
+        .part-sel-wrap.open .part-sel-dropdown { display: block; }
+        .part-sel-opt {
+            padding: 7px 13px; font-size: 13px; cursor: pointer;
+            color: var(--text-color); white-space: nowrap;
+            transition: background 0.1s;
+        }
+        .part-sel-opt:hover { background: rgba(155,126,200,0.18); }
+        .part-sel-opt.selected { color: var(--accent-color); font-weight: 700; }
+        body.light-mode .part-sel-dropdown { box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
         .rp-field .num-spinner { border-radius: 7px; font-size: 13.5px; }
         .rp-field .num-spinner input[type="text"] { padding: 7px 4px; font-size: 13.5px; }
         /* 中字：單選群組 */
@@ -833,6 +862,56 @@
         /* tooltip 用 fixed 定位（JS 注入），避免被 th overflow 截斷 */
         #gpThTipFloat { display: none; position: fixed; background: #1e1e2e; border: 1px solid var(--accent-color); color: #e0e0e0; font-size: 11.5px; font-weight: 400; white-space: pre-line; padding: 7px 11px; border-radius: 8px; z-index: 9999; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.6); line-height: 1.75; }
         body.light-mode #gpThTipFloat { background: #ffffff; color: #2d3436; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        /* ── 配件性能懸浮提示 ── */
+        #partStatTip {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            background: #18182a;
+            border: 1px solid rgba(155,126,200,0.5);
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.7);
+            min-width: 180px;
+        }
+        body.light-mode #partStatTip {
+            background: #ffffff;
+            border-color: rgba(124,92,191,0.4);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        #partStatTip .pst-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-color);
+            letter-spacing: 0.5px;
+            margin-bottom: 7px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(155,126,200,0.25);
+        }
+        #partStatTip .pst-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 2px 0;
+        }
+        #partStatTip .pst-label {
+            font-size: 11.5px;
+            color: #999;
+            font-weight: 500;
+        }
+        body.light-mode #partStatTip .pst-label { color: #888; }
+        #partStatTip .pst-val {
+            font-size: 13px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            font-family: monospace;
+        }
+        #partStatTip .pst-val.pos { color: #5dba8a; }
+        #partStatTip .pst-val.neg { color: #f78c6c; }
+        #partStatTip .pst-val.zero { color: #666; }
 
         /* 性能徽章 */
         .gp-stat-badge { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--edit-border); border-radius: 8px; padding: 4px 10px; font-size: 12px; background: rgba(255,255,255,0.03); }
@@ -1376,6 +1455,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/25</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>性能數值（探索性能、收集性能等）移到與「選擇船艇」同一行，不再佔用額外空間</li>
+                        <li>船體／船尾／船首／艦橋下拉選單改為自訂樣式，滑鼠移到選項上時，上方性能數值會即時預覽「選了這個會變多少」，離開或取消不影響實際數值</li>
+                        <li>滑鼠停留在配件選項上時，會顯示該配件的各項加成數值</li>
+                        <li>點選上方分頁（路線規劃、配件規劃等）時，頁面自動捲回最上方</li>
+                    </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/24</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>修正上傳截圖後路線規劃等級不同步問題
@@ -1498,8 +1584,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h3 class="rp-section-title">選擇船艇</h3>
                         <span class="rp-section-hint-inline">從艦隊選擇，或手動輸入等級與配件</span>
                     </div>
-                    <!-- 第一行：船艇 + 等級 -->
-                    <div class="rp-row" style="margin-bottom:10px; align-items:flex-end;">
+                    <!-- 第一行：船艇 + 等級 + 性能徽章 -->
+                    <div class="rp-row" style="margin-bottom:10px; align-items:flex-end; flex-wrap:wrap;">
                         <div class="rp-field">
                             <label>船艇</label>
                             <select id="rpShipSelect" style="width:200px;"></select>
@@ -1514,16 +1600,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                         </div>
+                        <!-- 性能徽章（與船艇/等級同行） -->
+                        <div id="rpStatBadges" style="display:flex; flex-wrap:wrap; gap:8px; align-self:flex-end; padding-bottom:2px;"></div>
                     </div>
                     <!-- 第二行：四部位 -->
                     <div class="rp-row" style="align-items:flex-end;">
-                        <div class="rp-field"><label>船體</label><select id="rp-part-hull" onchange="rpRefreshStatPreview()"></select></div>
-                        <div class="rp-field"><label>船尾</label><select id="rp-part-stern" onchange="rpRefreshStatPreview()"></select></div>
-                        <div class="rp-field"><label>船首</label><select id="rp-part-bow" onchange="rpRefreshStatPreview()"></select></div>
-                        <div class="rp-field"><label>艦橋</label><select id="rp-part-bridge" onchange="rpRefreshStatPreview()"></select></div>
+                        <div class="rp-field"><label>船體</label><div class="part-sel-wrap" id="rp-part-hull-wrap" data-partkey="hull" data-panel="rp"></div></div>
+                        <div class="rp-field"><label>船尾</label><div class="part-sel-wrap" id="rp-part-stern-wrap" data-partkey="stern" data-panel="rp"></div></div>
+                        <div class="rp-field"><label>船首</label><div class="part-sel-wrap" id="rp-part-bow-wrap" data-partkey="bow" data-panel="rp"></div></div>
+                        <div class="rp-field"><label>艦橋</label><div class="part-sel-wrap" id="rp-part-bridge-wrap" data-partkey="bridge" data-panel="rp"></div></div>
                     </div>
-                    <!-- 性能徽章 -->
-                    <div id="rpStatBadges" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div>
                 </div>
 
                 <div class="rp-section">
@@ -1675,7 +1761,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h3 class="rp-section-title">選擇船艇</h3>
                         <span class="rp-section-hint-inline">從艦隊選擇，或手動輸入等級與配件</span>
                     </div>
-                    <div class="rp-row" style="margin-bottom:10px; align-items:flex-end;">
+                    <div class="rp-row" style="margin-bottom:10px; align-items:flex-end; flex-wrap:wrap;">
                         <div class="rp-field">
                             <label>船艇</label>
                             <select id="gpShipSelect" style="width:200px;" onchange="gpApplyShipSelection()">
@@ -1692,15 +1778,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                         </div>
+                        <!-- 當前性能徽章（與船艇/等級同行） -->
+                        <div id="gpStatBadges" style="display:flex; flex-wrap:wrap; gap:8px; align-self:flex-end; padding-bottom:2px;"></div>
                     </div>
                     <div class="rp-row" style="align-items:flex-end;">
-                        <div class="rp-field"><label>船體</label><select id="gp-hull" onchange="gpRecalc()"></select></div>
-                        <div class="rp-field"><label>船尾</label><select id="gp-stern" onchange="gpRecalc()"></select></div>
-                        <div class="rp-field"><label>船首</label><select id="gp-bow" onchange="gpRecalc()"></select></div>
-                        <div class="rp-field"><label>艦橋</label><select id="gp-bridge" onchange="gpRecalc()"></select></div>
+                        <div class="rp-field"><label>船體</label><div class="part-sel-wrap" id="gp-hull-wrap" data-partkey="hull" data-panel="gp"></div></div>
+                        <div class="rp-field"><label>船尾</label><div class="part-sel-wrap" id="gp-stern-wrap" data-partkey="stern" data-panel="gp"></div></div>
+                        <div class="rp-field"><label>船首</label><div class="part-sel-wrap" id="gp-bow-wrap" data-partkey="bow" data-panel="gp"></div></div>
+                        <div class="rp-field"><label>艦橋</label><div class="part-sel-wrap" id="gp-bridge-wrap" data-partkey="bridge" data-panel="gp"></div></div>
                     </div>
-                    <!-- 當前性能徽章 -->
-                    <div id="gpStatBadges" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div>
                     <!-- 主流配件規劃下拉 -->
                     <div class="rp-row" style="margin-top:14px; align-items:flex-end; gap:12px;">
                         <div class="rp-field">
@@ -3174,10 +3260,162 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         STAT_KEYS.forEach(key => { document.getElementById(`cfg-stat-${key}`).innerText = stats[key]; });
     }
 
+    // 產生配件選項含性能懸浮提示
+    function buildPartOptions(partKey) {
+        const statNames = ['探索性能', '收集性能', '巡航速度', '航行距離', '恩惠'];
+        return PART_GRADES.map(g => {
+            if (!g.value) return `<option value="">${g.label}</option>`;
+            const stats = (PART_STAT_TABLE[partKey] && PART_STAT_TABLE[partKey][g.value]) || null;
+            const dataAttr = stats ? ` data-stats="${stats.join(',')}"` : '';
+            const title = stats ? ` title="${statNames.map((n,i) => `【${n}】${stats[i]>=0?'+':''}${stats[i]}`).join(' ')}"` : '';
+            return `<option value="${g.value}"${dataAttr}${title}>${g.label}</option>`;
+        }).join('');
+    }
+
+    // ── 配件性能懸浮提示（自定義，自動 2.5 秒後消失）──
+    const PART_STAT_NAMES = ['探索性能', '收集性能', '巡航速度', '航行距離', '恩惠'];
+    let _partTipTimer = null;
+
+    function showPartStatTip(sel) {
+        const opt = sel.options[sel.selectedIndex];
+        const raw = opt ? opt.dataset.stats : null;
+        const tip = document.getElementById('partStatTip');
+        if (!tip) return;
+        clearTimeout(_partTipTimer);
+        if (!raw) { tip.style.display = 'none'; return; }
+        const vals = raw.split(',').map(Number);
+        tip.innerHTML = `<div class="pst-title">${opt.text} 配件加成</div>` +
+            PART_STAT_NAMES.map((n, i) => {
+                const v = vals[i];
+                const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero';
+                const sign = v > 0 ? '+' : '';
+                return `<div class="pst-row"><span class="pst-label">${n}</span><span class="pst-val ${cls}">${sign}${v}</span></div>`;
+            }).join('');
+        tip.style.display = 'block';
+        const rect = sel.getBoundingClientRect();
+        let left = rect.left;
+        let top = rect.bottom + 6;
+        const tipW = tip.offsetWidth || 200;
+        const tipH = tip.offsetHeight || 160;
+        if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
+        if (top + tipH > window.innerHeight - 8) top = rect.top - tipH - 6;
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+    }
+
+    function hidePartStatTip() {
+        clearTimeout(_partTipTimer);
+        document.getElementById('partStatTip').style.display = 'none';
+    }
+
+    function attachPartHoverPreview(sel) {}
+
+    // ══ 自訂配件下拉元件 ══════════════════════════════════════════
+    const STAT_LABELS_ARR = ['探索性能','收集性能','巡航速度','航行距離','恩惠'];
+    const _partSelValues = {};  // wrapId → value
+
+    function getPartVal(key, panel) {
+        const wrapId = panel === 'rp' ? `rp-part-${key}-wrap` : `gp-${key}-wrap`;
+        return _partSelValues[wrapId] || '';
+    }
+
+    function setPartVal(key, panel, val) {
+        const wrapId = panel === 'rp' ? `rp-part-${key}-wrap` : `gp-${key}-wrap`;
+        _partSelValues[wrapId] = val || '';
+        const wrap = document.getElementById(wrapId);
+        if (!wrap) return;
+        const trigger = wrap.querySelector('.part-sel-trigger span');
+        const opt = PART_GRADES.find(g => g.value === val);
+        if (trigger) trigger.textContent = (opt && opt.value) ? opt.label : '（未設定）';
+        wrap.querySelectorAll('.part-sel-opt').forEach(el =>
+            el.classList.toggle('selected', el.dataset.val === (val || ''))
+        );
+    }
+
+    function buildPartCustomDropdown(wrapId, partKey, panel, onChangeFn) {
+        const wrap = document.getElementById(wrapId);
+        if (!wrap) return;
+        _partSelValues[wrapId] = '';
+
+        const trigger = document.createElement('div');
+        trigger.className = 'part-sel-trigger';
+        trigger.innerHTML = '<span>（未設定）</span>';
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'part-sel-dropdown';
+
+        function renderBadgesWithDiff(hoveredGrade) {
+            const badgeEl = document.getElementById(panel === 'rp' ? 'rpStatBadges' : 'gpStatBadges');
+            if (!badgeEl) return;
+            const statLabels = { explore:'探索性能', gather:'收集性能', speed:'巡航速度', range:'航行距離', favor:'恩惠' };
+            const levelEl = document.getElementById(panel === 'rp' ? 'rpLevel' : 'gpLevel');
+            const level = levelEl ? levelEl.value.trim() : '';
+            const fullParts = {};
+            PART_KEYS.forEach(k => { fullParts[k] = getPartVal(k, panel); });
+            const currentStats = computeStats(level, fullParts);
+            const curGrade = _partSelValues[wrapId];
+            const curStat = curGrade ? (PART_STAT_TABLE[partKey]?.[curGrade] || [0,0,0,0,0]) : [0,0,0,0,0];
+            const newStat = hoveredGrade ? (PART_STAT_TABLE[partKey]?.[hoveredGrade] || [0,0,0,0,0]) : [0,0,0,0,0];
+            badgeEl.innerHTML = STAT_KEYS.map((k, i) => {
+                const base = currentStats[k];
+                const diff = newStat[i] - curStat[i];
+                let diffHtml = '';
+                if (diff !== 0) {
+                    const col = diff > 0 ? '#5dba8a' : '#f78c6c';
+                    diffHtml = `<span style="color:${col};font-size:11px;font-weight:700;margin-left:2px;">(${diff>0?'+':''}${diff})</span>`;
+                }
+                return `<span class="gp-stat-badge"><span class="gp-stat-badge-label">${statLabels[k]}</span><span class="gp-stat-badge-val">${base}</span>${diffHtml}</span>`;
+            }).join('');
+        }
+
+        PART_GRADES.forEach(g => {
+            const item = document.createElement('div');
+            item.className = 'part-sel-opt';
+            item.dataset.val = g.value;
+            item.textContent = g.label;
+            if (g.value) {
+                const stats = PART_STAT_TABLE[partKey]?.[g.value];
+                if (stats) item.title = STAT_LABELS_ARR.map((n,i) => `【${n}】${stats[i]>=0?'+':''}${stats[i]}`).join(' ');
+            }
+            item.addEventListener('mouseenter', () => renderBadgesWithDiff(g.value));
+            item.addEventListener('mouseleave', () => onChangeFn());
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                _partSelValues[wrapId] = g.value;
+                trigger.querySelector('span').textContent = g.value ? g.label : '（未設定）';
+                dropdown.querySelectorAll('.part-sel-opt').forEach(el => el.classList.remove('selected'));
+                item.classList.add('selected');
+                wrap.classList.remove('open');
+                onChangeFn();
+            });
+            dropdown.appendChild(item);
+        });
+
+        trigger.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            const wasOpen = wrap.classList.contains('open');
+            document.querySelectorAll('.part-sel-wrap.open').forEach(w => w.classList.remove('open'));
+            if (!wasOpen) wrap.classList.add('open');
+        });
+        document.addEventListener('mousedown', (e) => {
+            if (!wrap.contains(e.target)) wrap.classList.remove('open');
+        }, true);
+
+        wrap.appendChild(trigger);
+        wrap.appendChild(dropdown);
+    }
+
+    function initPartDropdowns(panel, onChangeFn) {
+        PART_KEYS.forEach(key => {
+            const wrapId = panel === 'rp' ? `rp-part-${key}-wrap` : `gp-${key}-wrap`;
+            buildPartCustomDropdown(wrapId, key, panel, onChangeFn);
+        });
+    }
+
     function initSubConfigModal() {
         PART_KEYS.forEach(key => {
             const sel = document.getElementById(`cfg-part-${key}`);
-            sel.innerHTML = PART_GRADES.map(g => `<option value="${g.value}">${g.label}</option>`).join('');
+            sel.innerHTML = buildPartOptions(key);
             sel.addEventListener('change', refreshComputedStats);
         });
         document.getElementById('cfg-level').addEventListener('input', refreshComputedStats);
@@ -3500,10 +3738,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     const gpCheckedSectors = new Set(); // 使用者在探索值差距分析中勾選的 secId
 
     function initGearPlanner() {
-        PART_KEYS.forEach(key => {
-            const sel = document.getElementById(`gp-${key}`);
-            if (sel) sel.innerHTML = PART_GRADES.map(g => `<option value="${g.value}">${g.label}</option>`).join('');
-        });
+        initPartDropdowns('gp', gpRecalc);
         gpRefreshShipList();
         gpRecalc();
     }
@@ -3523,11 +3758,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         if (!t) return;
         document.getElementById('gpLevel').value = t.level || '';
         const parts = t.parts || createEmptyParts();
-        PART_KEYS.forEach(key => {
-            const sel = document.getElementById(`gp-${key}`);
-            if (sel) sel.value = parts[key] || '';
-        });
-        // 重選船艇時，重置預設配置選單並隱藏預覽列
+        PART_KEYS.forEach(key => setPartVal(key, 'gp', parts[key] || ''));
         const presetSel = document.getElementById('gpPresetSelect');
         if (presetSel) presetSel.value = '';
         const presetRow = document.getElementById('gpPresetStatRow');
@@ -3538,7 +3769,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     function gpGetCurrentStats() {
         const level = document.getElementById('gpLevel').value.trim();
         const parts = {};
-        PART_KEYS.forEach(k => { parts[k] = (document.getElementById(`gp-${k}`) || {}).value || ''; });
+        PART_KEYS.forEach(k => { parts[k] = getPartVal(k, 'gp'); });
         return computeStats(level, parts);
     }
 
@@ -4840,9 +5071,8 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             document.getElementById('rpLevel').value = gpLevel;
         }
         PART_KEYS.forEach(key => {
-            const gpVal = (document.getElementById('gp-' + key) || {}).value || '';
-            const rpEl  = document.getElementById('rp-part-' + key);
-            if (rpEl && gpVal) rpEl.value = gpVal;
+            const gpVal = getPartVal(key, 'gp');
+            if (gpVal) setPartVal(key, 'rp', gpVal);
         });
         // 更新路線規劃的性能徽章顯示
         rpRefreshStatPreview();
@@ -4901,10 +5131,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         if (!preset) return;
 
         // 套用到四部位下拉
-        PART_KEYS.forEach(k => {
-            const sel = document.getElementById(`gp-${k}`);
-            if (sel) sel.value = preset[k] || '';
-        });
+        PART_KEYS.forEach(k => setPartVal(k, 'gp', preset[k] || ''));
 
         // 重新計算並更新
         gpRecalc();
@@ -5050,6 +5277,7 @@ function gpRenderLootPreview() {
     // ══ 右側分頁切換 ══════════════════════════════════════════════
 
     function switchRpTab(tab) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         const fleet = document.getElementById('panelFleet');
         const route = document.getElementById('panelRoute');
         const gear  = document.getElementById('panelGear');
@@ -5797,12 +6025,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         shipSel.innerHTML = buildShipGroupedOptions();
         shipSel.addEventListener('change', rpApplyShipSelection);
 
-        // 四部位下拉（沿用練級/設定用的 PART_GRADES）
-        PART_KEYS.forEach(key => {
-            const sel = document.getElementById(`rp-part-${key}`);
-            sel.innerHTML = PART_GRADES.map(g => `<option value="${g.value}">${g.label}</option>`).join('');
-            sel.addEventListener('change', rpRefreshStatPreview);
-        });
+        // 四部位下拉（自訂元件，支援懸停差值預覽）
+        initPartDropdowns('rp', rpRefreshStatPreview);
         document.getElementById('rpLevel').addEventListener('input', rpRefreshStatPreview);
 
         // 地圖下拉（必須包含／排除）
@@ -6082,15 +6306,15 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         if (!t) return;
         document.getElementById('rpLevel').value = t.level || "";
         const parts = t.parts || createEmptyParts();
-        PART_KEYS.forEach(key => { document.getElementById(`rp-part-${key}`).value = parts[key] || ""; });
+        PART_KEYS.forEach(key => setPartVal(key, 'rp', parts[key] || ''));
         rpRefreshStatPreview();
     }
 
     function rpGetCurrentStats() {
         const level = document.getElementById('rpLevel').value.trim();
         const parts = {};
-        PART_KEYS.forEach(key => { parts[key] = document.getElementById(`rp-part-${key}`).value; });
-        return computeStats(level, parts); // {explore, gather, speed, range, favor}
+        PART_KEYS.forEach(key => { parts[key] = getPartVal(key, 'rp'); });
+        return computeStats(level, parts);
     }
 
     function rpRefreshStatPreview() {
@@ -6422,6 +6646,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
 </script>
 <a id="sponsorBtn" href="https://ganknow.com/cxz089675/tip" target="_blank" rel="noopener">🐟 贊助貓罐頭</a>
 <div id="rpGlobalTip"></div>
+<div id="partStatTip"></div>
 <script>
 (function() {
     const tip = document.getElementById('rpGlobalTip');
