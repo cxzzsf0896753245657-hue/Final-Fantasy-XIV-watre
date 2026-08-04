@@ -118,6 +118,33 @@
             box-shadow: 0 4px 14px rgba(249,115,22,0.6);
         }
 
+        /* ── 回報按鈕 ── */
+        #reportBtn {
+            position: fixed;
+            top: 12px;
+            right: 148px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #5c8ee6, #3b6fd4);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(59,111,212,0.45);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        #reportBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(59,111,212,0.6);
+        }
+
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
 
         /* ── Two-column layout ── */
@@ -1110,6 +1137,8 @@
             border-top: 2px solid rgba(155,126,200,0.25);
             border-bottom: 1px solid rgba(155,126,200,0.15);
             letter-spacing: 1px;
+            cursor: pointer;
+            user-select: none;
         }
         .craft-inv-cat-row:first-child td { border-top: none; }
         body.light-mode .craft-inv-cat-row td {
@@ -1117,6 +1146,33 @@
             border-top-color: rgba(124,92,191,0.20);
             border-bottom-color: rgba(124,92,191,0.10);
         }
+        .craft-inv-cat-row td:hover { background: rgba(155,126,200,0.22); }
+        body.light-mode .craft-inv-cat-row td:hover { background: rgba(124,92,191,0.16); }
+        .craft-cat-arrow {
+            display: inline-block;
+            margin-right: 5px;
+            font-size: 12px;
+            font-weight: 400;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .craft-inv-cat-row.collapsed .craft-cat-arrow { content: '＋'; }
+        .craft-cat-count {
+            display: inline;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0;
+            margin-left: 5px;
+            color: var(--accent-color);
+        }
+        .craft-mat-col-count {
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 5px;
+            letter-spacing: 0;
+            color: var(--accent-color);
+        }
+        .craft-inv-item-hidden { display: none; }
 
         /* 素材資料行 */
         .craft-inv-row td {
@@ -1379,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.2.3 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.2.4 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
             <div class="top-btns">
                 <button class="btn-top" onclick="toggleTheme()">切換主題</button>
                 <button class="btn-top" onclick="requestNotificationPermission()">啟用通知</button>
@@ -1466,7 +1522,16 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
-                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/27</div>
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/04</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>標題列新增「📢 回報」按鈕，點擊可至巴哈姆特論壇回報問題</li>
+                        <li>配件製作：成品素材、半成品、基礎素材各欄的分類標題支援點擊展開／收合，以 ＋／－ 符號標示狀態</li>
+                        <li>配件製作：各分類標題及欄位標題後方新增 (完成/總數) 計數顯示，即時反映勾選進度</li>
+                    </ul>
+                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/07/27</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>修正配件製作聖水、祝聖水素材數量計算問題</li>
+                    </ul>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>修正配件製作聖水、祝聖水素材數量計算問題</li>
                     </ul>
@@ -5746,6 +5811,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             // 行整體樣式：擁有足夠則淡化
             row.classList.toggle('craft-inv-row-done', owned >= needed && needed > 0);
         });
+        craftUpdateColCounts();
     }
 
     function craftLookupMeta(name) {
@@ -5902,7 +5968,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         });
 
         function craftCatRow(cat) {
-            return `<tr class="craft-inv-cat-row"><td colspan="5">${cat}</td></tr>`;
+            return `<tr class="craft-inv-cat-row" data-cat="${cat.replace(/"/g,'&quot;')}"><td colspan="5"><span class="craft-cat-arrow">－</span><span class="craft-cat-label">${cat}</span><span class="craft-cat-count"></span></td></tr>`;
         }
 
         function makeSortedColRows(mapEntries, noTarget = false) {
@@ -5980,20 +6046,20 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
                         <table class="craft-inv-table">${tableHead}<tbody>${col1Rows}</tbody></table>
                     </div>
                 </div>
-                <div class="craft-mat-col">
-                    <div class="craft-mat-col-header">成品素材</div>
+                <div class="craft-mat-col" data-col-id="col2">
+                    <div class="craft-mat-col-header">成品素材<span class="craft-mat-col-count" data-col-count="col2"></span></div>
                     <div class="craft-mat-col-body">
                         <table class="craft-inv-table">${tableHead}<tbody>${col2Rows}</tbody></table>
                     </div>
                 </div>
-                <div class="craft-mat-col">
-                    <div class="craft-mat-col-header">半成品</div>
+                <div class="craft-mat-col" data-col-id="col3">
+                    <div class="craft-mat-col-header">半成品<span class="craft-mat-col-count" data-col-count="col3"></span></div>
                     <div class="craft-mat-col-body">
                         <table class="craft-inv-table">${tableHead}<tbody>${col3Rows}</tbody></table>
                     </div>
                 </div>
-                <div class="craft-mat-col">
-                    <div class="craft-mat-col-header">基礎素材</div>
+                <div class="craft-mat-col" data-col-id="col4">
+                    <div class="craft-mat-col-header">基礎素材<span class="craft-mat-col-count" data-col-count="col4"></span></div>
                     <div class="craft-mat-col-body">
                         <table class="craft-inv-table">${tableHead4}<tbody>${col4Rows}</tbody></table>
                     </div>
@@ -6001,6 +6067,60 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             </div>
             </div>`;
         craftRefreshGridHighlight();
+
+        // ── 分類展開／收合事件綁定 ──
+        box.querySelectorAll('.craft-inv-cat-row').forEach(catRow => {
+            catRow.addEventListener('click', function() {
+                const isCollapsed = this.classList.toggle('collapsed');
+                const arrowEl = this.querySelector('.craft-cat-arrow');
+                if (arrowEl) arrowEl.textContent = isCollapsed ? '＋' : '－';
+                let sibling = this.nextElementSibling;
+                while (sibling && !sibling.classList.contains('craft-inv-cat-row')) {
+                    sibling.classList.toggle('craft-inv-item-hidden', isCollapsed);
+                    sibling = sibling.nextElementSibling;
+                }
+            });
+        });
+
+        // ── 計算並更新分類/欄位計數 ──
+        craftUpdateColCounts(box);
+    }
+
+    function craftUpdateColCounts(box) {
+        if (!box) box = document.getElementById('craftResult');
+        if (!box) return;
+        // 每個欄（col2/col3/col4）
+        box.querySelectorAll('[data-col-id]').forEach(colEl => {
+            const colId = colEl.dataset.colId;
+            const rows = colEl.querySelectorAll('.craft-inv-row');
+            let total = 0, done = 0;
+            rows.forEach(r => { total++; if (r.classList.contains('craft-inv-row-done')) done++; });
+            const countEl = colEl.querySelector(`[data-col-count="${colId}"]`);
+            if (countEl) {
+                countEl.textContent = total > 0 ? `(${done}/${total})` : '';
+                countEl.classList.toggle('all-done', total > 0 && done === total);
+            }
+            // 各分類行計數
+            const tbody = colEl.querySelector('tbody');
+            if (!tbody) return;
+            const allRows = [...tbody.children];
+            allRows.forEach((tr, idx) => {
+                if (!tr.classList.contains('craft-inv-cat-row')) return;
+                let catTotal = 0, catDone = 0;
+                let sib = allRows[idx + 1];
+                let i = idx + 1;
+                while (i < allRows.length && !allRows[i].classList.contains('craft-inv-cat-row')) {
+                    catTotal++;
+                    if (allRows[i].classList.contains('craft-inv-row-done')) catDone++;
+                    i++;
+                }
+                const catCountEl = tr.querySelector('.craft-cat-count');
+                if (catCountEl) {
+                    catCountEl.textContent = catTotal > 0 ? `(${catDone}/${catTotal})` : '';
+                    catCountEl.classList.toggle('all-done', catTotal > 0 && catDone === catTotal);
+                }
+            });
+        });
     }
 
     let rpSelectedItems = []; // [{id, name}]
@@ -6696,6 +6816,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         }).join('');
     }
 </script>
+<a id="reportBtn" href="https://forum.gamer.com.tw/C.php?bsn=17608&snA=30749&page=1&gothis=146463#146463" target="_blank" rel="noopener">📢 回報</a>
 <a id="sponsorBtn" href="https://ganknow.com/cxz089675/tip" target="_blank" rel="noopener">🐟 贊助貓罐頭</a>
 <div id="rpGlobalTip"></div>
 <div id="partStatTip"></div>
