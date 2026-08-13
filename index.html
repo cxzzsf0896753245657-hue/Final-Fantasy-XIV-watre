@@ -222,10 +222,86 @@
         .timer-footer { display: flex; justify-content: space-between; font-size: 15px; margin-top: 8px; }
         .time-highlight { font-weight: 800; color: #94bfff; font-size: 15px; }
         .time-highlight.target { color: #ffb627; font-size: 15px; }
-        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: space-between; align-items:center; gap: 10px; flex-wrap: wrap; }
+        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
         .delete-btn, .edit-btn { background-color: #333; border: 1px solid #444; color: #e0e0e0; cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px; min-height: 36px; display:inline-flex; align-items:center; }
         .delete-btn { color: #ff5370; }
         .delete-btn:hover, .edit-btn:hover { background-color: #444; }
+
+        /* ── 船艇小卡三按鈕：MD3 層次設計 ── */
+        .card-action-btns {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        /* 基底 reset */
+        .card-icon-btn {
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            border-radius: 20px;
+            height: 36px;
+            padding: 0 18px;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            transition: background 0.18s, box-shadow 0.18s, opacity 0.15s;
+        }
+        /* 路線規劃：Tonal（主要，填色偏淡，最吸睛）*/
+        .card-icon-btn.btn-route {
+            background: rgba(130, 170, 255, 0.15);
+            color: #82aaff;
+        }
+        .card-icon-btn.btn-route:hover {
+            background: rgba(130, 170, 255, 0.26);
+        }
+        /* 船艇設定：Outlined（次要，細框無填色）*/
+        .card-icon-btn.btn-config {
+            background: transparent;
+            color: #bbb;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+        }
+        .card-icon-btn.btn-config:hover {
+            background: rgba(255,255,255,0.07);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
+            color: #e0e0e0;
+        }
+        /* 刪除：Text-danger（最低權重，純文字，色彩暗示危險）*/
+        .card-icon-btn.btn-delete {
+            background: transparent;
+            color: #888;
+            padding: 0 12px;
+        }
+        .card-icon-btn.btn-delete:hover {
+            color: #ff5370;
+            background: rgba(255, 83, 112, 0.08);
+        }
+        /* Light mode */
+        body.light-mode .card-icon-btn.btn-route {
+            background: rgba(58, 90, 159, 0.1);
+            color: #3a5a9f;
+        }
+        body.light-mode .card-icon-btn.btn-route:hover {
+            background: rgba(58, 90, 159, 0.18);
+        }
+        body.light-mode .card-icon-btn.btn-config {
+            color: #555;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+        }
+        body.light-mode .card-icon-btn.btn-config:hover {
+            background: rgba(0,0,0,0.05);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.32);
+            color: #222;
+        }
+        body.light-mode .card-icon-btn.btn-delete {
+            color: #aaa;
+        }
+        body.light-mode .card-icon-btn.btn-delete:hover {
+            color: #c0392b;
+            background: rgba(192, 57, 43, 0.07);
+        }
         .edit-container { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
         .edit-group { display: flex; flex-direction: column; gap: 4px; }
         .edit-label { font-size: 11px; color: var(--accent-color); margin-left: 2px; } 
@@ -1592,7 +1668,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.2.4 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.2.5 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
             <div class="top-btns">
                 <button class="btn-top" onclick="toggleTheme()">切換主題</button>
                 <button class="btn-top" onclick="requestNotificationPermission()">啟用通知</button>
@@ -1683,6 +1759,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>船艇小卡新增「路線規劃」按鈕，點選後自動複製該船艇設定至路線規劃分頁並執行搜尋，原有目標物品與進階篩選設定維持不變</li>
                         <li>路線規劃結果小卡新增「使用此路線」按鈕，點選後以當前時間為出航點，將路線耗時套用至對應船艇小卡並更新回港時間；若路線規劃上方有變更等級或配件，一併更新</li>
+                        <li>整體 UI/UX 設計調整改善，含手機版響應式排版優化</li>
                     </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/04</div>
                     <ul style="margin: 0; padding-left: 18px;">
@@ -3788,7 +3865,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         const card = document.createElement('div'); 
         card.className = 'timer-card'; 
         card.id = `card-${timer.id}`; 
-        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div style="display:flex; gap:8px;"><button class="route-plan-btn" onclick="sendCardToRoutePlanner('${timer.id}')">路線規劃</button><button class="sub-config-btn" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div></div>`; 
+        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div class="card-action-btns"><button class="card-icon-btn btn-route" onclick="sendCardToRoutePlanner('${timer.id}')">路線規劃</button><button class="card-icon-btn btn-config" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="card-icon-btn btn-delete" onclick="deleteTimer('${timer.id}')">刪除</button></div></div>`; 
         timerList.appendChild(card); 
         updateConfigSummary(timer.id);
         applyGroupFilter();
