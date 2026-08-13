@@ -145,7 +145,9 @@
             box-shadow: 0 4px 14px rgba(59,111,212,0.6);
         }
 
-        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px;
+            transition: background-color 0.22s, color 0.22s;
+        }
 
         /* ── Two-column layout ── */
         .page-layout {
@@ -213,15 +215,15 @@
         .timer-name { color: #82aaff; font-size: 16px; }
         .timer-level { color: #ffcb6b; font-size: 13px; margin-left: 5px; }
         .timer-countdown { color: #f78c6c; font-family: monospace; font-size: 16px; }
-        .progress-bar-bg { background-color: #333; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
+        .progress-bar-bg { background-color: #333; height: 7px; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
         .progress-bar { background: linear-gradient(90deg, #9b7ec8, #7aadce); height: 100%; width: 100%; transition: width 1s linear; }
         .progress-bar-bg.finished { background-color: var(--success-color) !important; }
         .progress-bar.finished { display: none; }
         .timer-footer { display: flex; justify-content: space-between; font-size: 15px; margin-top: 8px; }
         .time-highlight { font-weight: 800; color: #94bfff; font-size: 15px; }
         .time-highlight.target { color: #ffb627; font-size: 15px; }
-        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: space-between; align-items:center; gap: 10px; }
-        .delete-btn, .edit-btn { background-color: #333; border: 1px solid #444; color: #e0e0e0; cursor: pointer; padding: 4px 12px; border-radius: 6px; font-size: 12px; }
+        .delete-btn-wrapper { margin-top: 10px; display: flex; justify-content: space-between; align-items:center; gap: 10px; flex-wrap: wrap; }
+        .delete-btn, .edit-btn { background-color: #333; border: 1px solid #444; color: #e0e0e0; cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px; min-height: 36px; display:inline-flex; align-items:center; }
         .delete-btn { color: #ff5370; }
         .delete-btn:hover, .edit-btn:hover { background-color: #444; }
         .edit-container { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
@@ -348,7 +350,7 @@
         .sub-stat-value { width:110px; box-sizing:border-box; background: rgba(155,126,200,0.08); color: var(--accent-color); border:1px dashed var(--edit-border); padding:6px 10px; border-radius:6px; font-size:15px; font-weight:800; text-align:center; user-select:none; }
         .sub-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
         /* 卡片次要操作按鈕：與 delete-btn 同風格，僅顏色區分 */
-        .sub-config-btn { background-color:#333; border:1px solid #444; color:#9b7ec8; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:12px; }
+        .sub-config-btn { background-color:#333; border:1px solid #444; color:#9b7ec8; cursor:pointer; padding:6px 14px; border-radius:6px; font-size:12px; min-height:36px; display:inline-flex; align-items:center; }
         .sub-config-btn:hover { background-color:#444; }
         body.light-mode .sub-config-btn { background-color:#f8f9fa; border:1px solid #dcdde1; color:#7c5cbf; }
         .sub-config-summary { font-size:12px; color:#888; margin-top:6px; line-height:1.6; }
@@ -1078,6 +1080,27 @@
         /* 舊 pill 樣式保留供相容 */
         .gp-sc-diff { font-size: 11px; font-weight: 700; opacity: 0.85; }
 
+        /* ── 路線規劃按鈕（船艇小卡）── */
+        .route-plan-btn {
+            background-color: #2a3a5a; border: 1px solid #4a6fa5; color: #82aaff;
+            cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px;
+            min-height: 36px; display: inline-flex; align-items: center;
+            transition: background-color 0.15s;
+        }
+        .route-plan-btn:hover { background-color: #3a4a6a; }
+        body.light-mode .route-plan-btn { background-color: #eaf0fb; border-color: #4a6fa5; color: #3a5a9f; }
+
+        /* ── 使用此路線按鈕（路線結果小卡）── */
+        .rp-use-route-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #2a4a3a; border: 1px solid #4caf50; color: #4caf50;
+            cursor: pointer; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;
+            transition: background-color 0.15s, transform 0.1s;
+            margin-left: auto; flex-shrink: 0;
+        }
+        .rp-use-route-btn:hover { background: #3a5a4a; transform: translateY(-1px); }
+        body.light-mode .rp-use-route-btn { background: #eaf6ec; border-color: #3a9e5f; color: #3a9e5f; }
+
         /* ── 配件製作：四欄庫存表格 ── */
         .craft-mat-cols-wrap {
             overflow-x: auto;
@@ -1348,6 +1371,140 @@
         body.light-mode .gp-drop-high .gp-drop-pct { color: #2e8b57; }
         body.light-mode .gp-drop-mid  .gp-drop-pct { color: #b07d2e; }
         body.light-mode .gp-drop-low  .gp-drop-pct { color: #c0623a; }
+
+        /* ══════════════════════════════════════════════════════
+           RWD & UX IMPROVEMENTS
+           ══════════════════════════════════════════════════════ */
+
+        /* ── 主題切換平滑過渡（僅針對背景/邊框/文字色，排除動畫元件）── */
+        body, .timer-card, .rp-result-card, .rp-section,
+        .collapsible-btn, .left-panel, .right-panel,
+        .rp-panel-tabs, .rp-panel-tab {
+            transition: background-color 0.22s ease, border-color 0.18s ease, color 0.18s ease;
+        }
+
+        /* ── 分頁列：手機版改為可橫向捲動，防截斷 ── */
+        .rp-panel-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .rp-panel-tabs::-webkit-scrollbar { display: none; }
+
+        /* ── 固定按鈕（贊助/回報）：手機版縮小並避免遮擋 ── */
+        @media (max-width: 640px) {
+            #sponsorBtn, #reportBtn {
+                padding: 5px 10px;
+                font-size: 11px;
+                border-radius: 14px;
+            }
+            #sponsorBtn { right: 10px; top: 8px; }
+            #reportBtn  { right: 110px; top: 8px; }
+        }
+
+        /* ── 海圖跑點節點：手機版加大觸控目標 ── */
+        @media (max-width: 640px) {
+            .map-node {
+                width: 36px;
+                height: 36px;
+                font-size: 13px;
+                border-radius: 8px;
+            }
+            .map-nodes { gap: 7px; }
+        }
+
+        /* ── 船艇小卡按鈕群組：視覺分組（刪除鍵與其他鍵之間加間距分隔）── */
+        .delete-btn-wrapper > div {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .delete-btn-wrapper .delete-btn {
+            margin-left: 6px;
+            border-left: 1px solid #4a2a2a;
+            padding-left: 14px;
+        }
+        body.light-mode .delete-btn-wrapper .delete-btn {
+            border-left-color: #f5b7b1;
+        }
+
+        /* ── 路線規劃：min-width 欄位在小螢幕自動縮放 ── */
+        @media (max-width: 640px) {
+            .rp-multiselect  { min-width: 0; width: 100%; }
+            .rp-sector-wrap  { min-width: 0; width: 100%; }
+            .rp-row          { flex-direction: column; align-items: stretch; }
+            .rp-field        { width: 100%; }
+            .rp-field select,
+            .rp-field input  { width: 100%; box-sizing: border-box; }
+            .part-sel-trigger { min-width: 0; width: 100%; }
+        }
+
+        /* ── 路線結果 stats 列：按鈕在小螢幕獨立一行靠右 ── */
+        @media (max-width: 640px) {
+            .rp-result-stats {
+                flex-wrap: wrap;
+            }
+            .rp-use-route-btn {
+                margin-left: auto;
+                margin-top: 4px;
+            }
+        }
+
+        /* ── 船艇設定 Modal：手機版下拉欄位全寬 ── */
+        @media (max-width: 640px) {
+            .sub-modal-box {
+                padding: 16px 12px;
+            }
+            .sub-part-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px;
+            }
+            .sub-part-item select {
+                width: 100%;
+            }
+            .sub-stat-grid {
+                gap: 8px;
+            }
+            .sub-stat-value {
+                width: 90px;
+            }
+        }
+
+        /* ── 左側面板：手機版 padding 縮小 ── */
+        @media (max-width: 640px) {
+            body { padding: 10px 8px; }
+            .page-layout { gap: 14px; }
+            h1 { font-size: 18px; }
+            .collapsible-btn { font-size: 13px; padding: 7px 12px; }
+        }
+
+        /* ── 右側分頁面板：手機版移除不必要內距 ── */
+        @media (max-width: 640px) {
+            .rp-panel-tab {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .rp-section {
+                padding: 12px 12px 14px;
+            }
+            .rp-result-card {
+                padding: 12px 12px;
+            }
+        }
+
+        /* ── 計時器雙欄 Grid：在平板斷點前改用彈性單欄 ── */
+        @media (max-width: 860px) {
+            .timer-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── 使用此路線按鈕：提升觸控高度 ── */
+        .rp-use-route-btn {
+            min-height: 34px;
+            padding: 5px 14px;
+        }
+
     </style>
 </head>
 <body>
@@ -1522,6 +1679,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/13</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>船艇小卡新增「路線規劃」按鈕，點選後自動複製該船艇設定至路線規劃分頁並執行搜尋，原有目標物品與進階篩選設定維持不變</li>
+                        <li>路線規劃結果小卡新增「使用此路線」按鈕，點選後以當前時間為出航點，將路線耗時套用至對應船艇小卡並更新回港時間；若路線規劃上方有變更等級或配件，一併更新</li>
+                    </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/04</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>標題列新增「📢 回報」按鈕，點擊可至巴哈姆特論壇回報問題</li>
@@ -3626,7 +3788,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         const card = document.createElement('div'); 
         card.className = 'timer-card'; 
         card.id = `card-${timer.id}`; 
-        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div style="display:flex; gap:8px;"><button class="sub-config-btn" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div></div>`; 
+        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div style="display:flex; gap:8px;"><button class="route-plan-btn" onclick="sendCardToRoutePlanner('${timer.id}')">路線規劃</button><button class="sub-config-btn" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="delete-btn" onclick="deleteTimer('${timer.id}')">刪除記錄</button></div></div>`; 
         timerList.appendChild(card); 
         updateConfigSummary(timer.id);
         applyGroupFilter();
@@ -3657,6 +3819,35 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         }, 1000); 
     }
     
+    // ── 從船艇小卡送往路線規劃 ──
+    function sendCardToRoutePlanner(timerId) {
+        const t = savedTimers.find(x => x.id === timerId);
+        if (!t) return;
+
+        // 切換到路線規劃分頁
+        switchRpTab('route');
+
+        // 找到對應的選單 option，選中此船艇
+        const shipSel = document.getElementById('rpShipSelect');
+        if (shipSel) {
+            // 重建選單（確保選項存在）
+            shipSel.innerHTML = buildShipGroupedOptions();
+            // 選中目標船艇
+            if ([...shipSel.options].some(o => o.value === t.id)) {
+                shipSel.value = t.id;
+            }
+        }
+
+        // 填入等級與配件
+        document.getElementById('rpLevel').value = t.level || '';
+        const parts = t.parts || createEmptyParts();
+        PART_KEYS.forEach(key => setPartVal(key, 'rp', parts[key] || ''));
+        rpRefreshStatPreview();
+
+        // 觸發搜尋
+        runRoutePlanner();
+    }
+
     function updateFleetCount() {
         const el = document.getElementById("fleetCount");
         if (!el) return;
@@ -6645,6 +6836,72 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         }, 30);
     }
 
+    // ── 使用此路線：將耗時套用回船艇小卡，並同步路線規劃上的等級與配件 ──
+    function applyRouteToCard(timeMins) {
+        // 取得目前路線規劃選中的船艇
+        const shipSel = document.getElementById('rpShipSelect');
+        if (!shipSel || !shipSel.value) {
+            showAlert('請先在路線規劃上方選擇船艇');
+            return;
+        }
+        const timerId = shipSel.value;
+        const t = savedTimers.find(x => x.id === timerId);
+        if (!t) {
+            showAlert('找不到對應船艇，請重新選擇');
+            return;
+        }
+
+        // 從路線規劃讀取目前的等級與配件（可能已被使用者變更）
+        const rpLevel = document.getElementById('rpLevel').value.trim();
+        const rpParts = {};
+        PART_KEYS.forEach(key => { rpParts[key] = getPartVal(key, 'rp'); });
+
+        // 更新等級與配件（若與原來不同）
+        let changed = false;
+        if (rpLevel && rpLevel !== String(t.level || '')) { t.level = rpLevel; changed = true; }
+        PART_KEYS.forEach(key => {
+            if (rpParts[key] !== (t.parts || {})[key]) { changed = true; }
+        });
+        if (changed) {
+            if (!t.parts) t.parts = createEmptyParts();
+            PART_KEYS.forEach(key => { t.parts[key] = rpParts[key]; });
+        }
+
+        // 以當前時間為出航時間，加上路線耗時計算回港時間
+        const now = Date.now();
+        const totalSeconds = Math.round(timeMins * 60);
+        const newEndTime = now + totalSeconds * 1000;
+
+        t.startTime = now;
+        t.endTime = newEndTime;
+        t.totalSeconds = totalSeconds;
+        delete t.stats;
+        delete t.statsUpdatedAt;
+        saveTimersToStorage();
+
+        // 重建卡片
+        const oldCard = document.getElementById(`card-${t.id}`);
+        if (oldCard) oldCard.remove();
+        createTimerCard(t);
+
+        // 重新排序
+        const list = document.getElementById('timerList');
+        getSortedTimers().forEach(st => {
+            const c = document.getElementById(`card-${st.id}`);
+            if (c) list.appendChild(c);
+        });
+        updateFleetCount();
+        refreshRpShipSelect();
+
+        // 切換到艦隊分頁，讓使用者看到更新後的卡片
+        switchRpTab('fleet');
+
+        const pad = n => String(n).padStart(2, '0');
+        const eta = new Date(newEndTime);
+        const etaStr = `${eta.getMonth()+1}/${eta.getDate()} ${pad(eta.getHours())}:${pad(eta.getMinutes())}`;
+        showAlert(`✅ 已套用路線！${t.name} 預計 ${etaStr} 回港`);
+    }
+
     function rpResetAll() {
         // 1. 時間限制：回到「不限時間」
         const radioNone = document.querySelector('input[name="rpTimeMode"][value="none"]');
@@ -6802,13 +7059,14 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
                         return `<span class="${cls}">${letter}</span>${arrow}`;
                     }).join('');
                 })()}</div>
-                <div class="rp-result-stats">
+                <div class="rp-result-stats" style="display:flex; align-items:center;">
                     <span class="rp-stat-item"><span class="rp-stat-label">等級需求</span><span class="rp-stat-value">≥ ${r.minRank}</span></span>
                     <span class="rp-stat-item"><span class="rp-stat-label">總經驗</span><span class="rp-stat-value">${r.exp.toLocaleString()}</span></span>
                     <span class="rp-stat-item"><span class="rp-stat-label">耗時</span><span class="rp-stat-value">${r.timeStr}</span></span>
                     <span class="rp-stat-item"><span class="rp-stat-label">預估回港</span><span class="rp-stat-value highlight">${etaStr}</span></span>
                     <span class="rp-stat-item"><span class="rp-stat-label">航行距離</span><span class="rp-stat-value">${r.range}</span></span>
                     <span class="rp-stat-item"><span class="rp-stat-label">站數</span><span class="rp-stat-value">${r.secCount}</span></span>
+                    <button class="rp-use-route-btn" onclick="applyRouteToCard(${r.timeMins})">✅ 使用此路線</button>
                 </div>
                 ${legendHtml}
                 <div class="rp-result-loot rp-tiered-loot">${tieredLootHtml}</div>
