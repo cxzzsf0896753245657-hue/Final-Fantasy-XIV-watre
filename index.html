@@ -468,6 +468,8 @@
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
             padding-bottom: 2px;
+            min-width: 0;   /* 允許在 flex 容器內收縮，讓 overflow-x: auto 生效 */
+            width: 100%;
         }
         .group-tabs::-webkit-scrollbar { display: none; }
         .group-tab {
@@ -590,7 +592,7 @@
             border-color: rgba(0,0,0,0.07);
         }
         .fleet-toolbar-left {
-            display: flex; align-items: center; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0;
+            display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; flex: 1; min-width: 0; overflow: hidden;
         }
         .fleet-toolbar-right {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
