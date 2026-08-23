@@ -1043,7 +1043,11 @@
             display: flex; align-items: center; gap: 12px;
         }
         .custom-alert-icon {
-            font-size: 16px; flex-shrink: 0; opacity: 0.85;
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 900; flex-shrink: 0;
+            font-style: normal; line-height: 1;
         }
         .custom-alert-msg {
             font-size: 13.5px; color: var(--text-color); line-height: 1.5; flex: 1;
@@ -2169,9 +2173,9 @@
 
 <!-- ── 自製 Alert Modal ── -->
 <div class="custom-alert-overlay" id="customAlertOverlay">
-    <div class="custom-alert-box">
+    <div class="custom-alert-box" id="customAlertBox">
         <div class="custom-alert-body">
-            <span class="custom-alert-icon">⚠️</span>
+            <span class="custom-alert-icon" id="customAlertIcon"></span>
             <span class="custom-alert-msg" id="customAlertMsg"></span>
             <button class="custom-alert-btn" onclick="document.getElementById('customAlertOverlay').classList.remove('visible')">確定</button>
         </div>
@@ -2179,7 +2183,28 @@
 </div>
 <script>
 function showAlert(msg) {
-    document.getElementById('customAlertMsg').textContent = msg;
+    // 清除訊息開頭的 emoji 符號，統一由視窗 icon 呈現
+    const cleanMsg = msg.replace(/^[✅⚠️🔴🟡🟢❌⛔️ℹ️]+\s*/, '');
+    // 判斷類型
+    let type = 'info';
+    if (msg.startsWith('✅')) type = 'success';
+    else if (msg.startsWith('⚠️') || msg.includes('失敗') || msg.includes('錯誤')) type = 'warning';
+
+    const iconEl = document.getElementById('customAlertIcon');
+    const boxEl  = document.getElementById('customAlertBox');
+    const msgEl  = document.getElementById('customAlertMsg');
+
+    // icon 和顏色
+    const map = {
+        success: { icon: '✓', color: '#4caf7d' },
+        warning: { icon: '!',  color: '#e0904a' },
+        info:    { icon: 'i',  color: 'var(--accent-color)' },
+    };
+    const cfg = map[type];
+    iconEl.textContent = cfg.icon;
+    iconEl.style.color = cfg.color;
+    iconEl.style.borderColor = cfg.color;
+    msgEl.textContent = cleanMsg;
     document.getElementById('customAlertOverlay').classList.add('visible');
 }
 // Close on overlay click
@@ -3377,6 +3402,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     }
 
     let alarmMode = localStorage.getItem('sub_alarm_mode') || 'soft';
+    let _audioCtx = null; // 全域共用，避免每次音效都建立新的
     let currentSort = localStorage.getItem('sub_sort') || 'time_asc';
     let volume = parseFloat(localStorage.getItem('sub_volume') || '0.5');
     document.getElementById('alarmSelect').value = alarmMode;
@@ -3386,7 +3412,29 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     function showNotification(name) { if ("Notification" in window && Notification.permission === "granted") { new Notification("潛水艇回港通知", { body: `${name} 已經回到港口了！` }); } }
     function changeAlarm(val) { alarmMode = val; localStorage.setItem('sub_alarm_mode', val); if (val !== 'off') playSound(); }
     function testVolume(val) { volume = parseFloat(val); localStorage.setItem('sub_volume', val); playSound(); }
-    function playSound() { if (alarmMode === 'off') return; const ctx = new (window.AudioContext || window.webkitAudioContext)(); function playNote(freq, type, duration, time) { const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.type = type; osc.frequency.setValueAtTime(freq, ctx.currentTime + time); gain.gain.setValueAtTime(volume * 0.75, ctx.currentTime + time); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + duration); osc.start(ctx.currentTime + time); osc.stop(ctx.currentTime + time + duration); } if (alarmMode === 'soft') { playNote(523.25, 'triangle', 0.3, 0); playNote(659.25, 'triangle', 0.3, 0.2); } else if (alarmMode === 'sharp') { playNote(880, 'square', 0.1, 0); playNote(880, 'square', 0.1, 0.2); } else if (alarmMode === 'ding') { playNote(1046.5, 'sine', 0.5, 0); playNote(1318.5, 'sine', 0.5, 0.1); } }
+    function playSound() {
+        if (alarmMode === 'off') return;
+        // 重用同一個 AudioContext，不再每次新建
+        if (!_audioCtx || _audioCtx.state === 'closed') {
+            _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (_audioCtx.state === 'suspended') _audioCtx.resume();
+        const ctx = _audioCtx;
+        function playNote(freq, type, duration, time) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+            gain.gain.setValueAtTime(volume * 0.75, ctx.currentTime + time);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + duration);
+            osc.start(ctx.currentTime + time);
+            osc.stop(ctx.currentTime + time + duration);
+        }
+        if (alarmMode === 'soft') { playNote(523.25, 'triangle', 0.3, 0); playNote(659.25, 'triangle', 0.3, 0.2); }
+        else if (alarmMode === 'sharp') { playNote(880, 'square', 0.1, 0); playNote(880, 'square', 0.1, 0.2); }
+        else if (alarmMode === 'ding') { playNote(1046.5, 'sine', 0.5, 0); playNote(1318.5, 'sine', 0.5, 0.1); }
+    }
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -3404,7 +3452,19 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     let customGroups = [];
     let activeGroup = GROUP_ALL;
 
-    window.onload = function() { if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode'); loadGroups(); loadTimersFromStorage(); loadCustomLinks(); initOCR(); initSubConfigModal(); initMapNodes(); initRoutePlanner(); initGearPlanner(); };
+    window.onload = function() {
+        if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode');
+        loadGroups(); loadTimersFromStorage(); loadCustomLinks(); initOCR(); initSubConfigModal(); initMapNodes(); initRoutePlanner(); initGearPlanner();
+        // 讓滑鼠滾輪可以橫向捲動標籤列
+        const groupTabsEl = document.getElementById('groupTabsContainer');
+        if (groupTabsEl) {
+            groupTabsEl.addEventListener('wheel', function(e) {
+                if (e.deltaY === 0) return;
+                e.preventDefault();
+                groupTabsEl.scrollLeft += e.deltaY;
+            }, { passive: false });
+        }
+    };
 
     function loadGroups() {
         const data = localStorage.getItem('sub_groups');
@@ -3993,7 +4053,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         renderCustomLinks();
     }
 
-    function saveCustomLinks() { localStorage.setItem('sub_custom_links', JSON.stringify(customLinks)); }
+    function saveCustomLinks() { localStorage.setItem('sub_custom_links', JSON.stringify(customLinks)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
 
     function renderCustomLinks() {
         const container = document.getElementById('linkListContainer');
@@ -4607,7 +4667,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         const card = document.createElement('div'); 
         card.className = 'timer-card'; 
         card.id = `card-${timer.id}`; 
-        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${timer.name}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${timer.level}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div class="card-action-btns"><button class="card-icon-btn btn-route" onclick="sendCardToRoutePlanner('${timer.id}')">路線規劃</button><button class="card-icon-btn btn-config" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="card-icon-btn btn-delete" onclick="deleteTimer('${timer.id}')">刪除</button></div></div>`; 
+        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${escapeHtml(String(timer.name||''))}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${escapeHtml(String(timer.level))}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div class="card-action-btns"><button class="card-icon-btn btn-route" onclick="sendCardToRoutePlanner('${timer.id}')">路線規劃</button><button class="card-icon-btn btn-config" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="card-icon-btn btn-delete" onclick="deleteTimer('${timer.id}')">刪除</button></div></div>`; 
         timerList.appendChild(card); 
         updateConfigSummary(timer.id);
         applyGroupFilter();
@@ -4780,7 +4840,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         const list = document.getElementById('timerList');
         if (list) list.innerHTML = '';
 
-        const data = localStorage.getItem("ffxiv_submarine_timers");
+        const data = localStorage.getItem('ffxiv_submarine_timers');
         if (data) {
             savedTimers = JSON.parse(data);
             // 舊資料相容：補上缺少的群組欄位
@@ -4795,7 +4855,6 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         }
         renderGroupTabs();
         applyGroupFilter();
-        updateFleetCount();
     }
 
     // ══ 海圖跑點 ══════════════════════════════════════════════
@@ -4837,6 +4896,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
 
     function saveMapNodeState() {
         localStorage.setItem('sub_map_nodes', JSON.stringify(mapNodeState));
+        if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData();
     }
 
     function isNodeOn(mapId, node) {
@@ -8139,7 +8199,6 @@ window.toggleUploadZone = function(btn) {
             renderGroupTabs();
             getSortedTimers().forEach(t => createTimerCard(t));
             applyGroupFilter();
-            updateFleetCount();
         } else {
             const room = _rooms[view];
             if (!room) return;
@@ -8150,7 +8209,6 @@ window.toggleUploadZone = function(btn) {
             renderGroupTabs();
             (_viewTimers).forEach(t => createTimerCard(t));
             applyGroupFilter();
-            updateFleetCount();
         }
     };
 
@@ -8186,6 +8244,13 @@ window.toggleUploadZone = function(btn) {
     }
 
     function _listenOwnerRoom(roomId) {
+        // 防呆：確保不會和 _listenRoomTimers 同時監聽同一個房間
+        if (_roomListenerType && _roomListenerType[roomId] === 'member') {
+            console.warn('[listenOwnerRoom] roomId', roomId, '已被 _listenRoomTimers 監聽，先停止再重建');
+            window.CloudSync.stopListenRoom(roomId);
+        }
+        if (!_roomListenerType) window._roomListenerType = {};
+        window._roomListenerType[roomId] = 'owner';
         window.CloudSync.listenRoom(roomId, function(roomData) {
             if (!_rooms[roomId]) return;
             _rooms[roomId].memberNames = roomData.memberNames || {};
@@ -8196,6 +8261,13 @@ window.toggleUploadZone = function(btn) {
 
     function _listenRoomTimers(roomId, roomName) {
         if (!_rooms[roomId]) _rooms[roomId] = { name: roomName, timers: [], groups: [], owner: '', memberNames: {} };
+        // 防呆：確保不會和 _listenOwnerRoom 同時監聽同一個房間
+        if (window._roomListenerType && window._roomListenerType[roomId] === 'owner') {
+            console.warn('[listenRoomTimers] roomId', roomId, '已被 _listenOwnerRoom 監聽，先停止再重建');
+            window.CloudSync.stopListenRoom(roomId);
+        }
+        if (!window._roomListenerType) window._roomListenerType = {};
+        window._roomListenerType[roomId] = 'member';
         window.CloudSync.listenRoom(roomId, function(roomData) {
             if (!_rooms[roomId]) return;
             _rooms[roomId].timers = roomData.timers || [];
@@ -8204,7 +8276,7 @@ window.toggleUploadZone = function(btn) {
             _rooms[roomId].memberNames = roomData.memberNames || {};
             _rooms[roomId].name = roomData.name || roomName;
             if (_currentFleetView === roomId) switchFleetView(roomId);
-            renderRoomList();
+            window.renderRoomList();
             // 若是房主視圖，同步更新成員列表
             if (window._ownedRoomId === roomId) window.renderOwnedRoomMembers?.(roomId);
         });
@@ -8255,6 +8327,7 @@ window.toggleUploadZone = function(btn) {
         if (!myNick) return showAlert('請先設定暱稱才能加入房間');
         const roomId = document.getElementById('joinRoomInput')?.value.trim().toUpperCase();
         if (!roomId || roomId.length !== 6) return showAlert('請輸入 6 碼房間代碼');
+        if (roomId === window._ownedRoomId) return showAlert('這是你自己建立的房間，無法加入');
         if (_rooms[roomId]) return showAlert('已加入此房間');
         try {
             const data = await window.CloudSync.joinRoom(roomId);
@@ -8262,7 +8335,7 @@ window.toggleUploadZone = function(btn) {
             _rooms[roomId] = { name: roomName, timers: data.timers || [], groups: data.groups || [], owner: data.owner || '', memberNames: data.memberNames || {} };
             _addRoomTab(roomId, roomName);
             _listenRoomTimers(roomId, roomName);
-            renderRoomList();
+            window.renderRoomList();
             document.getElementById('joinRoomInput').value = '';
             document.getElementById('joinRoomWrap').style.display = 'none';
             showAlert(`✅ 已加入房間「${roomName}」`);
@@ -8317,6 +8390,13 @@ window.toggleUploadZone = function(btn) {
         if (_currentFleetView !== 'mine') {
             // 加入的房間才需要走分頁離開流程
             cloudLeaveRoomById({ stopPropagation:()=>{} }, _currentFleetView);
+        }
+        // 房主：停止 Firebase 監聽、清除記憶體資料
+        const ownedId = window._ownedRoomId;
+        if (ownedId) {
+            window.CloudSync?.leaveRoom(ownedId);
+            if (_rooms[ownedId]) delete _rooms[ownedId];
+            if (window._roomListenerType) delete window._roomListenerType[ownedId];
         }
         const wrap = document.getElementById('currentRoomWrap');
         const actions = document.getElementById('roomActionWrap');
