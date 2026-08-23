@@ -2415,7 +2415,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="border-top:1px solid var(--edit-border); padding-top:12px;">
                             <div style="font-size:12px; font-weight:700; color:var(--text-color); margin-bottom:8px;">共同編輯</div>
                             <div id="currentRoomWrap" style="display:none; margin-bottom:10px; padding:8px 10px; background:rgba(155,126,200,0.08); border:1px solid rgba(155,126,200,0.2); border-radius:8px;">
-                                <div style="font-size:11px; color:#888; margin-bottom:4px;">目前加入的房間</div>
+                                <div style="font-size:11px; color:#888; margin-bottom:4px;" id="currentRoomLabel">目前加入的房間</div>
                                 <div style="display:flex; align-items:center; justify-content:space-between;">
                                     <span id="currentRoomCode" style="font-size:15px; font-weight:800; color:var(--accent-color); font-family:monospace; letter-spacing:2px;"></span>
                                     <div style="display:flex; gap:6px;">
@@ -8203,10 +8203,16 @@ window.toggleUploadZone = function(btn) {
         try {
             const roomId = await window.CloudSync.createRoom(roomName);
             await window.CloudSync.pushRoomData(roomId, { timers: savedTimers, groups: customGroups });
-            _rooms[roomId] = { name: roomName, timers: savedTimers, groups: customGroups, owner: window.CloudSync.myUUID, memberNames: { [window.CloudSync.myUUID]: myNick } };
-            _addRoomTab(roomId, roomName);
-            _listenRoomTimers(roomId, roomName);
-            renderRoomList();
+            // 房主不需要獨立分頁，資料就是自己的 savedTimers
+            // 只顯示代碼區塊供分享
+            const labelEl = document.getElementById('currentRoomLabel');
+            if (labelEl) labelEl.textContent = '我的房間（分享代碼給其他人加入）';
+            const wrap = document.getElementById('currentRoomWrap');
+            const code = document.getElementById('currentRoomCode');
+            const actions = document.getElementById('roomActionWrap');
+            if (code) code.textContent = roomId;
+            if (wrap) wrap.style.display = 'block';
+            if (actions) actions.style.display = 'none';
             showAlert(`✅ 房間「${roomName}」建立成功！代碼：${roomId}`);
         } catch(e) { showAlert('⚠️ ' + e.message); }
     };
@@ -8246,14 +8252,16 @@ window.toggleUploadZone = function(btn) {
 
     window.cloudLeaveRoom = function() {
         if (_currentFleetView !== 'mine') {
+            // 加入的房間才需要走分頁離開流程
             cloudLeaveRoomById({ stopPropagation:()=>{} }, _currentFleetView);
         }
         const wrap = document.getElementById('currentRoomWrap');
         const actions = document.getElementById('roomActionWrap');
+        const labelEl = document.getElementById('currentRoomLabel');
         if (wrap) wrap.style.display = 'none';
         if (actions) actions.style.display = 'flex';
-        renderRoomList();
-        showAlert('已離開房間');
+        if (labelEl) labelEl.textContent = '目前加入的房間';
+        window.renderRoomList();
     };
 
 // ══ 雲端同步 UI ══
@@ -8324,7 +8332,7 @@ window.toggleUploadZone = function(btn) {
                     ${members.length ? `<strong>成員：</strong>${members.join('、')}` : '<span style="opacity:0.5">尚無其他成員</span>'}
                 </div>
                 <div class="room-card-actions">
-                    <button class="room-card-btn enter" onclick="switchFleetView('${roomId}'); switchRpTab('fleet');">切換視圖</button>
+                    ${room.owner !== (window.CloudSync?.myUUID || '') ? `<button class="room-card-btn enter" onclick="switchFleetView('${roomId}'); switchRpTab('fleet');">切換視圖</button>` : ''}
                     <button class="room-card-btn leave" onclick="cloudLeaveRoomById(event,'${roomId}')">離開房間</button>
                 </div>`;
             wrap.appendChild(card);
