@@ -3406,7 +3406,11 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     }
     function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
     function saveActiveGroup() { localStorage.setItem('sub_active_group', activeGroup); }
-    function allGroupNames() { return [DEFAULT_GROUP, ...customGroups]; }
+    function allGroupNames() {
+        // 房間視圖用房間的群組清單，個人視圖用自己的
+        const groups = _viewGroups !== null ? _viewGroups : customGroups;
+        return [DEFAULT_GROUP, ...groups];
+    }
 
     function renderGroupTabs() {
         const container = document.getElementById('groupTabsContainer');
