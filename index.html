@@ -6512,6 +6512,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         try {
             localStorage.setItem(CRAFT_STORAGE_PARTS, JSON.stringify(craftSelectedParts));
             localStorage.setItem(CRAFT_STORAGE_OWNED, JSON.stringify(craftOwnedMap));
+            // 同步推上雲端，確保重整後資料一致
+            if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData();
         } catch(e) {}
     }
 
@@ -8425,6 +8427,12 @@ window.toggleUploadZone = function(btn) {
         if (typeof loadGroups === 'function') loadGroups();             // 先載群組，供 loadTimersFromStorage 補齊使用
         if (typeof loadTimersFromStorage === 'function') loadTimersFromStorage();
         if (typeof loadCustomLinks === 'function') loadCustomLinks();
+        // 重載配件製作資料（Firebase 同步後更新記憶體與 UI）
+        if (typeof craftLoadFromStorage === 'function') {
+            craftLoadFromStorage();
+            if (typeof craftRenderChips === 'function') craftRenderChips();
+            if (typeof craftRenderResult === 'function') craftRenderResult();
+        }
     });
 
     function _setStatus(msg, ok) {
