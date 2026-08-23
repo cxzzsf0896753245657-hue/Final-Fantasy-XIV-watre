@@ -4757,6 +4757,10 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             let groupsChanged = false;
             groupsInUse.forEach(g => { if (!customGroups.includes(g)) { customGroups.push(g); groupsChanged = true; } });
             if (groupsChanged) saveGroups();
+            // 清空舊卡片，避免重複渲染
+            const list = document.getElementById('timerList');
+            if (list) list.innerHTML = '';
+
             const sorted = getSortedTimers();
             sorted.forEach(timer => createTimerCard(timer));
         }
@@ -8308,8 +8312,8 @@ window.toggleUploadZone = function(btn) {
     }
 
     window.addEventListener('cloudDataLoaded', () => {
+        if (typeof loadGroups === 'function') loadGroups();             // 先載群組，供 loadTimersFromStorage 補齊使用
         if (typeof loadTimersFromStorage === 'function') loadTimersFromStorage();
-        if (typeof loadGroups === 'function') loadGroups();
         if (typeof loadCustomLinks === 'function') loadCustomLinks();
         showAlert('✅ 雲端資料已同步');
     });
