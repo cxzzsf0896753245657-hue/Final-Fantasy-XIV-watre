@@ -24,8 +24,8 @@
         }
         body.light-mode .timer-card { border: 1px solid #dfe6e9; box-shadow: 0 4px 6px rgba(0,0,0,0.05); background-color: #ffffff; }
         body.light-mode .progress-bar-bg { background-color: #e0e0e0; }
-        body.light-mode .collapsible-btn { background-color: #ffffff; border: 1px solid #dcdde1; color: #2d3436; }
-        body.light-mode .collapsible-btn:hover { background-color: #f1f2f6; }
+        body.light-mode .collapsible-btn { background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08); color: #2d3436; }
+        body.light-mode .collapsible-btn:hover { background: rgba(0,0,0,0.05); }
         body.light-mode .content { background-color: #ffffff; }
         body.light-mode .btn-top, body.light-mode #alarmSelect { 
             background: #dfe6e9; color: #2d3436; border: 1px solid #ced6e0; 
@@ -148,6 +148,7 @@
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px;
             transition: background-color 0.22s, color 0.22s;
         }
+        *, *::before, *::after { box-sizing: border-box; }
 
         /* ── Two-column layout ── */
         .page-layout {
@@ -172,26 +173,153 @@
             .left-panel { flex: none; width: 100%; }
         }
 
-        .header-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 20px; gap: 10px; }
-        h1 { color: var(--accent-color); font-size: 24px; margin: 0; text-align: center; }
-        .top-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
-        .btn-top { cursor: pointer; background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
-        
-        #alarmSelect { background: #333; color: #fff; border: 1px solid #444; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; }
-        #volumeSlider { width: 80px; cursor: pointer; }
-        
-        .upload-zone { border: 2px dashed #444; background-color: var(--card-color); padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; }
-        .upload-zone:hover { border-color: var(--accent-color); background-color: rgba(155,126,200,0.08); }
+        .header-wrapper { display: flex; flex-direction: column; align-items: flex-start; width: 100%; margin-bottom: 14px; gap: 0; }
+        h1 { color: var(--text-color); font-size: 18px; font-weight: 800; margin: 0 0 12px 0; letter-spacing: 0.2px; line-height: 1.3; }
+        h1 span { font-size: 12px; color: #888; font-weight: 400; margin-left: 6px; }
+        .top-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-start; width: 100%; }
+        .btn-top { cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-color); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 8px; font-size: 13px; transition: background 0.15s; }
+        .btn-top:hover { background: rgba(255,255,255,0.1); }
+
+        /* 控制列容器 */
+        .lp-controls {
+            display: flex; align-items: center; gap: 6px; width: 100%; flex-wrap: wrap;
+            padding: 8px 10px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+        body.light-mode .lp-controls { background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.07); }
+
+        /* Icon 按鈕 */
+        .lp-icon-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+            color: var(--text-color); font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; flex-shrink: 0;
+        }
+        .lp-icon-btn:hover { background: rgba(255,255,255,0.1); }
+        body.light-mode .lp-icon-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+
+        /* 音效控制組：移除多餘框線，直接在 lp-controls 內平排 */
+        .lp-sound-group {
+            display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+        }
+        .lp-sound-label { font-size: 10.5px; color: #888; white-space: nowrap; flex-shrink: 0; }
+        #alarmSelect { background: transparent; color: var(--text-color); border: none; font-size: 12px; cursor: pointer; outline: none; flex: 1; min-width: 0; }
+        body.light-mode #alarmSelect { color: #333; }
+        #volumeSlider { width: 55px; cursor: pointer; flex-shrink: 0; }
+        .lp-test-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #888;
+            border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer;
+            white-space: nowrap; flex-shrink: 0; transition: color 0.15s;
+        }
+        .lp-test-btn:hover { color: var(--text-color); }
+        body.light-mode .lp-test-btn { border-color: rgba(0,0,0,0.1); color: #aaa; }
+
+        /* 上傳區：摺疊式 */
+        .lp-upload-toggle {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            padding: 8px 12px; border-radius: 8px; cursor: pointer;
+            border: 1px dashed rgba(255,255,255,0.12); color: #888;
+            font-size: 12.5px; font-weight: 600; background: transparent;
+            text-align: left; margin-bottom: 6px; box-sizing: border-box;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .lp-upload-toggle:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.22); color: var(--text-color); }
+        body.light-mode .lp-upload-toggle { border-color: rgba(0,0,0,0.12); color: #aaa; }
+        .lp-upload-toggle .lp-upload-arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; }
+        .lp-upload-toggle.open .lp-upload-arrow { transform: rotate(180deg); }
+        #uploadZoneWrap { display: none; margin-bottom: 8px; }
+        #uploadZoneWrap.open { display: block; }
+
         #fileInput { display: none; }
-        .status { font-size: 14px; color: #aaa; margin-top: 10px; min-height: 20px; }
-        
-        .collapsible-wrapper { width: 100%; margin-bottom: 25px; }
-        .collapsible-btn { background: #2a2a2a; color: var(--text-color); border: 1px solid #444; padding: 8px 15px; width: 100%; text-align: left; cursor: pointer; border-radius: 6px; font-size: 15px; display: flex; align-items: center; gap: 10px; margin-bottom: 5px; transition: 0.3s; }
-        .collapsible-btn span { font-size: 20px; font-weight: bold; width: 20px; text-align: center; }
-        .collapsible-btn:hover { background: #3a3a3a; }
+        .status { font-size: 12px; color: #888; margin-top: 8px; min-height: 18px; }
+        .upload-zone { border: 2px dashed #444; background-color: var(--card-color); padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 0; }
+        .upload-zone:hover { border-color: var(--accent-color); background-color: rgba(155,126,200,0.08); }
+        .upload-zone p { margin: 0 0 4px; font-size: 12.5px; color: #aaa; }
+        body.light-mode .upload-zone { background-color: #fff; border-color: #ced6e0; }
+        body.light-mode .upload-zone:hover { background-color: #f1f2f6; }
+        body.light-mode .upload-zone p { color: #888; }
+
+        /* ── 側邊欄分組標題 ── */
+        .lp-group-label {
+            font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+            text-transform: uppercase; color: #666;
+            padding: 0 4px; margin: 14px 0 6px;
+            user-select: none;
+        }
+        .lp-group-label:first-child { margin-top: 0; }
+        body.light-mode .lp-group-label { color: #bbb; }
+
+        .collapsible-wrapper { width: 100%; margin-bottom: 20px; display: flex; flex-direction: column; gap: 4px; }
         .content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: var(--card-color); border-radius: 0 0 6px 6px; }
-        
+        .cloud-status-badge { margin-left: auto; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: rgba(102,102,102,0.2); color: #888; }
+        .cloud-status-badge.connected { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .cloud-status-badge.error { background: rgba(255,83,112,0.15); color: #ff5370; }
+        body.light-mode .cloud-status-badge { background: rgba(0,0,0,0.07); color: #999; }
+
+        /* ── 房間列表小卡 ── */
+        .room-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        body.light-mode .room-card { background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.08); }
+        .room-card-name {
+            font-size: 13.5px; font-weight: 800; color: var(--text-color);
+            margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .room-card-code {
+            font-size: 10.5px; font-family: monospace; letter-spacing: 1.5px;
+            color: var(--accent-color); background: rgba(155,126,200,0.1);
+            padding: 1px 6px; border-radius: 5px; font-weight: 700;
+        }
+        .room-card-meta {
+            font-size: 11.5px; color: #888; line-height: 1.7;
+        }
+        .room-card-meta strong { color: #bbb; font-weight: 700; }
+        body.light-mode .room-card-meta { color: #aaa; }
+        body.light-mode .room-card-meta strong { color: #666; }
+        .room-card-actions {
+            display: flex; gap: 6px; margin-top: 8px;
+        }
+        .room-card-btn {
+            font-size: 11.5px; font-weight: 700; padding: 4px 12px;
+            border-radius: 7px; cursor: pointer; border: 1px solid;
+            transition: background 0.15s;
+        }
+        .room-card-btn.enter {
+            background: rgba(155,126,200,0.12); border-color: rgba(155,126,200,0.3);
+            color: var(--accent-color);
+        }
+        .room-card-btn.enter:hover { background: rgba(155,126,200,0.22); }
+        .room-card-btn.leave {
+            background: transparent; border-color: rgba(255,83,112,0.25); color: #e06070;
+        }
+        .room-card-btn.leave:hover { background: rgba(255,83,112,0.1); }
         .thumb-container { padding: 4px 5px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: fit-content; }
+
+        /* 折疊按鈕：左側指示條 */
+        .collapsible-btn {
+            width: 100%; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+            color: var(--text-color); padding: 9px 12px; text-align: left; cursor: pointer;
+            font-size: 13.5px; font-weight: 600; border-radius: 8px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 0;
+            box-sizing: border-box; position: relative; overflow: hidden;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .collapsible-btn::before {
+            content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+            width: 3px; border-radius: 0 2px 2px 0;
+            background: var(--accent-color); opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .collapsible-btn:hover::before { opacity: 1; }
+        .collapsible-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); padding-left: 15px; }
+        .collapsible-btn span { font-size: 13px; font-weight: 800; color: var(--accent-color); flex-shrink: 0; }
+        body.light-mode .collapsible-btn { background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08); color: #2d3436; }
+        body.light-mode .collapsible-btn:hover { background: rgba(0,0,0,0.05); }
         .thumb-img { width: 100px; height: auto; cursor: pointer; border: 2px solid #444; display: block; }
         .thumb-text { text-align: center; margin-top: 5px; color: var(--accent-color); font-weight: bold; }
         
@@ -331,32 +459,126 @@
         body.light-mode .map-divider { border-color:#dde3ec; }
 
         /* ── 群組 / 標籤 ── */
-        .group-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:0; }
-        .group-tab { display:inline-flex; align-items:center; gap:5px; background:#2a2a2a; border:1px solid #444; color:var(--text-color); padding:4px 10px; border-radius:14px; font-size:12px; cursor:pointer; user-select:none; }
-        .group-tab.active { background: var(--accent-color); color:#fff; border-color: var(--accent-color); font-weight:bold; }
-        .group-tab-x { font-size:10px; opacity:0.55; padding:0 2px; }
-        .group-tab-x:hover { opacity:1; color:#ff5370; }
-        .group-tab-edit { font-size:11px; opacity:0.55; padding:0 2px; }
-        .group-tab-edit:hover { opacity:1; color: var(--accent-color); }
-        .group-tab-add { background:transparent; border:1px dashed #666; color:var(--accent-color); }
+        /* ── 群組標籤 ── */
+        .group-tabs {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+        .group-tabs::-webkit-scrollbar { display: none; }
+        .group-tab {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #aaa;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .group-tab:hover { background: rgba(255,255,255,0.07); color: #e0e0e0; }
+        .group-tab.active {
+            background: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+            font-weight: 700;
+        }
+        /* 編輯/刪除：hover 時才浮現 */
+        .group-tab-x {
+            font-size: 11px; opacity: 0; padding: 0 1px;
+            transition: opacity 0.15s, color 0.15s;
+            line-height: 1;
+        }
+        .group-tab-edit {
+            font-size: 11px; opacity: 0; padding: 0 1px;
+            transition: opacity 0.15s, color 0.15s;
+            line-height: 1;
+        }
+        .group-tab:hover .group-tab-x,
+        .group-tab:hover .group-tab-edit { opacity: 0.65; }
+        .group-tab-x:hover { opacity: 1 !important; color: #ff5370; }
+        .group-tab-edit:hover { opacity: 1 !important; color: var(--accent-color); }
+        /* 拖曳把手 */
         .group-tab-handle {
             display: inline-flex; align-items: center; justify-content: center;
-            cursor: grab; padding: 0 4px 0 0; opacity: 0.45; font-size: 11px;
+            cursor: grab; padding: 0 3px 0 0; opacity: 0.3; font-size: 10px;
             line-height: 1; user-select: none; flex-shrink: 0;
+            transition: opacity 0.15s;
         }
+        .group-tab:hover .group-tab-handle { opacity: 0.65; }
         .group-tab-handle:active { cursor: grabbing; }
-        .group-tab-handle:hover { opacity: 0.9; }
-        .group-tab-dragging { opacity: 0.4; pointer-events: none; }
-        .group-tab-placeholder { display:inline-flex; border: 2px dashed var(--accent-color); border-radius: 14px; opacity: 0.45; flex-shrink: 0; }
-        body.light-mode .group-tab { background:#f1f2f6; border:1px solid #dcdde1; color:#2d3436; }
-        body.light-mode .group-tab.active { background: var(--accent-color); color:#fff; }
-        body.light-mode .group-tab-add { border:1px dashed #b2bec3; }
+        .group-tab-dragging { opacity: 0.35; pointer-events: none; }
+        .group-tab-placeholder {
+            display: inline-flex; border: 2px dashed var(--accent-color);
+            border-radius: 20px; opacity: 0.4; flex-shrink: 0;
+        }
+        /* 新增標籤按鈕 */
+        .group-tab-add {
+            background: transparent;
+            border: 1px dashed rgba(155,126,200,0.45);
+            color: var(--accent-color);
+            opacity: 0.75;
+        }
+        .group-tab-add:hover { opacity: 1; background: rgba(155,126,200,0.1); }
+        /* Light mode */
+        body.light-mode .group-tab {
+            border-color: rgba(0,0,0,0.12); color: #666;
+        }
+        body.light-mode .group-tab:hover { background: rgba(0,0,0,0.05); color: #333; }
+        body.light-mode .group-tab.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        body.light-mode .group-tab-add { border-color: rgba(124,92,191,0.4); }
+
         .card-group-select { background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); border-radius:6px; font-size:11px; padding:3px 6px; max-width:110px; cursor:pointer; }
 
-        /* ── 艦隊 toolbar ── */
+        /* ── 艦隊視圖切換列 ── */
+        #fleetViewSwitcher {
+            display: none;
+            align-items: center;
+            padding: 10px 14px 0;
+        }
+        .fleet-seg-control {
+            display: inline-flex;
+            background: rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 3px;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+        body.light-mode .fleet-seg-control { background: rgba(0,0,0,0.07); }
+        .fleet-view-tab {
+            padding: 5px 14px; border-radius: 16px; font-size: 12.5px; font-weight: 700;
+            cursor: pointer; border: none; background: transparent; color: #888;
+            transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+            white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .fleet-view-tab.active {
+            background: var(--card-color); color: var(--text-color);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+        }
+        body.light-mode .fleet-view-tab { color: #aaa; }
+        body.light-mode .fleet-view-tab.active { background: #fff; color: #2d3436; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+        .fleet-view-tab:hover:not(.active) { color: var(--text-color); }
+        .fleet-view-badge { font-size: 9.5px; font-weight: 800; background: rgba(76,175,80,0.25); color: #4caf50; padding: 1px 5px; border-radius: 7px; }
+        .fleet-view-close { font-size: 11px; opacity: 0.5; margin-left: 2px; line-height: 1; }
+        .fleet-view-tab:hover .fleet-view-close { opacity: 1; color: #ff5370; }
+
+        /* ── 艦隊 toolbar：改為兩列設計 ── */
         .fleet-toolbar {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
             padding: 10px 14px;
             margin-bottom: 16px;
             background: rgba(255,255,255,0.025);
@@ -367,8 +589,12 @@
             background: rgba(0,0,0,0.02);
             border-color: rgba(0,0,0,0.07);
         }
-        .fleet-toolbar-left { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
-        .fleet-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .fleet-toolbar-left {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0;
+        }
+        .fleet-toolbar-right {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
 
         /* 手動新增按鈕 */
         .fleet-add-btn {
@@ -449,70 +675,77 @@
         /* ── 文字層級系統：大 / 中 / 小 ── */
         .rp-section {
             border: 1px solid var(--edit-border);
-            border-radius: 10px;
-            padding: 16px 18px 18px;
-            margin-bottom: 16px;
+            border-radius: 12px;
+            padding: 18px 20px 20px;
+            margin-bottom: 14px;
             background: rgba(255,255,255,0.015);
         }
         body.light-mode .rp-section { background: rgba(0,0,0,0.015); }
         .rp-section:last-of-type { margin-bottom: 0; }
 
-        .rp-section-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+        .rp-section-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px; }
         .rp-section-num {
             display: inline-flex; align-items: center; justify-content: center;
             width: 22px; height: 22px; border-radius: 50%;
             background: var(--accent-color); color: #fff;
             font-size: 12px; font-weight: 800; flex-shrink: 0;
         }
-        /* 大字：章節標題 */
-        .rp-section-title { font-size: 16px; font-weight: 800; color: var(--accent-color); margin: 0; letter-spacing: 0.3px; }
-        /* 小字：章節輔助說明 */
+        .rp-section-title { font-size: 15px; font-weight: 800; color: var(--accent-color); margin: 0; letter-spacing: 0.3px; }
         .rp-section-hint { font-size: 11.5px; color: #888; margin: 2px 0 12px 30px; line-height: 1.5; }
         body.light-mode .rp-section-hint { color: #8a94a3; }
-        .rp-section-hint-inline { font-size: 11.5px; color: #888; font-weight: 400; margin-left: 8px; align-self: center; }
+        .rp-section-hint-inline { font-size: 11px; color: #888; font-weight: 400; margin-left: 6px; align-self: center; }
         body.light-mode .rp-section-hint-inline { color: #8a94a3; }
 
         .rp-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-        .rp-field { display: flex; flex-direction: column; gap: 4px; }
-        /* 中字：欄位標籤 */
-        .rp-field label { font-size: 12.5px; font-weight: 700; color: var(--text-color); opacity: 0.85; }
+
+        /* ── rp-field：label 在上，輸入框在下，留白加大 ── */
+        .rp-field { display: flex; flex-direction: column; gap: 5px; }
+        .rp-field label {
+            font-size: 11px; font-weight: 700;
+            color: #888;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        body.light-mode .rp-field label { color: #999; }
         .rp-field select, .rp-field input[type=text], .rp-field input[type=number], .rp-field input[type=datetime-local] {
             background: var(--edit-bg); color: var(--text-color); border: 1px solid var(--edit-border);
-            padding: 7px 11px; border-radius: 7px; font-size: 13.5px; outline: none;
+            padding: 9px 12px; border-radius: 9px; font-size: 13.5px; outline: none;
+            transition: border-color 0.15s;
         }
         .rp-field select:focus, .rp-field input:focus { border-color: var(--accent-color); }
 
+        /* ── 四部位配件：2×2 grid ── */
         /* ── 自訂配件下拉 ── */
         .part-sel-wrap { position: relative; display: inline-block; }
         .part-sel-trigger {
             display: flex; align-items: center; justify-content: space-between;
             background: var(--edit-bg); color: var(--text-color);
             border: 1px solid var(--edit-border);
-            padding: 7px 11px; border-radius: 7px; font-size: 13.5px;
+            padding: 9px 12px; border-radius: 9px; font-size: 13px;
             cursor: pointer; user-select: none; min-width: 140px; gap: 8px;
             font-family: inherit;
+            transition: border-color 0.15s;
         }
-        .part-sel-trigger:after { content: '▾'; font-size: 11px; opacity: 0.6; flex-shrink: 0; }
+        .part-sel-trigger:after { content: '▾'; font-size: 11px; opacity: 0.5; flex-shrink: 0; }
         .part-sel-wrap.open .part-sel-trigger { border-color: var(--accent-color); }
         .part-sel-dropdown {
-            display: none; position: absolute; top: calc(100% + 3px); left: 0;
+            display: none; position: absolute; top: calc(100% + 4px); left: 0;
             min-width: 100%; max-height: 260px; overflow-y: auto;
             background: var(--edit-bg); border: 1px solid var(--accent-color);
-            border-radius: 8px; z-index: 8000;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+            border-radius: 10px; z-index: 8000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.55);
         }
         .part-sel-wrap.open .part-sel-dropdown { display: block; }
         .part-sel-opt {
-            padding: 7px 13px; font-size: 13px; cursor: pointer;
+            padding: 9px 14px; font-size: 13px; cursor: pointer;
             color: var(--text-color); white-space: nowrap;
             transition: background 0.1s;
         }
         .part-sel-opt:hover { background: rgba(155,126,200,0.18); }
         .part-sel-opt.selected { color: var(--accent-color); font-weight: 700; }
         body.light-mode .part-sel-dropdown { box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
-        .rp-field .num-spinner { border-radius: 7px; font-size: 13.5px; }
-        .rp-field .num-spinner input[type="text"] { padding: 7px 4px; font-size: 13.5px; }
-        /* 中字：單選群組 */
+        .rp-field .num-spinner { border-radius: 9px; font-size: 13.5px; }
+        .rp-field .num-spinner input[type="text"] { padding: 9px 6px; font-size: 13.5px; }
         .rp-radio-group { display: flex; gap: 18px; align-items: center; font-size: 13.5px; font-weight: 600; flex-wrap: wrap; }
         .rp-radio-group label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
         .rp-chk-box { display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: 620px; }
@@ -1356,6 +1589,7 @@
             font-size: 12.5px; font-weight: 700; color: var(--text-color);
         }
         body.light-mode .craft-qty-btn { color: #444; }
+        .craft-inv-footnote {
             padding: 6px 12px 8px;
             font-size: 11px; color: #888; text-align: right; font-style: italic;
             border-top: 1px solid var(--edit-border);
@@ -1365,6 +1599,18 @@
         @media (max-width: 760px) {
             .craft-mat-cols { grid-template-columns: repeat(4, minmax(180px, 1fr)); min-width: 720px; }
         }
+
+        /* ── 桌機版：隱藏手機用的下拉和 Tab，顯示全部欄 ── */
+        @media (min-width: 641px) {
+            .craft-mob-selects { display: none !important; }
+            .craft-mob-tabs { display: none !important; }
+            .craft-desktop-only { display: block !important; }
+            .craft-mat-col { display: flex !important; }
+            .craft-mat-cols { display: grid !important; min-width: 880px; grid-template-columns: minmax(200px,1fr) repeat(3, minmax(220px,1fr)); }
+        }
+
+        /* ── 手機版：製作分頁 ── */
+        /* (在 @media max-width:640px 區塊內) */
 
         /* ── 配件製作：格狀選擇表格 ── */
         .craft-selector-wrap { display: flex; flex-direction: column; gap: 8px; }
@@ -1452,14 +1698,14 @@
            RWD & UX IMPROVEMENTS
            ══════════════════════════════════════════════════════ */
 
-        /* ── 主題切換平滑過渡（僅針對背景/邊框/文字色，排除動畫元件）── */
+        /* ── 主題切換平滑過渡 ── */
         body, .timer-card, .rp-result-card, .rp-section,
         .collapsible-btn, .left-panel, .right-panel,
         .rp-panel-tabs, .rp-panel-tab {
             transition: background-color 0.22s ease, border-color 0.18s ease, color 0.18s ease;
         }
 
-        /* ── 分頁列：手機版改為可橫向捲動，防截斷 ── */
+        /* ── 分頁列橫向捲動 ── */
         .rp-panel-tabs {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -1467,121 +1713,446 @@
         }
         .rp-panel-tabs::-webkit-scrollbar { display: none; }
 
-        /* ── 固定按鈕（贊助/回報）：手機版縮小並避免遮擋 ── */
+        /* ── 路線規劃 stats 按鈕靠右 ── */
+        .rp-use-route-btn { min-height: 34px; padding: 5px 14px; }
+
+        /* ══════════════════════════════════════════════════════
+           MOBILE REDESIGN  (≤ 640px)
+           – Bottom Tab Bar 取代左右分欄
+           – 電腦版完全不受影響
+           ══════════════════════════════════════════════════════ */
         @media (max-width: 640px) {
+
+            /* 全域 padding */
+            body { padding: 0; padding-bottom: 72px; }
+
+            /* 頁面改為單欄 */
+            .page-layout {
+                flex-direction: column;
+                gap: 0;
+                max-width: 100vw;
+            }
+
+            /* ── 左側面板：手機版隱藏，改為「工具」分頁內容 ── */
+            .left-panel {
+                display: none;
+            }
+
+            /* ── 右側面板：全寬 ── */
+            .right-panel {
+                width: 100%;
+                min-width: 0;
+                border-radius: 0;
+                border: none;
+                padding: 0;
+                background: transparent;
+            }
+
+            /* ── 原本右側的分頁列：手機版隱藏（改用底部導航）── */
+            .rp-panel-tabs {
+                display: none;
+            }
+
+            /* ── 手機版頂部標題列 ── */
+            #mobileHeader {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 16px 10px;
+                background: var(--card-bg, #1e1e2e);
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            #mobileHeader h2 {
+                margin: 0;
+                font-size: 15px;
+                font-weight: 700;
+                color: var(--text-color);
+                letter-spacing: 0.3px;
+            }
+            #mobileHeader .mob-header-right {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+            #mobileHeader .mob-icon-btn {
+                background: rgba(255,255,255,0.07);
+                border: none;
+                border-radius: 10px;
+                color: var(--text-color);
+                font-size: 15px;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+            body.light-mode #mobileHeader {
+                background: #f4f4f8;
+                border-bottom-color: rgba(0,0,0,0.08);
+            }
+            body.light-mode #mobileHeader .mob-icon-btn {
+                background: rgba(0,0,0,0.06);
+            }
+
+            /* ── 底部導航欄 ── */
+            #mobileBottomNav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 200;
+                background: var(--card-bg, #1e1e2e);
+                border-top: 1px solid rgba(255,255,255,0.08);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+            .mob-nav-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px 4px 10px;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                gap: 3px;
+                transition: opacity 0.15s;
+            }
+            .mob-nav-item .mob-nav-icon {
+                font-size: 20px;
+                line-height: 1;
+            }
+            .mob-nav-item .mob-nav-label {
+                font-size: 10px;
+                color: #666;
+                font-weight: 500;
+                white-space: nowrap;
+                transition: color 0.15s;
+            }
+            .mob-nav-item.active .mob-nav-label {
+                color: #82aaff;
+            }
+            .mob-nav-item.active .mob-nav-icon {
+                filter: drop-shadow(0 0 4px rgba(130,170,255,0.5));
+            }
+            body.light-mode #mobileBottomNav {
+                background: rgba(248,249,252,0.95);
+                border-top-color: rgba(0,0,0,0.09);
+            }
+            body.light-mode .mob-nav-item .mob-nav-label { color: #aaa; }
+            body.light-mode .mob-nav-item.active .mob-nav-label { color: #3a5a9f; }
+
+            /* ── 工具面板（手機版左側內容）── */
+            #mobileToolPanel {
+                display: none;
+            }
+            #mobileToolPanel.active {
+                display: block;
+                padding: 12px 14px;
+            }
+            /* 讓原本左側面板的 header-wrapper（標題、設定）在工具面板裡顯示 */
+            #mobileToolPanel .header-wrapper {
+                display: block;
+                margin-bottom: 14px;
+            }
+            #mobileToolPanel h1 {
+                font-size: 16px;
+                margin: 0 0 10px;
+            }
+            #mobileToolPanel .top-btns {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            /* ── 右側分頁面板：手機版 ── */
+            .rp-section { padding: 12px 14px 16px; }
+            .rp-result-card { padding: 12px 14px; }
+
+            /* 艦隊工具列 */
+            .fleet-toolbar {
+                padding: 10px 14px;
+                gap: 8px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                margin-bottom: 8px;
+            }
+            .fleet-toolbar-right { gap: 6px; }
+
+            /* 計時卡片：單欄 */
+            .timer-list { grid-template-columns: 1fr; padding: 8px 14px; gap: 10px; }
+
+            /* 路線規劃欄位全寬 */
+            .rp-multiselect  { min-width: 0; width: 100%; }
+            .rp-sector-wrap  { min-width: 0; width: 100%; }
+            .rp-row          { flex-direction: column; align-items: stretch; }
+            .rp-row .rp-field { width: 100%; }
+            .rp-field select,
+            .rp-field input  { width: 100%; box-sizing: border-box; }
+            /* 選船艇列：手機直排全寬 */
+            .rp-ship-row { flex-direction: column; align-items: stretch; }
+            .rp-ship-row .rp-field { width: 100%; }
+            .rp-ship-row select { width: 100% !important; box-sizing: border-box; }
+            .rp-stat-badges-inline { margin-top: 4px; }
+            /* 四部位配件：手機 2×2 grid */
+            .rp-parts-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .rp-parts-grid .rp-field { width: 100%; }
+            .rp-parts-grid .part-sel-wrap { width: 100%; }
+            .rp-parts-grid .part-sel-trigger { min-width: 0; width: 100%; box-sizing: border-box; font-size: 12px; padding: 8px 10px; }
+
+            /* 路線結果 stats 按鈕換行靠右 */
+            .rp-result-stats { flex-wrap: wrap; }
+            .rp-use-route-btn { margin-left: auto; margin-top: 4px; }
+
+            /* ── 製作分頁：手機版 ── */
+            .craft-desktop-only { display: none !important; }
+            .craft-mob-selects { display: flex !important; flex-direction: column; gap: 10px; }
+            .craft-mob-sel-row { display: flex; align-items: center; gap: 10px; }
+            .craft-mob-sel-row label { font-size: 13px; font-weight: 700; color: var(--accent-color); width: 36px; flex-shrink: 0; }
+            .craft-mob-sel-row select { flex: 1; background: var(--edit-bg); color: var(--text-color); border: 1px solid var(--edit-border); border-radius: 8px; padding: 9px 10px; font-size: 13.5px; outline: none; }
+            .craft-mob-sel-row select:focus { border-color: var(--accent-color); }
+
+            /* 素材列表 Tab 切換 */
+            .craft-mob-tabs { display: flex !important; background: var(--edit-bg); border-bottom: 1px solid var(--edit-border); }
+            .craft-mob-tab { flex: 1; padding: 9px 4px; font-size: 11.5px; font-weight: 700; color: #888; text-align: center; cursor: pointer; border: none; background: transparent; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+            .craft-mob-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+            .craft-mat-cols { display: block !important; min-width: 0 !important; }
+            .craft-mat-col { display: none !important; border-right: none; }
+            .craft-mat-col.mob-col-active { display: flex !important; }
+            .craft-mat-col-body { max-height: 55vh; }
+
+            /* 等級表可橫捲 */
+            .craft-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .craft-grid-table { font-size: 13px; }
+            .craft-grid-table th, .craft-grid-table td { padding: 8px 10px; }
+
+            /* 船艇設定 Modal */
+            .sub-modal-box { padding: 16px 12px; }
+            .sub-part-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+            .sub-part-item select { width: 100%; }
+
+            /* 海圖節點加大 */
+            .map-node { width: 36px; height: 36px; font-size: 13px; border-radius: 8px; }
+            .map-nodes { gap: 7px; }
+
+            /* 固定贊助/回報按鈕 */
             #sponsorBtn, #reportBtn {
                 padding: 5px 10px;
                 font-size: 11px;
                 border-radius: 14px;
+                top: 8px;
             }
-            #sponsorBtn { right: 10px; top: 8px; }
-            #reportBtn  { right: 110px; top: 8px; }
+            #sponsorBtn { right: 10px; }
+            #reportBtn  { right: 110px; }
         }
 
-        /* ── 海圖跑點節點：手機版加大觸控目標 ── */
-        @media (max-width: 640px) {
-            .map-node {
-                width: 36px;
-                height: 36px;
-                font-size: 13px;
-                border-radius: 8px;
-            }
-            .map-nodes { gap: 7px; }
-        }
-
-        /* ── 船艇小卡按鈕群組：視覺分組（刪除鍵與其他鍵之間加間距分隔）── */
-        .delete-btn-wrapper > div {
+        /* ── 選船艇列：桌機橫排，手機直排 ── */
+        .rp-ship-row {
             display: flex;
-            gap: 6px;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 10px;
         }
-        .delete-btn-wrapper .delete-btn {
-            margin-left: 6px;
-            border-left: 1px solid #4a2a2a;
-            padding-left: 14px;
+        .rp-stat-badges-inline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-self: flex-end;
+            padding-bottom: 2px;
         }
-        body.light-mode .delete-btn-wrapper .delete-btn {
-            border-left-color: #f5b7b1;
+        /* ── 四部位配件：桌機橫排，手機 2×2 ── */
+        .rp-parts-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
         }
+        .rp-parts-grid .part-sel-trigger { min-width: 140px; }
 
-        /* ── 路線規劃：min-width 欄位在小螢幕自動縮放 ── */
-        @media (max-width: 640px) {
-            .rp-multiselect  { min-width: 0; width: 100%; }
-            .rp-sector-wrap  { min-width: 0; width: 100%; }
-            .rp-row          { flex-direction: column; align-items: stretch; }
-            .rp-field        { width: 100%; }
-            .rp-field select,
-            .rp-field input  { width: 100%; box-sizing: border-box; }
-            .part-sel-trigger { min-width: 0; width: 100%; }
+        @media (min-width: 641px) and (max-width: 860px) {
+            .timer-list { grid-template-columns: 1fr; }
         }
-
-        /* ── 路線結果 stats 列：按鈕在小螢幕獨立一行靠右 ── */
-        @media (max-width: 640px) {
-            .rp-result-stats {
-                flex-wrap: wrap;
-            }
-            .rp-use-route-btn {
-                margin-left: auto;
-                margin-top: 4px;
-            }
-        }
-
-        /* ── 船艇設定 Modal：手機版下拉欄位全寬 ── */
-        @media (max-width: 640px) {
-            .sub-modal-box {
-                padding: 16px 12px;
-            }
-            .sub-part-grid {
-                grid-template-columns: 1fr 1fr !important;
-                gap: 10px;
-            }
-            .sub-part-item select {
-                width: 100%;
-            }
-            .sub-stat-grid {
-                gap: 8px;
-            }
-            .sub-stat-value {
-                width: 90px;
-            }
-        }
-
-        /* ── 左側面板：手機版 padding 縮小 ── */
-        @media (max-width: 640px) {
-            body { padding: 10px 8px; }
-            .page-layout { gap: 14px; }
-            h1 { font-size: 18px; }
-            .collapsible-btn { font-size: 13px; padding: 7px 12px; }
-        }
-
-        /* ── 右側分頁面板：手機版移除不必要內距 ── */
-        @media (max-width: 640px) {
-            .rp-panel-tab {
-                padding: 8px 12px;
-                font-size: 13px;
-            }
-            .rp-section {
-                padding: 12px 12px 14px;
-            }
-            .rp-result-card {
-                padding: 12px 12px;
-            }
-        }
-
-        /* ── 計時器雙欄 Grid：在平板斷點前改用彈性單欄 ── */
-        @media (max-width: 860px) {
-            .timer-list {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ── 使用此路線按鈕：提升觸控高度 ── */
-        .rp-use-route-btn {
-            min-height: 34px;
-            padding: 5px 14px;
-        }
-
     </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, off, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqcX6hhHVBe58ko9-XVtLzYHLOn6yhmfY",
+            authDomain: "final-fantasy-xiv-watre.firebaseapp.com",
+            databaseURL: "https://final-fantasy-xiv-watre-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "final-fantasy-xiv-watre",
+            storageBucket: "final-fantasy-xiv-watre.firebasestorage.app",
+            messagingSenderId: "506472520239",
+            appId: "1:506472520239:web:bbdd534f016fdb217484da"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getDatabase(app);
+
+        function generateUUID() {
+            return 'xxxx-xxxx-xxxx-xxxx'.replace(/x/g, () => Math.floor(Math.random()*16).toString(16));
+        }
+        function generateRoomCode() {
+            const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            return Array.from({length:6}, () => c[Math.floor(Math.random()*c.length)]).join('');
+        }
+        function getMyUUID() {
+            let uuid = localStorage.getItem('sub_user_uuid');
+            if (!uuid) { uuid = generateUUID(); localStorage.setItem('sub_user_uuid', uuid); }
+            return uuid;
+        }
+        function collectLocalData() {
+            return {
+                timers:     JSON.parse(localStorage.getItem('ffxiv_submarine_timers') || '[]'),
+                groups:     JSON.parse(localStorage.getItem('sub_groups') || '[]'),
+                mapNodes:   JSON.parse(localStorage.getItem('sub_map_nodes') || '{}'),
+                craftParts: JSON.parse(localStorage.getItem('sub_craft_selected_parts') || '[]'),
+                craftOwned: JSON.parse(localStorage.getItem('sub_craft_owned_map') || '{}'),
+                links:      JSON.parse(localStorage.getItem('sub_custom_links') || '[]'),
+                updatedAt:  Date.now()
+            };
+        }
+        function applyRemoteData(data) {
+            if (!data) return;
+            if (data.timers)     localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(data.timers));
+            if (data.groups)     localStorage.setItem('sub_groups', JSON.stringify(data.groups));
+            if (data.mapNodes)   localStorage.setItem('sub_map_nodes', JSON.stringify(data.mapNodes));
+            if (data.craftParts) localStorage.setItem('sub_craft_selected_parts', JSON.stringify(data.craftParts));
+            if (data.craftOwned) localStorage.setItem('sub_craft_owned_map', JSON.stringify(data.craftOwned));
+            if (data.links)      localStorage.setItem('sub_custom_links', JSON.stringify(data.links));
+            window.dispatchEvent(new CustomEvent('cloudDataLoaded'));
+        }
+
+        const myUUID = getMyUUID();
+        let _userListener = null, _roomListeners = {}, _syncEnabled = false;
+
+        function _getSavedRooms() {
+            try { return JSON.parse(localStorage.getItem('sub_room_ids') || '[]'); }
+            catch { return []; }
+        }
+        function _saveRooms(rooms) {
+            localStorage.setItem('sub_room_ids', JSON.stringify(rooms));
+        }
+
+        // 暱稱管理
+        function getMyNickname() {
+            return localStorage.getItem('sub_nickname') || '';
+        }
+        function setMyNickname(name) {
+            localStorage.setItem('sub_nickname', name);
+        }
+        async function pushNickname() {
+            const name = getMyNickname();
+            if (!name) return;
+            await update(ref(db, `users/${myUUID}`), { nickname: name });
+        }
+        async function pushMemberName(roomId) {
+            const name = getMyNickname();
+            if (!name) return;
+            await update(ref(db, `rooms/${roomId}/memberNames`), { [myUUID]: name });
+        }
+
+        // 讓外部 JS 可以查詢 Firebase 房間資料
+        window._fbGet = async function(roomId) {
+            const snap = await get(ref(db, `rooms/${roomId}`));
+            return snap.exists() ? snap.val() : null;
+        };
+        window._fbGetNickname = async function(uuid) {
+            const snap = await get(ref(db, `users/${uuid}/nickname`));
+            return snap.exists() ? snap.val() : uuid.slice(0, 8);
+        };
+        window._getMyNickname = getMyNickname;
+        window._setMyNickname = setMyNickname;
+
+        window.CloudSync = {
+            myUUID,
+            async pushMyData() {
+                if (!_syncEnabled) return;
+                await set(ref(db, `users/${myUUID}`), collectLocalData());
+            },
+            async pullMyData() {
+                const snap = await get(ref(db, `users/${myUUID}`));
+                if (snap.exists()) applyRemoteData(snap.val());
+            },
+            listenMyData() {
+                if (_userListener) off(ref(db, `users/${myUUID}`), 'value', _userListener);
+                _userListener = onValue(ref(db, `users/${myUUID}`), snap => {
+                    if (snap.exists()) applyRemoteData(snap.val());
+                });
+            },
+            async createRoom(name) {
+                const roomId = generateRoomCode();
+                const myName = getMyNickname() || myUUID.slice(0,8);
+                await set(ref(db, `rooms/${roomId}`), {
+                    name: name||'共同艦隊', owner: myUUID,
+                    members:{[myUUID]:true},
+                    memberNames:{[myUUID]: myName},
+                    timers:[], groups:[], updatedAt:Date.now()
+                });
+                const rooms = _getSavedRooms();
+                if (!rooms.find(r => r.id === roomId)) {
+                    rooms.push({ id: roomId, name: name||'共同艦隊' });
+                    _saveRooms(rooms);
+                }
+                return roomId;
+            },
+            async joinRoom(roomId) {
+                const snap = await get(ref(db, `rooms/${roomId}`));
+                if (!snap.exists()) throw new Error('找不到此房間代碼');
+                const myName = getMyNickname() || myUUID.slice(0,8);
+                await update(ref(db, `rooms/${roomId}/members`), {[myUUID]:true});
+                await update(ref(db, `rooms/${roomId}/memberNames`), {[myUUID]: myName});
+                const rooms = _getSavedRooms();
+                const roomName = snap.val().name || '共同艦隊';
+                if (!rooms.find(r => r.id === roomId)) {
+                    rooms.push({ id: roomId, name: roomName });
+                    _saveRooms(rooms);
+                }
+                return snap.val();
+            },
+            listenRoom(roomId, cb) {
+                if (_roomListeners[roomId]) off(ref(db, `rooms/${roomId}`), 'value', _roomListeners[roomId]);
+                _roomListeners[roomId] = onValue(ref(db, `rooms/${roomId}`), snap => {
+                    if (snap.exists()) cb(snap.val());
+                });
+            },
+            stopListenRoom(roomId) {
+                if (_roomListeners[roomId]) {
+                    off(ref(db, `rooms/${roomId}`), 'value', _roomListeners[roomId]);
+                    delete _roomListeners[roomId];
+                }
+            },
+            async pushRoomData(roomId, data) {
+                await update(ref(db, `rooms/${roomId}`), { ...data, updatedAt: Date.now() });
+            },
+            leaveRoom(roomId) {
+                this.stopListenRoom(roomId);
+                const rooms = _getSavedRooms().filter(r => r.id !== roomId);
+                _saveRooms(rooms);
+            },
+            getSavedRooms() { return _getSavedRooms(); },
+            async pushNickname() { await pushNickname(); },
+            enable() { _syncEnabled = true; this.listenMyData(); },
+            isEnabled() { return _syncEnabled; }
+        };
+
+        window.dispatchEvent(new CustomEvent('cloudSyncReady'));
+    </script>
 </head>
 <body>
 
@@ -1663,33 +2234,82 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- ══ MOBILE HEADER（僅手機版顯示）══ -->
+<div id="mobileHeader" style="display:none;">
+    <h2>⚓ FF14 潛水艇計時器</h2>
+    <div class="mob-header-right">
+        <button class="mob-icon-btn" onclick="toggleTheme()" title="切換主題">🌙</button>
+        <button class="mob-icon-btn" onclick="requestNotificationPermission()" title="啟用通知">🔔</button>
+    </div>
+</div>
+
+<!-- ══ MOBILE 工具面板（手機版左側面板替代）══ -->
+<div id="mobileToolPanel">
+    <!-- 內容由 JS 注入 -->
+</div>
+
+<!-- ══ MOBILE 底部導航欄══ -->
+<div id="mobileBottomNav" style="display:none;">
+    <button class="mob-nav-item active" id="mobNavFleet" onclick="switchMobileTab('fleet')">
+        <span class="mob-nav-icon">⚓</span>
+        <span class="mob-nav-label">艦隊</span>
+    </button>
+    <button class="mob-nav-item" id="mobNavRoute" onclick="switchMobileTab('route')">
+        <span class="mob-nav-icon">🧭</span>
+        <span class="mob-nav-label">路線</span>
+    </button>
+    <button class="mob-nav-item" id="mobNavGear" onclick="switchMobileTab('gear')">
+        <span class="mob-nav-icon">⚙️</span>
+        <span class="mob-nav-label">配件</span>
+    </button>
+    <button class="mob-nav-item" id="mobNavCraft" onclick="switchMobileTab('craft')">
+        <span class="mob-nav-icon">🔨</span>
+        <span class="mob-nav-label">製作</span>
+    </button>
+    <button class="mob-nav-item" id="mobNavTools" onclick="switchMobileTab('tools')">
+        <span class="mob-nav-icon">🗂️</span>
+        <span class="mob-nav-label">工具</span>
+    </button>
+</div>
+
 <div class="page-layout">
 
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.2.5 <span style="font-size:13px; color:#888; font-weight:normal; white-space:nowrap;">阿緋@鳳凰</span></h1>
-            <div class="top-btns">
-                <button class="btn-top" onclick="toggleTheme()">切換主題</button>
-                <button class="btn-top" onclick="requestNotificationPermission()">啟用通知</button>
-                <select id="alarmSelect" onchange="changeAlarm(this.value)">
-                    <option value="off">音效：關閉</option>
-                    <option value="soft">音效：01 (柔和)</option>
-                    <option value="sharp">音效：02 (清脆)</option>
-                    <option value="ding">音效：03 (叮咚)</option>
-                </select>
-                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" oninput="testVolume(this.value)">
-                <button class="btn-top" onclick="testAlarm()">測試</button>
+            <h1>FF14 潛水艇計時器2.3.1 <span>阿緋@鳳凰</span></h1>
+            <!-- 控制列 -->
+            <div class="lp-controls">
+                <button class="lp-icon-btn" onclick="toggleTheme()" title="切換主題">🌙</button>
+                <button class="lp-icon-btn" onclick="requestNotificationPermission()" title="啟用通知">🔔</button>
+                <div class="lp-sound-group">
+                    <span class="lp-sound-label">🔊</span>
+                    <select id="alarmSelect" onchange="changeAlarm(this.value)">
+                        <option value="off">關閉</option>
+                        <option value="soft">01 柔和</option>
+                        <option value="sharp">02 清脆</option>
+                        <option value="ding">03 叮咚</option>
+                    </select>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" oninput="testVolume(this.value)">
+                    <button class="lp-test-btn" onclick="testAlarm()">測試</button>
+                </div>
+            </div>
+            <!-- 上傳截圖（預設收折）-->
+            <button class="lp-upload-toggle" onclick="toggleUploadZone(this)">
+                📂 上傳截圖辨識配件
+                <span class="lp-upload-arrow">▼</span>
+            </button>
+            <div id="uploadZoneWrap">
+                <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <p>點擊選擇圖片、拖曳圖片至此，或直接 Ctrl + V 貼上截圖</p>
+                    <input type="file" id="fileInput" accept="image/*">
+                    <div class="status" id="statusText">正在初始化引擎...</div>
+                </div>
             </div>
         </div>
 
-<div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-            <p>📂 點擊選擇圖片、拖曳圖片至此，或直接 Ctrl + V 貼上截圖</p>
-            <input type="file" id="fileInput" accept="image/*">
-            <div class="status" id="statusText">正在初始化引擎...</div>
-        </div>
-
         <div class="collapsible-wrapper">
+            <div class="lp-group-label">工具</div>
             <button class="collapsible-btn" onclick="toggleCollapse('content1', this)"><span>+</span> 練級表</button>
             <div id="content1" class="content">
                 <div style="display:flex; flex-wrap:wrap;">
@@ -1735,6 +2355,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
+            <div class="lp-group-label">設定</div>
             <button class="collapsible-btn" onclick="toggleCollapse('content_links', this)"><span>+</span> 自訂連結</button>
             <div id="content_links" class="content">
                 <div style="padding: 12px;">
@@ -1751,6 +2372,74 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn-top" onclick="addCustomLink()">新增</button>
                     </div>
                 </div>
+            </div>
+            <!-- ── 雲端同步 ── -->
+            <button class="collapsible-btn" onclick="toggleCollapse('cloudSyncContent', this)"><span>+</span> 雲端同步 / 跨裝置<span class="cloud-status-badge" id="cloudStatusBadge">未連線</span></button>
+            <div id="cloudSyncContent" class="content">
+                    <div style="padding:12px 14px; background:var(--edit-bg); border:1px solid var(--edit-border); border-top:none; border-radius:0 0 8px 8px;">
+                        <div style="margin-bottom:14px;">
+                            <div style="font-size:12px; color:#888; margin-bottom:6px;">我的裝置 ID（換裝置時輸入此 ID 可還原資料）</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input id="myUUIDDisplay" type="text" readonly style="flex:1; background:var(--card-color); border:1px solid var(--edit-border); color:var(--accent-color); border-radius:6px; padding:6px 10px; font-size:12px; font-family:monospace;" value="載入中...">
+                                <button onclick="copyMyUUID()" style="background:var(--accent-color); color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;">複製</button>
+                            </div>
+                        </div>
+                        <!-- 暱稱設定 -->
+                        <div style="margin-bottom:12px;">
+                            <div style="font-size:12px; color:#888; margin-bottom:6px;">我的暱稱（在共同編輯房間中顯示）</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input id="myNicknameInput" type="text" maxlength="16" placeholder="輸入暱稱（最多16字）"
+                                    style="flex:1; background:var(--edit-bg); border:1px solid var(--edit-border); color:var(--text-color); border-radius:6px; padding:6px 10px; font-size:13px;">
+                                <button onclick="saveMyNickname()" style="background:rgba(155,126,200,0.15); border:1px solid var(--accent-color); color:var(--accent-color); border-radius:6px; padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer;">儲存</button>
+                            </div>
+                        </div>
+                        <div id="cloudSyncStatus" style="display:none;">
+                            <span id="cloudSyncDot"></span>
+                            <span id="cloudSyncMsg"></span>
+                        </div>
+                        <div id="cloudEnableWrap" style="margin-bottom:12px;">
+                            <button onclick="cloudEnableSync()" style="width:100%; background:rgba(155,126,200,0.15); border:1px solid var(--accent-color); color:var(--accent-color); border-radius:8px; padding:8px; font-size:13px; font-weight:700; cursor:pointer;">☁️ 啟用雲端同步</button>
+                        </div>
+                        <details style="margin-bottom:12px;">
+                            <summary style="font-size:12px; color:#888; cursor:pointer;">換裝置 / 輸入已有 ID</summary>
+                            <div style="display:flex; gap:6px; margin-top:8px;">
+                                <input id="importUUIDInput" type="text" placeholder="貼上你的裝置 ID" style="flex:1; background:var(--edit-bg); border:1px solid var(--edit-border); color:var(--text-color); border-radius:6px; padding:6px 10px; font-size:12px; font-family:monospace;">
+                                <button onclick="cloudImportUUID()" style="background:#2a4a3a; border:1px solid #4caf50; color:#4caf50; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;">載入</button>
+                            </div>
+                        </details>
+                        <div style="border-top:1px solid var(--edit-border); padding-top:12px;">
+                            <div style="font-size:12px; font-weight:700; color:var(--text-color); margin-bottom:8px;">共同編輯</div>
+                            <div id="currentRoomWrap" style="display:none; margin-bottom:10px; padding:8px 10px; background:rgba(155,126,200,0.08); border:1px solid rgba(155,126,200,0.2); border-radius:8px;">
+                                <div style="font-size:11px; color:#888; margin-bottom:4px;">目前加入的房間</div>
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <span id="currentRoomCode" style="font-size:15px; font-weight:800; color:var(--accent-color); font-family:monospace; letter-spacing:2px;"></span>
+                                    <div style="display:flex; gap:6px;">
+                                        <button onclick="copyRoomCode()" style="background:transparent; border:1px solid var(--edit-border); color:#aaa; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer;">複製代碼</button>
+                                        <button onclick="cloudLeaveRoom()" style="background:transparent; border:1px solid rgba(255,83,112,0.3); color:#e06070; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer;">離開</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="roomActionWrap" style="display:flex; gap:6px;">
+                                <button onclick="cloudCreateRoom()" style="flex:1; background:rgba(155,126,200,0.12); border:1px solid rgba(155,126,200,0.3); color:var(--accent-color); border-radius:8px; padding:7px; font-size:12px; font-weight:700; cursor:pointer;">＋ 建立房間</button>
+                                <button onclick="cloudShowJoinRoom()" style="flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--edit-border); color:#aaa; border-radius:8px; padding:7px; font-size:12px; font-weight:700; cursor:pointer;">加入房間</button>
+                            </div>
+                            <!-- 建立房間名稱輸入列 -->
+                            <div id="createRoomInputWrap" style="display:none; flex-direction:column; gap:6px; margin-top:8px;">
+                                <input id="createRoomNameInput" type="text" placeholder="輸入房間名稱（可留空，預設「共同艦隊」）" maxlength="20"
+                                    style="width:100%; background:var(--edit-bg); border:1px solid var(--edit-border); color:var(--text-color); border-radius:8px; padding:7px 10px; font-size:13px; box-sizing:border-box;">
+                                <div style="display:flex; gap:6px;">
+                                    <button onclick="cloudConfirmCreateRoom()" style="background:rgba(155,126,200,0.15); border:1px solid var(--accent-color); color:var(--accent-color); border-radius:8px; padding:7px 18px; font-size:13px; font-weight:700; cursor:pointer;">確認建立</button>
+                                    <button onclick="document.getElementById('createRoomInputWrap').style.display='none'" style="background:transparent; border:1px solid var(--edit-border); color:#888; border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer;">取消</button>
+                                </div>
+                            </div>
+                            <div id="joinRoomWrap" style="display:none; flex-direction:column; gap:6px; margin-top:8px;">
+                                <input id="joinRoomInput" type="text" placeholder="輸入6碼房間代碼" maxlength="6" style="width:100%; background:var(--edit-bg); border:1px solid var(--edit-border); color:var(--text-color); border-radius:6px; padding:8px 10px; font-size:14px; font-family:monospace; text-transform:uppercase; letter-spacing:3px; box-sizing:border-box;">
+                                <button onclick="cloudJoinRoom()" style="width:100%; background:#2a4a3a; border:1px solid #4caf50; color:#4caf50; border-radius:6px; padding:8px; font-size:13px; font-weight:700; cursor:pointer;">確認加入</button>
+                            </div>
+                            <!-- 已加入的房間列表 -->
+                            <div id="roomListWrap" style="margin-top:12px; display:none; flex-direction:column; gap:8px;"></div>
+                        </div>
+                    </div>
             </div>
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
@@ -1868,13 +2557,19 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- 分頁切換列 -->
         <div class="rp-panel-tabs" id="rpPanelTabs">
             <button class="rp-panel-tab active" id="tabFleet" onclick="switchRpTab('fleet')">⚓ 潛水艇艦隊 <span id="fleetCount" style="font-size:12px; background:rgba(199,146,234,0.2); color:#c792ea; border:1px solid #555; border-radius:6px; padding:1px 7px; margin-left:4px; vertical-align:middle; display:inline-block; min-width:36px; text-align:center;">0 艘</span></button>
-            <button class="rp-panel-tab" id="tabRoute" onclick="switchRpTab('route')">🧭 路線規劃 <span style="font-size:10px; color:#888; margin-left:3px;">Beta</span></button>
-            <button class="rp-panel-tab" id="tabGear" onclick="switchRpTab('gear')">⚙️ 配件規劃 <span style="font-size:10px; color:#888; margin-left:3px;">Beta</span></button>
+            <button class="rp-panel-tab" id="tabRoute" onclick="switchRpTab('route')">🧭 路線規劃</button>
+            <button class="rp-panel-tab" id="tabGear" onclick="switchRpTab('gear')">⚙️ 配件規劃</button>
             <button class="rp-panel-tab" id="tabCraft" onclick="switchRpTab('craft')">🔨 配件製作 <span style="font-size:10px; color:#888; margin-left:3px;">Beta</span></button>
         </div>
 
         <!-- 艦隊分頁 -->
         <div id="panelFleet">
+            <!-- 我的艦隊 / 共同編輯 切換列 -->
+            <div id="fleetViewSwitcher">
+                <div class="fleet-seg-control" id="fleetSegControl">
+        <button class="fleet-view-tab active" id="fleetTabMine" data-view="mine" onclick="switchFleetView('mine')">我的艦隊</button>
+                </div>
+            </div>
             <div class="fleet-toolbar">
                 <div class="fleet-toolbar-left">
                     <div id="groupTabsContainer" class="group-tabs"></div>
@@ -1908,7 +2603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="rp-section-hint-inline">從艦隊選擇，或手動輸入等級與配件</span>
                     </div>
                     <!-- 第一行：船艇 + 等級 + 性能徽章 -->
-                    <div class="rp-row" style="margin-bottom:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div class="rp-ship-row">
                         <div class="rp-field">
                             <label>船艇</label>
                             <select id="rpShipSelect" style="width:200px;"></select>
@@ -1923,11 +2618,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                         </div>
-                        <!-- 性能徽章（與船艇/等級同行） -->
-                        <div id="rpStatBadges" style="display:flex; flex-wrap:wrap; gap:8px; align-self:flex-end; padding-bottom:2px;"></div>
+                        <div id="rpStatBadges" class="rp-stat-badges-inline"></div>
                     </div>
-                    <!-- 第二行：四部位 -->
-                    <div class="rp-row" style="align-items:flex-end;">
+                    <!-- 四部位：2×2 grid（手機）/ 橫排（桌機）-->
+                    <div class="rp-parts-grid">
                         <div class="rp-field"><label>船體</label><div class="part-sel-wrap" id="rp-part-hull-wrap" data-partkey="hull" data-panel="rp"></div></div>
                         <div class="rp-field"><label>船尾</label><div class="part-sel-wrap" id="rp-part-stern-wrap" data-partkey="stern" data-panel="rp"></div></div>
                         <div class="rp-field"><label>船首</label><div class="part-sel-wrap" id="rp-part-bow-wrap" data-partkey="bow" data-panel="rp"></div></div>
@@ -1944,7 +2638,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="rp-radio-group">
                             <label><input type="radio" name="rpTimeMode" value="none" checked onchange="rpToggleTimeMode()"> 不限時間</label>
                             <label><input type="radio" name="rpTimeMode" value="hours" onchange="rpToggleTimeMode()"> 剩餘時數（小時）</label>
-                            <label><input type="radio" name="rpTimeMode" value="endtime" onchange="rpToggleTimeMode()"> 指定回港時刻(測試中)</label>
+                            <label><input type="radio" name="rpTimeMode" value="endtime" onchange="rpToggleTimeMode()"> 指定回港時刻</label>
                         </div>
                     </div>
                     <div class="rp-row" style="margin-top:10px;">
@@ -1973,7 +2667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="rp-section-head">
                         <span class="rp-section-num">3</span>
                         <h3 class="rp-section-title">目標物品</h3>
-                        <span class="rp-section-hint-inline">可複選，符合任一或全部視「嚴格模式」而定</span>
+                        <span class="rp-section-hint-inline">可複選，符合任一或全部視勾選而定</span>
                     </div>
                     <div class="rp-row">
                         <div class="rp-field">
@@ -1995,7 +2689,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div id="rpSuggestBox" class="rp-suggest-box"></div>
                             </div>
                         </div>
-                        <label class="rp-chk" style="margin-bottom:6px;"><input type="checkbox" id="rpLootStrict"> 嚴格模式（路線上每一站都要有目標物）</label>
+                        <label class="rp-chk" style="margin-bottom:6px;"><input type="checkbox" id="rpLootStrict"> 每一站都必須包含目標物品</label>
                     </div>
                     <div class="rp-chips" id="rpItemChips"></div>
                 </div>
@@ -2084,7 +2778,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h3 class="rp-section-title">選擇船艇</h3>
                         <span class="rp-section-hint-inline">從艦隊選擇，或手動輸入等級與配件</span>
                     </div>
-                    <div class="rp-row" style="margin-bottom:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div class="rp-ship-row">
                         <div class="rp-field">
                             <label>船艇</label>
                             <select id="gpShipSelect" style="width:200px;" onchange="gpApplyShipSelection()">
@@ -2101,10 +2795,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                         </div>
-                        <!-- 當前性能徽章（與船艇/等級同行） -->
-                        <div id="gpStatBadges" style="display:flex; flex-wrap:wrap; gap:8px; align-self:flex-end; padding-bottom:2px;"></div>
+                        <div id="gpStatBadges" class="rp-stat-badges-inline"></div>
                     </div>
-                    <div class="rp-row" style="align-items:flex-end;">
+                    <!-- 四部位：2×2 grid（手機）/ 橫排（桌機）-->
+                    <div class="rp-parts-grid">
                         <div class="rp-field"><label>船體</label><div class="part-sel-wrap" id="gp-hull-wrap" data-partkey="hull" data-panel="gp"></div></div>
                         <div class="rp-field"><label>船尾</label><div class="part-sel-wrap" id="gp-stern-wrap" data-partkey="stern" data-panel="gp"></div></div>
                         <div class="rp-field"><label>船首</label><div class="part-sel-wrap" id="gp-bow-wrap" data-partkey="bow" data-panel="gp"></div></div>
@@ -2186,10 +2880,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <!-- 區段 1：選擇要製作的部位 -->
                 <div class="rp-section" style="padding: 12px 14px 14px;">
                     <div class="craft-selector-wrap">
-                        <div class="craft-grid-wrap">
+                        <!-- 桌機版：表格點選 -->
+                        <div class="craft-grid-wrap craft-desktop-only">
                             <div id="craftGridTable"></div>
                         </div>
-                        <div class="craft-add-row">
+                        <div class="craft-add-row craft-desktop-only">
                             <span class="craft-sel-hint" id="craftGridHint">—</span>
                             <div class="num-spinner">
                                 <input type="text" class="craft-qty-input" id="craftQty" value="1" placeholder="1">
@@ -2200,6 +2895,26 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <button class="fleet-add-btn" style="padding:5px 14px; font-size:13px;" onclick="craftAddPart()"><span class="fleet-add-icon">＋</span> 加入</button>
                             <button class="craft-clear-btn" onclick="craftClearAll()" title="清除所有配件與庫存數量（資料不可復原）">🗑 清除</button>
+                        </div>
+                        <!-- 手機版：4 個下拉，選了直接加入 -->
+                        <div class="craft-mob-selects" style="display:none;">
+                            <div class="craft-mob-sel-row">
+                                <label>船體</label>
+                                <select id="craftMobHull" onchange="craftMobAdd('船體',this)"><option value="">— 不製作 —</option></select>
+                            </div>
+                            <div class="craft-mob-sel-row">
+                                <label>船尾</label>
+                                <select id="craftMobStern" onchange="craftMobAdd('船尾',this)"><option value="">— 不製作 —</option></select>
+                            </div>
+                            <div class="craft-mob-sel-row">
+                                <label>船首</label>
+                                <select id="craftMobBow" onchange="craftMobAdd('船首',this)"><option value="">— 不製作 —</option></select>
+                            </div>
+                            <div class="craft-mob-sel-row">
+                                <label>艦橋</label>
+                                <select id="craftMobBridge" onchange="craftMobAdd('艦橋',this)"><option value="">— 不製作 —</option></select>
+                            </div>
+                            <button class="craft-clear-btn" style="margin-top:4px; width:100%; justify-content:center;" onclick="craftClearAll()">🗑 清除所有素材</button>
                         </div>
                     </div>
                     <div class="rp-chips" id="craftChips" style="margin-top:8px;"></div>
@@ -2634,12 +3349,17 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     function toggleCollapse(id, btn) {
         const content = document.getElementById(id);
         const span = btn.querySelector('span');
-        if (content.style.maxHeight) {
-            content.style.maxHeight = null;
-            span.innerText = "+";
+        if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+            // 收合：先固定當前高度，再歸零觸發動畫
+            content.style.maxHeight = content.scrollHeight + 'px';
+            requestAnimationFrame(() => {
+                content.style.maxHeight = '0px';
+            });
+            span.innerText = '+';
         } else {
-            content.style.maxHeight = content.scrollHeight + "px";
-            span.innerText = "-";
+            // 展開：直接 none，無截斷問題
+            content.style.maxHeight = 'none';
+            span.innerText = '-';
         }
     }
 
@@ -2678,13 +3398,16 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         const savedActive = localStorage.getItem('sub_active_group');
         if (savedActive) activeGroup = savedActive;
     }
-    function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); }
+    function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
     function saveActiveGroup() { localStorage.setItem('sub_active_group', activeGroup); }
     function allGroupNames() { return [DEFAULT_GROUP, ...customGroups]; }
 
     function renderGroupTabs() {
         const container = document.getElementById('groupTabsContainer');
         if (!container) return;
+        // 房間視圖用房間群組，個人視圖用個人群組
+        const groups = _viewGroups !== null ? _viewGroups : customGroups;
+        const isRoomView = _viewGroups !== null;
 
         container.innerHTML = '';
 
@@ -2698,57 +3421,60 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         });
 
         // ── 可拖曳的自訂群組標籤 ──
-        customGroups.forEach(g => {
+        groups.forEach(g => {
             const span = document.createElement('span');
             span.className = 'group-tab group-tab-draggable' + (g === activeGroup ? ' active' : '');
             span.id = `gtab-${CSS.escape(g)}`;
             span.dataset.group = g;
             span.style.cursor = 'default';
 
-            // 拖曳把手
-            const handle = document.createElement('span');
-            handle.className = 'group-tab-handle';
-            handle.innerHTML = '⠿';
-            handle.title = '拖曳排序';
+            if (!isRoomView) {
+                // 拖曳把手（只在個人視圖顯示）
+                const handle = document.createElement('span');
+                handle.className = 'group-tab-handle';
+                handle.innerHTML = '⠿';
+                handle.title = '拖曳排序';
+                handle.addEventListener('pointerdown', (e) => {
+                    if (e.button !== 0) return;
+                    onGroupTabPointerDown(e, g);
+                });
+                span.appendChild(handle);
+            }
 
             // 標籤名稱（點擊切換）
             const label = document.createElement('span');
             label.textContent = g;
             label.style.cursor = 'pointer';
             label.onclick = (e) => { e.stopPropagation(); setActiveGroup(g); };
-
-            const editBtn = document.createElement('span');
-            editBtn.className = 'group-tab-edit';
-            editBtn.title = '重新命名';
-            editBtn.innerHTML = '✎';
-            editBtn.onclick = (e) => { e.stopPropagation(); openRenameGroupModal(g); };
-
-            const delBtn = document.createElement('span');
-            delBtn.className = 'group-tab-x';
-            delBtn.title = '刪除群組';
-            delBtn.innerHTML = '✕';
-            delBtn.onclick = (e) => { e.stopPropagation(); deleteGroup(g); };
-
-            span.appendChild(handle);
             span.appendChild(label);
-            span.appendChild(editBtn);
-            span.appendChild(delBtn);
 
-            // 只有把手觸發拖曳
-            handle.addEventListener('pointerdown', (e) => {
-                if (e.button !== 0) return;
-                onGroupTabPointerDown(e, g);
-            });
+            if (!isRoomView) {
+                // 編輯/刪除（只在個人視圖顯示）
+                const editBtn = document.createElement('span');
+                editBtn.className = 'group-tab-edit';
+                editBtn.title = '重新命名';
+                editBtn.innerHTML = '✎';
+                editBtn.onclick = (e) => { e.stopPropagation(); openRenameGroupModal(g); };
+                const delBtn = document.createElement('span');
+                delBtn.className = 'group-tab-x';
+                delBtn.title = '刪除群組';
+                delBtn.innerHTML = '✕';
+                delBtn.onclick = (e) => { e.stopPropagation(); deleteGroup(g); };
+                span.appendChild(editBtn);
+                span.appendChild(delBtn);
+            }
 
             container.appendChild(span);
         });
 
-        // ── 新增按鈕 ──
-        const addBtn = document.createElement('span');
-        addBtn.className = 'group-tab group-tab-add';
-        addBtn.textContent = '＋ 新增';
-        addBtn.onclick = promptAddGroup;
-        container.appendChild(addBtn);
+        // ── 新增按鈕（只在個人視圖顯示）──
+        if (!isRoomView) {
+            const addBtn = document.createElement('span');
+            addBtn.className = 'group-tab group-tab-add';
+            addBtn.textContent = '＋ 新增';
+            addBtn.onclick = promptAddGroup;
+            container.appendChild(addBtn);
+        }
     }
 
     // ── 群組標籤 Pointer 拖曳（水平，仿自訂連結設計）──
@@ -3159,8 +3885,8 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             parts: createDefaultNewShipParts(),
             group
         };
-        savedTimers.push(timerData);
-        saveTimersToStorage();
+        getActiveTimers().push(timerData);
+        saveActiveTimers();
         createTimerCard(timerData);
         updateFleetCount();
         applyGroupFilter();
@@ -3193,15 +3919,16 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     }
 
     function changeCardGroup(id, newGroup) {
-        const t = savedTimers.find(x => x.id === id);
+        const t = getActiveTimers().find(x => x.id === id);
         if (!t) return;
         t.group = newGroup;
-        saveTimersToStorage();
+        saveActiveTimers();
         applyGroupFilter();
     }
 
     function applyGroupFilter() {
-        savedTimers.forEach(t => {
+        const timers = _viewTimers !== null ? _viewTimers : savedTimers;
+        timers.forEach(t => {
             const card = document.getElementById(`card-${t.id}`);
             if (!card) return;
             const g = t.group || DEFAULT_GROUP;
@@ -3492,21 +4219,22 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             const prevParts = matched.parts || createEmptyParts();
 
             // 清除同群組內同名卡片（含已完成的），避免舊卡與新計時並存；不影響其他群組內的同名船
-            const toRemove = savedTimers.filter(t => t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup);
+            const activeArr = getActiveTimers();
+            const toRemove = activeArr.filter(t => t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup);
             toRemove.forEach(t => document.getElementById(`card-${t.id}`)?.remove());
-            savedTimers = savedTimers.filter(t => !(t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup));
+            setActiveTimers(activeArr.filter(t => !(t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup)));
 
             // 用原本正確的名字建立新計時，並帶回原本的配件設定與群組
             const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level, startTime: now, endTime, totalSeconds, parts: prevParts, group: matchedGroup };
-            savedTimers.push(timerData);
-            saveTimersToStorage();
+            getActiveTimers().push(timerData);
+            saveActiveTimers();
             createTimerCard(timerData);
         } else {
             // 新船：新增（配件預設為 1111，待使用者手動調整；性能會自動計算）。若目前正篩選在特定群組，新船直接歸入該群組
             const newGroup = (activeGroup === GROUP_ALL) ? DEFAULT_GROUP : activeGroup;
             const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name, level, startTime: now, endTime, totalSeconds, parts: createDefaultNewShipParts(), group: newGroup };
-            savedTimers.push(timerData);
-            saveTimersToStorage();
+            getActiveTimers().push(timerData);
+            saveActiveTimers();
             createTimerCard(timerData);
         }
         updateFleetCount();
@@ -3770,7 +4498,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     let currentConfigTimerId = null;
 
     function openSubConfigModal(id) {
-        const t = savedTimers.find(x => x.id === id);
+        const t = getActiveTimers().find(x => x.id === id);
         if (!t) return;
         currentConfigTimerId = id;
         const parts = t.parts || createEmptyParts();
@@ -3791,7 +4519,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
 
     function saveSubConfigModal() {
         if (!currentConfigTimerId) return;
-        const t = savedTimers.find(x => x.id === currentConfigTimerId);
+        const t = getActiveTimers().find(x => x.id === currentConfigTimerId);
         if (!t) return;
         const newName = document.getElementById('cfg-name').value.trim();
         const newLevel = document.getElementById('cfg-level').value.trim();
@@ -3802,11 +4530,9 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         if (isNaN(newEndTime)) { showAlert('回港時間格式錯誤'); return; }
         t.name = newName;
         t.level = newLevel;
-        // 若回港時間有變動，重新計算相關欄位
         if (newEndTime !== t.endTime) {
             t.endTime = newEndTime;
             t.totalSeconds = Math.round((newEndTime - t.startTime) / 1000);
-            // 同步卡片上的回港時間顯示
             const card = document.getElementById(`card-${t.id}`);
             if (card) {
                 const footerSpans = card.querySelectorAll('.time-highlight.target');
@@ -3818,12 +4544,10 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         t.parts = parts;
         delete t.stats;
         delete t.statsUpdatedAt;
-        saveTimersToStorage();
-        // 重建卡片，確保倒數計時器正確重啟（尤其是從已回港狀態改為未來時間）
+        saveActiveTimers();
         const oldCard = document.getElementById(`card-${t.id}`);
         if (oldCard) oldCard.remove();
         createTimerCard(t);
-        // 重新排序
         const list = document.getElementById('timerList');
         const sorted = getSortedTimers();
         sorted.forEach(st => {
@@ -3854,7 +4578,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     function updateConfigSummary(id) {
         const el = document.getElementById(`config-summary-${id}`);
         if (!el) return;
-        const t = savedTimers.find(x => x.id === id);
+        const t = getActiveTimers().find(x => x.id === id);
         if (!t) return;
         const summary = formatConfigSummary(t);
         el.innerHTML = summary;
@@ -3898,7 +4622,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     
     // ── 從船艇小卡送往路線規劃 ──
     function sendCardToRoutePlanner(timerId) {
-        const t = savedTimers.find(x => x.id === timerId);
+        const t = getActiveTimers().find(x => x.id === timerId);
         if (!t) return;
 
         // 切換到路線規劃分頁
@@ -3935,13 +4659,51 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             el.innerText = visible + " / " + savedTimers.length + " 艘";
         }
     }
-    function deleteTimer(id) { savedTimers = savedTimers.filter(t => t.id !== id); saveTimersToStorage(); document.getElementById(`card-${id}`)?.remove(); updateFleetCount(); }
-    function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); }
+    function deleteTimer(id) {
+        const arr = getActiveTimers().filter(t => t.id !== id);
+        setActiveTimers(arr);
+        saveActiveTimers();
+        document.getElementById(`card-${id}`)?.remove();
+        updateFleetCount();
+    }
+    function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
+
+    // ── 房間視圖的 timers 寫回 Firebase ──
+    async function saveRoomTimers(roomId) {
+        if (!roomId || !_rooms[roomId]) return;
+        _rooms[roomId].timers = _viewTimers || [];
+        await window.CloudSync?.pushRoomData(roomId, { timers: _rooms[roomId].timers });
+    }
+
+    // 依目前視圖儲存（個人 or 房間）
+    function saveActiveTimers() {
+        if (_currentFleetView === 'mine') {
+            saveTimersToStorage();
+        } else {
+            saveRoomTimers(_currentFleetView);
+        }
+    }
+
+    // 取得目前視圖的 timers 陣列（可讀寫）
+    function getActiveTimers() {
+        return _currentFleetView === 'mine' ? savedTimers : (_viewTimers || []);
+    }
+
+    // 設定目前視圖的 timers 陣列
+    function setActiveTimers(arr) {
+        if (_currentFleetView === 'mine') {
+            savedTimers = arr;
+        } else {
+            _viewTimers = arr;
+            if (_rooms[_currentFleetView]) _rooms[_currentFleetView].timers = arr;
+        }
+    }
     function getSortedTimers() {
+        const timers = getActiveTimers();
         const now = Date.now();
         const sort = currentSort;
-        const finished = savedTimers.filter(t => t.endTime <= now);
-        const active   = savedTimers.filter(t => t.endTime > now);
+        const finished = timers.filter(t => t.endTime <= now);
+        const active   = timers.filter(t => t.endTime > now);
 
         function nameCompare(a, b) {
             return a.name.localeCompare(b.name, 'zh-TW', { sensitivity: 'base' });
@@ -3949,21 +4711,20 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         function levelNum(t) { return parseInt(t.level) || 0; }
 
         if (sort === 'name') {
-            return [...savedTimers].sort(nameCompare);
+            return [...timers].sort(nameCompare);
         }
         if (sort === 'time_asc') {
-            // 已回港在最前，其餘依回港時間由近到遠，同時間再依名字
             const sortedFinished = [...finished].sort(nameCompare);
             const sortedActive   = [...active].sort((a, b) => a.endTime - b.endTime || nameCompare(a, b));
             return [...sortedFinished, ...sortedActive];
         }
         if (sort === 'level_asc') {
-            return [...savedTimers].sort((a, b) => levelNum(a) - levelNum(b) || nameCompare(a, b));
+            return [...timers].sort((a, b) => levelNum(a) - levelNum(b) || nameCompare(a, b));
         }
         if (sort === 'level_desc') {
-            return [...savedTimers].sort((a, b) => levelNum(b) - levelNum(a) || nameCompare(a, b));
+            return [...timers].sort((a, b) => levelNum(b) - levelNum(a) || nameCompare(a, b));
         }
-        return savedTimers;
+        return timers;
     }
 
     function applySortAndRender() {
@@ -4134,7 +4895,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     function gpApplyShipSelection() {
         const id = document.getElementById('gpShipSelect').value;
         if (!id) return;
-        const t = savedTimers.find(x => x.id === id);
+        const t = getActiveTimers().find(x => x.id === id);
         if (!t) return;
         document.getElementById('gpLevel').value = t.level || '';
         const parts = t.parts || createEmptyParts();
@@ -5689,6 +6450,14 @@ function gpRenderLootPreview() {
             tabCraft.classList.add('active');
             initCraftPlanner();
         }
+        // 同步手機版底部導航 active 狀態
+        ['fleet','route','gear','craft'].forEach(t => {
+            const id = 'mobNav' + t.charAt(0).toUpperCase() + t.slice(1);
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', t === tab);
+        });
+        const toolBtn = document.getElementById('mobNavTools');
+        if (toolBtn) toolBtn.classList.remove('active');
     }
 
     // ══ 配件製作：資料 ══════════════════════════════════════════
@@ -5846,6 +6615,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         craftUpdateHint();
         craftRenderChips();
         craftRenderResult();
+        craftInitMobSelects();
     }
 
     function craftAddPart() {
@@ -6307,8 +7077,14 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
 
         box.innerHTML = `
             <div class="craft-mat-cols-wrap">
+            <div class="craft-mob-tabs" style="display:none;">
+                <button class="craft-mob-tab active" onclick="craftMobTab(this,0)">配件</button>
+                <button class="craft-mob-tab" onclick="craftMobTab(this,1)">成品素材</button>
+                <button class="craft-mob-tab" onclick="craftMobTab(this,2)">半成品</button>
+                <button class="craft-mob-tab" onclick="craftMobTab(this,3)">基礎素材</button>
+            </div>
             <div class="craft-mat-cols">
-                <div class="craft-mat-col">
+                <div class="craft-mat-col mob-col-active">
                     <div class="craft-mat-col-header">配件</div>
                     <div class="craft-mat-col-body">
                         <table class="craft-inv-table">${tableHead}<tbody>${col1Rows}</tbody></table>
@@ -6352,6 +7128,42 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
 
         // ── 計算並更新分類/欄位計數 ──
         craftUpdateColCounts(box);
+    }
+
+    // ── 手機版製作 Tab 切換 ──
+    window.craftMobTab = function(btn, idx) {
+        const wrap = btn.closest('.craft-mat-cols-wrap');
+        wrap.querySelectorAll('.craft-mob-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+        wrap.querySelectorAll('.craft-mat-col').forEach((c,i) => c.classList.toggle('mob-col-active', i===idx));
+    };
+
+    // ── 手機版下拉選了直接加入 ──
+    window.craftMobAdd = function(partName, sel) {
+        const val = sel.value;
+        if (!val) return;
+        craftSelectedCellName = val;
+        document.getElementById('craftQty').value = '1';
+        craftAddPart();
+        sel.value = '';
+    };
+
+    // ── 初始化手機版下拉選項 ──
+    function craftInitMobSelects() {
+        const SEL_IDS = { '船體':'craftMobHull', '船尾':'craftMobStern', '船首':'craftMobBow', '艦橋':'craftMobBridge' };
+        ['船體','船尾','船首','艦橋'].forEach(partName => {
+            const sel = document.getElementById(SEL_IDS[partName]);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">— 不製作 —</option>';
+            const items = Object.entries(CRAFT_PARTS)
+                .filter(([,p]) => p.part === partName)
+                .sort(([,a],[,b]) => a.class - b.class);
+            items.forEach(([key, p]) => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = p.className;
+                sel.appendChild(opt);
+            });
+        });
     }
 
     function craftUpdateColCounts(box) {
@@ -6742,7 +7554,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
     function rpApplyShipSelection() {
         const id = document.getElementById('rpShipSelect').value;
         if (!id) return;
-        const t = savedTimers.find(x => x.id === id);
+        const t = getActiveTimers().find(x => x.id === id);
         if (!t) return;
         document.getElementById('rpLevel').value = t.level || "";
         const parts = t.parts || createEmptyParts();
@@ -6915,25 +7727,22 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
 
     // ── 使用此路線：將耗時套用回船艇小卡，並同步路線規劃上的等級與配件 ──
     function applyRouteToCard(timeMins) {
-        // 取得目前路線規劃選中的船艇
         const shipSel = document.getElementById('rpShipSelect');
         if (!shipSel || !shipSel.value) {
             showAlert('請先在路線規劃上方選擇船艇');
             return;
         }
         const timerId = shipSel.value;
-        const t = savedTimers.find(x => x.id === timerId);
+        const t = getActiveTimers().find(x => x.id === timerId);
         if (!t) {
             showAlert('找不到對應船艇，請重新選擇');
             return;
         }
 
-        // 從路線規劃讀取目前的等級與配件（可能已被使用者變更）
         const rpLevel = document.getElementById('rpLevel').value.trim();
         const rpParts = {};
         PART_KEYS.forEach(key => { rpParts[key] = getPartVal(key, 'rp'); });
 
-        // 更新等級與配件（若與原來不同）
         let changed = false;
         if (rpLevel && rpLevel !== String(t.level || '')) { t.level = rpLevel; changed = true; }
         PART_KEYS.forEach(key => {
@@ -6944,7 +7753,6 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             PART_KEYS.forEach(key => { t.parts[key] = rpParts[key]; });
         }
 
-        // 以當前時間為出航時間，加上路線耗時計算回港時間
         const now = Date.now();
         const totalSeconds = Math.round(timeMins * 60);
         const newEndTime = now + totalSeconds * 1000;
@@ -6954,7 +7762,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         t.totalSeconds = totalSeconds;
         delete t.stats;
         delete t.statsUpdatedAt;
-        saveTimersToStorage();
+        saveActiveTimers();
 
         // 重建卡片
         const oldCard = document.getElementById(`card-${t.id}`);
@@ -7209,6 +8017,368 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         if (!el) return;
         floatTip.style.display = 'none';
     });
+})();
+
+// ══ 手機版底部導航邏輯 ══
+(function initMobileNav() {
+    const isMobile = () => window.innerWidth <= 640;
+
+    function applyMobileLayout() {
+        const mobile = isMobile();
+        document.getElementById('mobileHeader').style.display    = mobile ? 'flex' : 'none';
+        document.getElementById('mobileBottomNav').style.display = mobile ? 'flex' : 'none';
+        if (mobile) injectToolPanel();
+        if (!mobile) {
+            // 電腦版：確保右側面板可見、工具面板隱藏
+            const rp = document.querySelector('.right-panel');
+            if (rp) rp.style.display = '';
+            const tp = document.getElementById('mobileToolPanel');
+            if (tp) tp.classList.remove('active');
+        }
+    }
+
+    function injectToolPanel() {
+        const panel = document.getElementById('mobileToolPanel');
+        if (panel.dataset.injected) return;
+        panel.dataset.injected = '1';
+        const leftPanel = document.querySelector('.left-panel');
+        if (leftPanel) panel.innerHTML = leftPanel.innerHTML;
+    }
+
+    window.switchMobileTab = function(tab) {
+        ['fleet','route','gear','craft','tools'].forEach(t => {
+            const id = 'mobNav' + t.charAt(0).toUpperCase() + t.slice(1);
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', t === tab);
+        });
+
+        const toolPanel = document.getElementById('mobileToolPanel');
+        const rightPanel = document.querySelector('.right-panel');
+
+        if (tab === 'tools') {
+            toolPanel.classList.add('active');
+            if (rightPanel) rightPanel.style.display = 'none';
+        } else {
+            toolPanel.classList.remove('active');
+            if (rightPanel) rightPanel.style.display = '';
+            switchRpTab(tab);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    applyMobileLayout();
+    window.addEventListener('resize', applyMobileLayout);
+})();
+
+// ══ 上傳區摺疊 ══
+window.toggleUploadZone = function(btn) {
+    const wrap = document.getElementById('uploadZoneWrap');
+    const isOpen = wrap.classList.contains('open');
+    wrap.classList.toggle('open', !isOpen);
+    btn.classList.toggle('open', !isOpen);
+};
+
+    // ══ 艦隊視圖切換（我的艦隊 + 多房間 Tab）══
+    let _currentFleetView = 'mine';
+    const _rooms = {}; // { roomId: { name, timers, groups } }
+    let _viewGroups = null; // null = 使用個人群組
+    let _viewTimers = null; // null = 使用個人船艇
+
+    window.switchFleetView = function(view) {
+        _currentFleetView = view;
+        // 更新所有 tab active 狀態
+        document.querySelectorAll('.fleet-view-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+        const list = document.getElementById('timerList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (view === 'mine') {
+            // 還原個人群組標籤
+            _viewGroups = null;
+            _viewTimers = null;
+            renderGroupTabs();
+            getSortedTimers().forEach(t => createTimerCard(t));
+            applyGroupFilter();
+            updateFleetCount();
+        } else {
+            const room = _rooms[view];
+            if (!room) return;
+            // 暫時切換為房間的群組和船艇資料
+            _viewGroups = room.groups || [];
+            _viewTimers = room.timers || [];
+            activeGroup = GROUP_ALL;
+            renderGroupTabs();
+            (_viewTimers).forEach(t => createTimerCard(t));
+            applyGroupFilter();
+            updateFleetCount();
+        }
+    };
+
+    function _addRoomTab(roomId, roomName) {
+        const seg = document.getElementById('fleetSegControl');
+        if (!seg) return;
+        if (document.querySelector(`.fleet-view-tab[data-view="${roomId}"]`)) return;
+        const btn = document.createElement('button');
+        btn.className = 'fleet-view-tab';
+        btn.dataset.view = roomId;
+        btn.innerHTML = `${roomName}<span class="fleet-view-badge">即時</span><span class="fleet-view-close" onclick="cloudLeaveRoomById(event,'${roomId}')">✕</span>`;
+        btn.onclick = () => switchFleetView(roomId);
+        seg.appendChild(btn);
+        const mineTab = document.getElementById('fleetTabMine');
+        if (mineTab) mineTab.dataset.view = 'mine';
+        document.getElementById('fleetViewSwitcher').style.display = 'flex';
+    }
+
+    function _removeRoomTab(roomId) {
+        const btn = document.querySelector(`.fleet-view-tab[data-view="${roomId}"]`);
+        if (btn) btn.remove();
+        // 若沒有房間 tab 了，隱藏切換列
+        const seg = document.getElementById('fleetSegControl');
+        if (seg && seg.querySelectorAll('.fleet-view-tab').length <= 1) {
+            document.getElementById('fleetViewSwitcher').style.display = 'none';
+        }
+        if (_currentFleetView === roomId) switchFleetView('mine');
+    }
+
+    function _hideFleetSwitcher() {
+        document.getElementById('fleetViewSwitcher').style.display = 'none';
+        switchFleetView('mine');
+    }
+
+    function _listenRoomTimers(roomId, roomName) {
+        if (!_rooms[roomId]) _rooms[roomId] = { name: roomName, timers: [], groups: [], owner: '', memberNames: {} };
+        window.CloudSync.listenRoom(roomId, function(roomData) {
+            if (!_rooms[roomId]) return;
+            _rooms[roomId].timers = roomData.timers || [];
+            _rooms[roomId].groups = roomData.groups || [];
+            _rooms[roomId].owner = roomData.owner || '';
+            _rooms[roomId].memberNames = roomData.memberNames || {};
+            _rooms[roomId].name = roomData.name || roomName;
+            if (_currentFleetView === roomId) switchFleetView(roomId);
+            renderRoomList();
+        });
+    }
+
+    // 房間命名：點建立房間先展開輸入框
+    window.cloudCreateRoom = async function() {
+        if (!window.CloudSync?.isEnabled()) return showAlert('請先啟用雲端同步');
+        const wrap = document.getElementById('createRoomInputWrap');
+        if (wrap) { wrap.style.display = 'flex'; document.getElementById('createRoomNameInput')?.focus(); }
+    };
+
+    window.cloudConfirmCreateRoom = async function() {
+        const nameInput = document.getElementById('createRoomNameInput');
+        const roomName = nameInput?.value.trim() || '共同艦隊';
+        document.getElementById('createRoomInputWrap').style.display = 'none';
+        if (nameInput) nameInput.value = '';
+        // 暱稱檢查
+        const myNick = window._getMyNickname?.() || '';
+        if (!myNick) return showAlert('請先設定暱稱才能建立房間');
+        try {
+            const roomId = await window.CloudSync.createRoom(roomName);
+            await window.CloudSync.pushRoomData(roomId, { timers: savedTimers, groups: customGroups });
+            _rooms[roomId] = { name: roomName, timers: savedTimers, groups: customGroups, owner: window.CloudSync.myUUID, memberNames: { [window.CloudSync.myUUID]: myNick } };
+            _addRoomTab(roomId, roomName);
+            _listenRoomTimers(roomId, roomName);
+            renderRoomList();
+            showAlert(`✅ 房間「${roomName}」建立成功！代碼：${roomId}`);
+        } catch(e) { showAlert('⚠️ ' + e.message); }
+    };
+
+    window.cloudJoinRoom = async function() {
+        if (!window.CloudSync?.isEnabled()) return showAlert('請先啟用雲端同步');
+        const myNick = window._getMyNickname?.() || '';
+        if (!myNick) return showAlert('請先設定暱稱才能加入房間');
+        const roomId = document.getElementById('joinRoomInput')?.value.trim().toUpperCase();
+        if (!roomId || roomId.length !== 6) return showAlert('請輸入 6 碼房間代碼');
+        if (_rooms[roomId]) return showAlert('已加入此房間');
+        try {
+            const data = await window.CloudSync.joinRoom(roomId);
+            const roomName = data.name || '共同艦隊';
+            _rooms[roomId] = { name: roomName, timers: data.timers || [], groups: data.groups || [], owner: data.owner || '', memberNames: data.memberNames || {} };
+            _addRoomTab(roomId, roomName);
+            _listenRoomTimers(roomId, roomName);
+            renderRoomList();
+            document.getElementById('joinRoomInput').value = '';
+            document.getElementById('joinRoomWrap').style.display = 'none';
+            showAlert(`✅ 已加入房間「${roomName}」`);
+        } catch(e) { showAlert('⚠️ ' + e.message); }
+    };
+
+    window.cloudLeaveRoomById = function(e, roomId) {
+        e.stopPropagation();
+        window.CloudSync?.leaveRoom(roomId);
+        if (_rooms[roomId]) delete _rooms[roomId];
+        _removeRoomTab(roomId);
+        // 移除房間小卡
+        const card = document.getElementById(`room-card-${roomId}`);
+        if (card) card.remove();
+        // 若沒有房間了，隱藏列表容器
+        const wrap = document.getElementById('roomListWrap');
+        if (wrap && !Object.keys(_rooms).length) wrap.style.display = 'none';
+    };
+
+    window.cloudLeaveRoom = function() {
+        if (_currentFleetView !== 'mine') {
+            cloudLeaveRoomById({ stopPropagation:()=>{} }, _currentFleetView);
+        }
+        const wrap = document.getElementById('currentRoomWrap');
+        const actions = document.getElementById('roomActionWrap');
+        if (wrap) wrap.style.display = 'none';
+        if (actions) actions.style.display = 'flex';
+        renderRoomList();
+        showAlert('已離開房間');
+    };
+
+// ══ 雲端同步 UI ══
+(function() {
+    window.addEventListener('cloudSyncReady', () => {
+        const uuid = window.CloudSync?.myUUID || '';
+        const el = document.getElementById('myUUIDDisplay');
+        if (el) el.value = uuid;
+        // 載入已儲存的暱稱
+        const savedNick = window._getMyNickname?.() || '';
+        const nickEl = document.getElementById('myNicknameInput');
+        if (nickEl && savedNick) nickEl.value = savedNick;
+
+        if (localStorage.getItem('sub_cloud_enabled') === '1') _doEnableSync();
+
+        // ── 重整後還原所有已加入的房間 ──
+        const savedRooms = window.CloudSync?.getSavedRooms() || [];
+        savedRooms.forEach(async ({ id: roomId, name: roomName }) => {
+            try {
+                const snap = await window._fbGet(roomId);
+                if (!snap) { window.CloudSync?.leaveRoom(roomId); return; }
+                const actualName = snap.name || roomName;
+                _rooms[roomId] = { name: actualName, timers: snap.timers || [], groups: snap.groups || [], owner: snap.owner || '', memberNames: snap.memberNames || {} };
+                _addRoomTab(roomId, actualName);
+                _listenRoomTimers(roomId, actualName);
+                renderRoomList();
+            } catch(e) { console.warn('還原房間失敗:', roomId, e); }
+        });
+    });
+
+    // 儲存暱稱
+    window.saveMyNickname = async function() {
+        const input = document.getElementById('myNicknameInput');
+        const name = input?.value.trim();
+        if (!name) return showAlert('請輸入暱稱');
+        window._setMyNickname?.(name);
+        if (window.CloudSync?.isEnabled()) await window.CloudSync.pushNickname();
+        showAlert('✅ 暱稱已儲存：' + name);
+    };
+
+    // 渲染房間列表
+    function renderRoomList() {
+        const wrap = document.getElementById('roomListWrap');
+        if (!wrap) return;
+        const roomIds = Object.keys(_rooms);
+        if (!roomIds.length) { wrap.style.display = 'none'; return; }
+        wrap.style.display = 'flex';
+        wrap.innerHTML = '<div style="font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#666; margin-bottom:4px;">已加入的房間</div>';
+        roomIds.forEach(roomId => {
+            const room = _rooms[roomId];
+            const memberNames = room.memberNames || {};
+            const ownerUUID = room.owner || '';
+            const ownerName = memberNames[ownerUUID] || ownerUUID.slice(0,8);
+            // 成員排除持有人
+            const members = Object.entries(memberNames)
+                .filter(([uuid]) => uuid !== ownerUUID)
+                .map(([, name]) => name);
+            const card = document.createElement('div');
+            card.className = 'room-card';
+            card.id = `room-card-${roomId}`;
+            card.innerHTML = `
+                <div class="room-card-name">
+                    ${room.name}
+                    <span class="room-card-code">${roomId}</span>
+                </div>
+                <div class="room-card-meta">
+                    <strong>持有人：</strong>${ownerName}<br>
+                    ${members.length ? `<strong>成員：</strong>${members.join('、')}` : '<span style="opacity:0.5">尚無其他成員</span>'}
+                </div>
+                <div class="room-card-actions">
+                    <button class="room-card-btn enter" onclick="switchFleetView('${roomId}'); switchRpTab('fleet');">切換視圖</button>
+                    <button class="room-card-btn leave" onclick="cloudLeaveRoomById(event,'${roomId}')">離開房間</button>
+                </div>`;
+            wrap.appendChild(card);
+        });
+    }
+
+    window.addEventListener('cloudDataLoaded', () => {
+        if (typeof loadTimersFromStorage === 'function') loadTimersFromStorage();
+        if (typeof loadGroups === 'function') loadGroups();
+        if (typeof loadCustomLinks === 'function') loadCustomLinks();
+        showAlert('✅ 雲端資料已同步');
+    });
+
+    function _setStatus(msg, ok) {
+        const dot = document.getElementById('cloudSyncDot');
+        const txt = document.getElementById('cloudSyncMsg');
+        const badge = document.getElementById('cloudStatusBadge');
+        if (dot) dot.style.background = ok === true ? '#4caf50' : ok === false ? '#ff5370' : '#ffcb6b';
+        if (txt) txt.textContent = msg;
+        if (badge) {
+            badge.textContent = ok === true ? '已連線' : ok === false ? '連線失敗' : '連線中...';
+            badge.className = 'cloud-status-badge' + (ok === true ? ' connected' : ok === false ? ' error' : '');
+        }
+    }
+
+    function _doEnableSync() {
+        if (!window.CloudSync) return;
+        localStorage.setItem('sub_cloud_enabled', '1');
+        window.CloudSync.enable();
+        _setStatus('連線中...', null);
+        window.CloudSync.pullMyData().then(() => {
+            _setStatus('✅ 已連線，同步中', true);
+            const w = document.getElementById('cloudEnableWrap');
+            if (w) w.style.display = 'none';
+        }).catch(() => _setStatus('⚠️ 連線失敗，請確認網路', false));
+    }
+
+    function _showRoomUI(roomId) {
+        const wrap = document.getElementById('currentRoomWrap');
+        const code = document.getElementById('currentRoomCode');
+        const actions = document.getElementById('roomActionWrap');
+        if (wrap) wrap.style.display = 'block';
+        if (code) code.textContent = roomId;
+        if (actions) actions.style.display = 'none';
+    }
+
+    window.cloudEnableSync = _doEnableSync;
+
+    window.copyMyUUID = function() {
+        const val = document.getElementById('myUUIDDisplay')?.value;
+        if (!val) return;
+        navigator.clipboard?.writeText(val).then(() => showAlert('✅ 已複製 ID'));
+    };
+
+    window.cloudImportUUID = async function() {
+        const newUUID = document.getElementById('importUUIDInput')?.value.trim();
+        if (!newUUID) return showAlert('請輸入 ID');
+        localStorage.setItem('sub_user_uuid', newUUID);
+        showAlert('正在載入資料...');
+        try { await window.CloudSync.pullMyData(); }
+        catch(e) { showAlert('⚠️ 載入失敗，請確認 ID'); }
+    };
+
+    window.cloudShowJoinRoom = function() {
+        const w = document.getElementById('joinRoomWrap');
+        if (!w) return;
+        const isOpen = w.style.display === 'flex';
+        w.style.display = isOpen ? 'none' : 'flex';
+        const content = document.getElementById('cloudSyncContent');
+        if (content && content.style.maxHeight !== '0px') {
+            content.style.maxHeight = 'none';
+        }
+    };
+
+    window.copyRoomCode = function() {
+        const code = document.getElementById('currentRoomCode')?.textContent;
+        if (code) navigator.clipboard?.writeText(code).then(() => showAlert('✅ 已複製房間代碼'));
+    };
 })();
 </script>
 </body>
