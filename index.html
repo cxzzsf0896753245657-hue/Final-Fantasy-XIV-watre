@@ -462,13 +462,11 @@
         /* ── 群組標籤 ── */
         .group-tabs {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;       /* 桌面版：全展開，標籤自動換行 */
             gap: 6px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+            overflow-x: visible;
             padding-bottom: 2px;
-            min-width: 0;   /* 允許在 flex 容器內收縮，讓 overflow-x: auto 生效 */
+            min-width: 0;
             width: 100%;
         }
         .group-tabs::-webkit-scrollbar { display: none; }
@@ -592,7 +590,7 @@
             border-color: rgba(0,0,0,0.07);
         }
         .fleet-toolbar-left {
-            display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; flex: 1; min-width: 0; overflow: hidden;
+            display: flex; align-items: flex-start; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0;
         }
         .fleet-toolbar-right {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
@@ -1881,6 +1879,14 @@
             /* ── 右側分頁面板：手機版 ── */
             .rp-section { padding: 12px 14px 16px; }
             .rp-result-card { padding: 12px 14px; }
+
+            /* 標籤列：手機版維持橫向滑動 */
+            .group-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
 
             /* 艦隊工具列 */
             .fleet-toolbar {
