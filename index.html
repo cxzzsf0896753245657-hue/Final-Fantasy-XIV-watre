@@ -2027,6 +2027,7 @@
                 updatedAt:  Date.now()
             };
         }
+        let _applyRemoteDebounce = null;
         function applyRemoteData(data) {
             if (!data) return;
             if (data.timers)     localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(data.timers));
@@ -2035,7 +2036,11 @@
             if (data.craftParts) localStorage.setItem('sub_craft_selected_parts', JSON.stringify(data.craftParts));
             if (data.craftOwned) localStorage.setItem('sub_craft_owned_map', JSON.stringify(data.craftOwned));
             if (data.links)      localStorage.setItem('sub_custom_links', JSON.stringify(data.links));
-            window.dispatchEvent(new CustomEvent('cloudDataLoaded'));
+            // debounce：避免 pushMyData 後 Firebase 回流造成連續觸發 cloudDataLoaded
+            clearTimeout(_applyRemoteDebounce);
+            _applyRemoteDebounce = setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('cloudDataLoaded'));
+            }, 800);
         }
 
         const myUUID = getMyUUID();
@@ -4747,6 +4752,10 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             const sel = document.getElementById('sortSelect');
             if (sel) sel.value = savedSort;
         }
+        // 清空舊卡片，避免重複渲染（無論是否有資料都先清）
+        const list = document.getElementById('timerList');
+        if (list) list.innerHTML = '';
+
         const data = localStorage.getItem("ffxiv_submarine_timers");
         if (data) {
             savedTimers = JSON.parse(data);
@@ -4757,10 +4766,6 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             let groupsChanged = false;
             groupsInUse.forEach(g => { if (!customGroups.includes(g)) { customGroups.push(g); groupsChanged = true; } });
             if (groupsChanged) saveGroups();
-            // 清空舊卡片，避免重複渲染
-            const list = document.getElementById('timerList');
-            if (list) list.innerHTML = '';
-
             const sorted = getSortedTimers();
             sorted.forEach(timer => createTimerCard(timer));
         }
@@ -8315,7 +8320,6 @@ window.toggleUploadZone = function(btn) {
         if (typeof loadGroups === 'function') loadGroups();             // 先載群組，供 loadTimersFromStorage 補齊使用
         if (typeof loadTimersFromStorage === 'function') loadTimersFromStorage();
         if (typeof loadCustomLinks === 'function') loadCustomLinks();
-        showAlert('✅ 雲端資料已同步');
     });
 
     function _setStatus(msg, ok) {
