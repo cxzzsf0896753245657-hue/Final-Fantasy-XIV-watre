@@ -3385,6 +3385,7 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
     const statusText = document.getElementById('statusText');
     const timerList = document.getElementById('timerList');
     let savedTimers = [];
+    const _timerIntervals = new Map(); // 追蹤每個 timer 的 interval，避免重複建立
     let _timerIdCounter = 0;
     let worker = null;
     let workerInitPromise = null;
@@ -4606,8 +4607,13 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             return;
         }
 
+        // 清除舊 interval，避免同一張卡片同時跑多個倒數
+        if (_timerIntervals.has(timer.id)) {
+            clearInterval(_timerIntervals.get(timer.id));
+            _timerIntervals.delete(timer.id);
+        }
         const interval = setInterval(() => { 
-            if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); return; } 
+            if (!document.getElementById(`card-${timer.id}`)) { clearInterval(interval); _timerIntervals.delete(timer.id); return; } 
             const remaining = timer.endTime - Date.now(); 
             if (remaining <= 0) { 
                 document.getElementById(`count-${timer.id}`).innerText = "🌟 已回港！"; 
@@ -4617,12 +4623,14 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
                 playSound(); 
                 showNotification(timer.name); 
                 clearInterval(interval); 
+                _timerIntervals.delete(timer.id);
                 return; 
             } 
             const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), s = Math.floor((remaining % 60000) / 1000); 
             document.getElementById(`count-${timer.id}`).innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; 
             document.getElementById(`bar-${timer.id}`).style.width = `${(remaining / (timer.totalSeconds * 1000)) * 100}%`; 
-        }, 1000); 
+        }, 1000);
+        _timerIntervals.set(timer.id, interval); 
     }
     
     // ── 從船艇小卡送往路線規劃 ──
@@ -4669,6 +4677,8 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         setActiveTimers(arr);
         saveActiveTimers();
         document.getElementById(`card-${id}`)?.remove();
+        // 清除對應的 interval
+        if (_timerIntervals.has(id)) { clearInterval(_timerIntervals.get(id)); _timerIntervals.delete(id); }
         updateFleetCount();
     }
     function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
@@ -4752,7 +4762,9 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
             const sel = document.getElementById('sortSelect');
             if (sel) sel.value = savedSort;
         }
-        // 清空舊卡片，避免重複渲染（無論是否有資料都先清）
+        // 清空舊卡片與所有 interval，避免重複渲染
+        _timerIntervals.forEach(iv => clearInterval(iv));
+        _timerIntervals.clear();
         const list = document.getElementById('timerList');
         if (list) list.innerHTML = '';
 
@@ -8101,6 +8113,9 @@ window.toggleUploadZone = function(btn) {
         });
         const list = document.getElementById('timerList');
         if (!list) return;
+        // 清空 interval 再清空卡片
+        _timerIntervals.forEach(iv => clearInterval(iv));
+        _timerIntervals.clear();
         list.innerHTML = '';
 
         if (view === 'mine') {
