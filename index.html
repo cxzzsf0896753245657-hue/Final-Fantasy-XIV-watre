@@ -1989,7 +1989,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { getDatabase, ref, set, get, onValue, off, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+        import { getDatabase, ref, set, get, onValue, off, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqcX6hhHVBe58ko9-XVtLzYHLOn6yhmfY",
@@ -2153,7 +2153,11 @@
             getSavedRooms() { return _getSavedRooms(); },
             async pushNickname() { await pushNickname(); },
             enable() { _syncEnabled = true; this.listenMyData(); },
-            isEnabled() { return _syncEnabled; }
+            isEnabled() { return _syncEnabled; },
+            async kickMember(roomId, targetUUID) {
+                await remove(ref(db, `rooms/${roomId}/members/${targetUUID}`));
+                await remove(ref(db, `rooms/${roomId}/memberNames/${targetUUID}`));
+            }
         };
 
         window.dispatchEvent(new CustomEvent('cloudSyncReady'));
@@ -2423,6 +2427,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <button onclick="cloudLeaveRoom()" style="background:transparent; border:1px solid rgba(255,83,112,0.3); color:#e06070; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer;">離開</button>
                                     </div>
                                 </div>
+                                <!-- 成員列表（房主可見） -->
+                                <div id="currentRoomMembers" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid rgba(155,126,200,0.15);"></div>
                             </div>
                             <div id="roomActionWrap" style="display:flex; gap:6px;">
                                 <button onclick="cloudCreateRoom()" style="flex:1; background:rgba(155,126,200,0.12); border:1px solid rgba(155,126,200,0.3); color:var(--accent-color); border-radius:8px; padding:7px; font-size:12px; font-weight:700; cursor:pointer;">＋ 建立房間</button>
@@ -8175,6 +8181,15 @@ window.toggleUploadZone = function(btn) {
         switchFleetView('mine');
     }
 
+    function _listenOwnerRoom(roomId) {
+        window.CloudSync.listenRoom(roomId, function(roomData) {
+            if (!_rooms[roomId]) return;
+            _rooms[roomId].memberNames = roomData.memberNames || {};
+            _rooms[roomId].owner = roomData.owner || '';
+            if (window._ownedRoomId === roomId) window.renderOwnedRoomMembers?.(roomId);
+        });
+    }
+
     function _listenRoomTimers(roomId, roomName) {
         if (!_rooms[roomId]) _rooms[roomId] = { name: roomName, timers: [], groups: [], owner: '', memberNames: {} };
         window.CloudSync.listenRoom(roomId, function(roomData) {
@@ -8186,6 +8201,8 @@ window.toggleUploadZone = function(btn) {
             _rooms[roomId].name = roomData.name || roomName;
             if (_currentFleetView === roomId) switchFleetView(roomId);
             renderRoomList();
+            // 若是房主視圖，同步更新成員列表
+            if (window._ownedRoomId === roomId) window.renderOwnedRoomMembers?.(roomId);
         });
     }
 
@@ -8219,6 +8236,11 @@ window.toggleUploadZone = function(btn) {
             if (actions) actions.style.display = 'none';
             // 記錄自己建立的房間代碼，重整後用來還原代碼顯示
             localStorage.setItem('sub_owned_room_id', roomId);
+            // 記錄房主正在管理的房間 ID，供成員列表使用
+            window._ownedRoomId = roomId;
+            window.renderOwnedRoomMembers?.(roomId);
+            // 房主監聽 Firebase，以便即時更新成員列表（不切換視圖）
+            _listenOwnerRoom(roomId);
             showAlert(`✅ 房間「${roomName}」建立成功！代碼：${roomId}`);
         } catch(e) { showAlert('⚠️ ' + e.message); }
     };
@@ -8256,6 +8278,37 @@ window.toggleUploadZone = function(btn) {
         if (wrap && !Object.keys(_rooms).length) wrap.style.display = 'none';
     };
 
+    // ── 渲染房主的成員列表 ──
+    window.renderOwnedRoomMembers = function(roomId) {
+        const el = document.getElementById('currentRoomMembers');
+        if (!el) return;
+        const room = _rooms[roomId];
+        if (!room) { el.style.display = 'none'; return; }
+        const myUUID = window.CloudSync?.myUUID || '';
+        const memberNames = room.memberNames || {};
+        const members = Object.entries(memberNames).filter(([uuid]) => uuid !== myUUID);
+        if (!members.length) {
+            el.style.display = 'block';
+            el.innerHTML = '<div style="font-size:11px; color:#666;">尚無成員加入</div>';
+            return;
+        }
+        el.style.display = 'block';
+        el.innerHTML = '<div style="font-size:11px; color:#888; margin-bottom:5px; font-weight:700;">已加入的成員</div>' +
+            members.map(([uuid, name]) =>
+                `<div style="display:flex; align-items:center; justify-content:space-between; padding:3px 0;">
+                    <span style="font-size:12px; color:var(--text-color);">${name || uuid.slice(0,8)}</span>
+                    <button onclick="kickRoomMember('${roomId}','${uuid}')" style="background:transparent; border:1px solid rgba(255,83,112,0.3); color:#e06070; border-radius:5px; padding:2px 8px; font-size:11px; cursor:pointer;">移除</button>
+                </div>`
+            ).join('');
+    };
+
+    window.kickRoomMember = async function(roomId, targetUUID) {
+        try {
+            await window.CloudSync.kickMember(roomId, targetUUID);
+            // Firebase listener 會自動更新 _rooms[roomId].memberNames，重新渲染
+        } catch(e) { showAlert('⚠️ 移除失敗：' + e.message); }
+    };
+
     window.cloudLeaveRoom = function() {
         if (_currentFleetView !== 'mine') {
             // 加入的房間才需要走分頁離開流程
@@ -8268,6 +8321,9 @@ window.toggleUploadZone = function(btn) {
         if (actions) actions.style.display = 'flex';
         if (labelEl) labelEl.textContent = '目前加入的房間';
         localStorage.removeItem('sub_owned_room_id');
+        window._ownedRoomId = null;
+        const membersEl = document.getElementById('currentRoomMembers');
+        if (membersEl) membersEl.style.display = 'none';
         window.renderRoomList();
     };
 
@@ -8305,6 +8361,9 @@ window.toggleUploadZone = function(btn) {
                     if (code) code.textContent = roomId;
                     if (wrap) wrap.style.display = 'block';
                     if (actions) actions.style.display = 'none';
+                    window._ownedRoomId = roomId;
+                    window.renderOwnedRoomMembers?.(roomId);
+                    _listenOwnerRoom(roomId);
                 } else {
                     // 加入者：走完整分頁 + 監聽流程
                     _addRoomTab(roomId, actualName);
