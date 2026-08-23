@@ -8217,6 +8217,8 @@ window.toggleUploadZone = function(btn) {
             if (code) code.textContent = roomId;
             if (wrap) wrap.style.display = 'block';
             if (actions) actions.style.display = 'none';
+            // 記錄自己建立的房間代碼，重整後用來還原代碼顯示
+            localStorage.setItem('sub_owned_room_id', roomId);
             showAlert(`✅ 房間「${roomName}」建立成功！代碼：${roomId}`);
         } catch(e) { showAlert('⚠️ ' + e.message); }
     };
@@ -8265,6 +8267,7 @@ window.toggleUploadZone = function(btn) {
         if (wrap) wrap.style.display = 'none';
         if (actions) actions.style.display = 'flex';
         if (labelEl) labelEl.textContent = '目前加入的房間';
+        localStorage.removeItem('sub_owned_room_id');
         window.renderRoomList();
     };
 
@@ -8288,10 +8291,26 @@ window.toggleUploadZone = function(btn) {
                 const snap = await window._fbGet(roomId);
                 if (!snap) { window.CloudSync?.leaveRoom(roomId); return; }
                 const actualName = snap.name || roomName;
+                const myUUID = window.CloudSync?.myUUID || '';
+                const isOwner = snap.owner === myUUID;
                 _rooms[roomId] = { name: actualName, timers: snap.timers || [], groups: snap.groups || [], owner: snap.owner || '', memberNames: snap.memberNames || {} };
-                _addRoomTab(roomId, actualName);
-                _listenRoomTimers(roomId, actualName);
-                renderRoomList();
+
+                if (isOwner) {
+                    // 房主：只還原代碼顯示區塊，不新增分頁
+                    const labelEl = document.getElementById('currentRoomLabel');
+                    const wrap = document.getElementById('currentRoomWrap');
+                    const code = document.getElementById('currentRoomCode');
+                    const actions = document.getElementById('roomActionWrap');
+                    if (labelEl) labelEl.textContent = '我的房間（分享代碼給其他人加入）';
+                    if (code) code.textContent = roomId;
+                    if (wrap) wrap.style.display = 'block';
+                    if (actions) actions.style.display = 'none';
+                } else {
+                    // 加入者：走完整分頁 + 監聽流程
+                    _addRoomTab(roomId, actualName);
+                    _listenRoomTimers(roomId, actualName);
+                    window.renderRoomList();
+                }
             } catch(e) { console.warn('還原房間失敗:', roomId, e); }
         });
     });
