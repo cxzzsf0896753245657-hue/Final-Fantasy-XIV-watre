@@ -8295,7 +8295,7 @@ window.toggleUploadZone = function(btn) {
     };
 
     // 渲染房間列表
-    function renderRoomList() {
+    window.renderRoomList = function renderRoomList() {
         const wrap = document.getElementById('roomListWrap');
         if (!wrap) return;
         const roomIds = Object.keys(_rooms);
