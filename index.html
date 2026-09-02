@@ -118,6 +118,268 @@
             box-shadow: 0 4px 14px rgba(249,115,22,0.6);
         }
 
+        /* ── 使用說明抽屜 ── */
+        #manualDrawer {
+            position: fixed;
+            top: 0; left: -520px;
+            width: 520px;
+            height: 100vh;
+            background: #1a1a2e;
+            border-right: 1px solid rgba(155,126,200,0.2);
+            z-index: 10000;
+            transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+            display: flex;
+            flex-direction: column;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+        }
+        body.light-mode #manualDrawer { background: #f4f0fa; border-right-color: rgba(155,126,200,0.25); }
+        #manualDrawer.open { left: 0; }
+        #manualOverlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 9999;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        #manualOverlay.open { opacity: 1; pointer-events: all; }
+        .manual-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(155,126,200,0.15);
+            flex-shrink: 0;
+        }
+        .manual-head-title { font-size: 17px; font-weight: 700; color: #9b7ec8; display: flex; align-items: center; gap: 8px; }
+        .manual-close {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa; font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+        .manual-close:hover { background: rgba(255,255,255,0.1); color: #e0e0e0; }
+        body.light-mode .manual-close { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #666; }
+        body.light-mode .manual-close:hover { background: rgba(0,0,0,0.1); color: #333; }
+        .manual-body { display: flex; flex: 1; overflow: hidden; }
+        .manual-nav {
+            width: 168px; flex-shrink: 0;
+            background: rgba(0,0,0,0.15);
+            border-right: 1px solid rgba(155,126,200,0.12);
+            padding: 12px 0; overflow-y: auto;
+        }
+        body.light-mode .manual-nav { background: rgba(155,126,200,0.06); border-right-color: rgba(155,126,200,0.15); }
+        .manual-nav-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; font-size: 14px; color: #ccc;
+            cursor: pointer; transition: all .15s;
+            border-left: 2px solid transparent; user-select: none;
+        }
+        .manual-nav-item:hover { background: rgba(155,126,200,0.08); color: #ccc; }
+        .manual-nav-item.active { color: #9b7ec8; border-left-color: #9b7ec8; background: rgba(155,126,200,0.1); font-weight: 600; }
+        body.light-mode .manual-nav-item { color: #888; }
+        body.light-mode .manual-nav-item:hover { color: #555; }
+        body.light-mode .manual-nav-item.active { color: #7c5cbf; }
+        .manual-content { flex: 1; overflow-y: auto; padding: 26px 26px 36px; }
+        .manual-content::-webkit-scrollbar { width: 4px; }
+        .manual-content::-webkit-scrollbar-thumb { background: rgba(155,126,200,0.3); border-radius: 2px; }
+        .manual-section { display: none; }
+        .manual-section.active { display: block; }
+        .manual-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 12px; font-weight: 600; padding: 3px 10px;
+            border-radius: 20px; background: rgba(155,126,200,0.12);
+            color: #9b7ec8; border: 0.5px solid rgba(155,126,200,0.3);
+            margin-bottom: 10px;
+        }
+        .manual-h2 { font-size: 22px; font-weight: 700; color: #e0e0e0; margin-bottom: 7px; }
+        body.light-mode .manual-h2 { color: #2d2d2d; }
+        .manual-sub { font-size: 14px; color: #b8b8b8; margin-bottom: 20px; line-height: 1.75; }
+        body.light-mode .manual-sub { color: #666; }
+        .manual-demo-card {
+            background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+        }
+        body.light-mode .manual-demo-card { background: #fff; border-color: rgba(0,0,0,0.08); }
+        .manual-demo-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .manual-demo-name { font-size: 15px; font-weight: 600; color: #9b7ec8; }
+        .manual-demo-timer { font-size: 20px; font-weight: 800; color: #e07070; font-family: monospace; letter-spacing: 1px; }
+        .manual-bar-bg { height: 3px; background: rgba(155,126,200,0.15); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
+        .manual-bar { height: 100%; background: linear-gradient(90deg,#9b7ec8,#c792ea); border-radius: 2px; }
+        .manual-meta { font-size: 13px; color: #999; display: flex; justify-content: space-between; }
+        body.light-mode .manual-meta { color: #999; }
+        .manual-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .manual-tag {
+            font-size: 13px; padding: 5px 13px; border-radius: 20px;
+            border: 0.5px solid rgba(255,255,255,0.12); color: #aaa;
+            cursor: pointer; transition: all .15s; user-select: none;
+        }
+        body.light-mode .manual-tag { border-color: rgba(0,0,0,0.1); color: #888; }
+        .manual-tag.active { background: #9b7ec8; color: #fff; border-color: #9b7ec8; }
+        .manual-tag:hover:not(.active) { background: rgba(155,126,200,0.1); border-color: rgba(155,126,200,0.4); color: #9b7ec8; }
+        .manual-step { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+        .manual-step-num {
+            width: 24px; height: 24px; border-radius: 50%; background: #9b7ec8; color: #fff;
+            font-size: 12px; font-weight: 700; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0; margin-top: 2px;
+        }
+        .manual-step-text { font-size: 14px; color: #c8c8c8; line-height: 1.7; }
+        body.light-mode .manual-step-text { color: #666; }
+        .manual-step-text b { color: #e0e0e0; font-weight: 600; }
+        body.light-mode .manual-step-text b { color: #333; }
+        .manual-stat-row { display: flex; gap: 7px; margin-bottom: 12px; }
+        .manual-stat-box {
+            flex: 1; background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 8px; padding: 9px 6px; text-align: center;
+        }
+        body.light-mode .manual-stat-box { background: #fff; border-color: rgba(0,0,0,0.08); }
+        .manual-stat-val { font-size: 20px; font-weight: 700; color: #9b7ec8; font-family: monospace; }
+        .manual-stat-label { font-size: 12.5px; color: #aaa; margin-top: 3px; }
+        .manual-gear-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        .manual-gear-slot {
+            flex: 1; background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 8px; padding: 9px 8px; font-size: 13px; color: #d0d0d0; text-align: center;
+        }
+        body.light-mode .manual-gear-slot { background: #fff; border-color: rgba(0,0,0,0.08); color: #666; }
+        .manual-gear-slot b { display: block; font-size: 12px; color: #999; margin-bottom: 3px; font-weight: 400; }
+        .manual-craft-row {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 0; border-bottom: 0.5px solid rgba(255,255,255,0.06);
+        }
+        body.light-mode .manual-craft-row { border-bottom-color: rgba(0,0,0,0.06); }
+        .manual-craft-row:last-child { border-bottom: none; }
+        .manual-craft-check {
+            width: 18px; height: 18px; border-radius: 4px;
+            border: 1.5px solid rgba(255,255,255,0.2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .15s; flex-shrink: 0;
+        }
+        body.light-mode .manual-craft-check { border-color: rgba(0,0,0,0.2); }
+        .manual-craft-check.done { background: #9b7ec8; border-color: #9b7ec8; }
+        .manual-craft-check.done::after { content: '✓'; color: #fff; font-size: 9px; font-weight: 700; }
+        .manual-craft-name { flex: 1; font-size: 14px; color: #d0d0d0; }
+        body.light-mode .manual-craft-name { color: #666; }
+        .manual-craft-name.done { text-decoration: line-through; color: #555; }
+        .manual-craft-qty { font-size: 13px; color: #aaa; font-family: monospace; }
+        .manual-badge-row { display: flex; gap: 5px; flex-wrap: wrap; margin: 9px 0; }
+        .manual-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 13px; padding: 4px 10px; border-radius: 20px; font-weight: 600;
+        }
+        .manual-badge.green { background: rgba(76,175,125,0.12); color: #4caf7d; border: 0.5px solid rgba(76,175,125,0.25); }
+        .manual-badge.purple { background: rgba(155,126,200,0.12); color: #9b7ec8; border: 0.5px solid rgba(155,126,200,0.3); }
+        .manual-badge.red { background: rgba(224,112,112,0.12); color: #e07070; border: 0.5px solid rgba(224,112,112,0.25); }
+        .manual-cloud-box {
+            background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 9px; padding: 13px 15px; margin-bottom: 12px;
+        }
+        body.light-mode .manual-cloud-box { background: #fff; border-color: rgba(0,0,0,0.08); }
+        .manual-cloud-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .manual-cloud-label { font-size: 14px; color: #d0d0d0; }
+        body.light-mode .manual-cloud-label { color: #666; }
+        .manual-cloud-val { font-size: 13px; font-family: monospace; color: #9b7ec8; background: rgba(155,126,200,0.12); padding: 3px 9px; border-radius: 5px; }
+        .manual-sync-btn {
+            width: 100%; padding: 10px; background: #9b7ec8; color: #fff;
+            border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: opacity .15s; font-family: inherit;
+        }
+        .manual-sync-btn:hover { opacity: .85; }
+        .manual-room-card {
+            background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 9px; padding: 12px 14px; margin-bottom: 10px;
+        }
+        body.light-mode .manual-room-card { background: #fff; border-color: rgba(0,0,0,0.08); }
+        .manual-room-code { font-size: 26px; font-weight: 800; font-family: monospace; letter-spacing: 3px; color: #9b7ec8; margin: 9px 0; }
+        .manual-room-member { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; color: #d0d0d0; }
+        body.light-mode .manual-room-member { color: #666; }
+        .manual-member-dot { width: 7px; height: 7px; border-radius: 50%; background: #4caf7d; }
+        .manual-tip {
+            background: rgba(155,126,200,0.08); border: 0.5px solid rgba(155,126,200,0.22);
+            border-radius: 8px; padding: 12px 14px; font-size: 13.5px;
+            color: #bbb; line-height: 1.7; margin-top: 14px;
+        }
+        body.light-mode .manual-tip { color: #666; }
+        .manual-tip b { color: #9b7ec8; font-weight: 600; }
+        .manual-intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 4px; }
+        .manual-intro-item {
+            background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 9px; padding: 11px 13px; cursor: pointer; transition: all .15s;
+        }
+        body.light-mode .manual-intro-item { background: #fff; border-color: rgba(0,0,0,0.08); }
+        .manual-intro-item:hover { border-color: rgba(155,126,200,0.4); background: rgba(155,126,200,0.06); }
+        .manual-intro-icon { font-size: 22px; color: #9b7ec8; margin-bottom: 6px; }
+        .manual-intro-title { font-size: 14px; font-weight: 600; color: #e0e0e0; margin-bottom: 3px; }
+        body.light-mode .manual-intro-title { color: #333; }
+        .manual-intro-desc { font-size: 12.5px; color: #aaa; line-height: 1.55; }
+        .manual-card-config {
+            margin: 8px 0 10px;
+        }
+        .manual-config-row {
+            font-size: 12px;
+            color: #aaa;
+            line-height: 1.7;
+        }
+        body.light-mode .manual-config-row { color: #777; }
+        .manual-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .manual-card-select {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #ccc;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        body.light-mode .manual-card-select {
+            border-color: rgba(0,0,0,0.12);
+            background: rgba(0,0,0,0.04);
+            color: #444;
+        }
+        .manual-card-btns {
+            display: flex;
+            gap: 6px;
+        }
+        .manual-card-btn {
+            font-size: 11.5px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(155,126,200,0.3);
+            background: rgba(155,126,200,0.1);
+            color: #b0a0d8;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+        .manual-card-btn:hover { background: rgba(155,126,200,0.2); }
+        .manual-card-btn.btn-del {
+            border-color: rgba(224,112,112,0.3);
+            background: rgba(224,112,112,0.08);
+            color: #e07070;
+        }
+        .manual-card-btn.btn-del:hover { background: rgba(224,112,112,0.18); }
+        body.light-mode .manual-card-btn { color: #7c5cbf; background: rgba(155,126,200,0.08); }
+        body.light-mode .manual-card-btn.btn-del { color: #c0504a; background: rgba(224,112,112,0.06); }
+
+        .manual-route-card {
+            background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.09);
+            border-radius: 9px; padding: 11px 13px; margin-bottom: 9px;
+        }
+        body.light-mode .manual-route-card { background: #fff; border-color: rgba(0,0,0,0.08); }
+        .manual-route-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+        .manual-route-name { font-size: 14.5px; font-weight: 600; color: #e0e0e0; }
+        body.light-mode .manual-route-name { color: #333; }
+        .manual-route-exp { font-size: 13.5px; color: #9b7ec8; font-weight: 700; }
+        .manual-route-stops { font-size: 13px; color: #aaa; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+        .manual-stop-badge { padding: 2px 8px; background: rgba(155,126,200,0.12); color: #9b7ec8; border-radius: 9px; font-size: 12.5px; }
+        @media (max-width: 860px) {
+            #manualDrawer { width: 100vw; left: -100vw; }
+        }
+
         /* ── 回報按鈕 ── */
         #reportBtn {
             position: fixed;
@@ -1959,15 +2221,15 @@
             .map-node { width: 36px; height: 36px; font-size: 13px; border-radius: 8px; }
             .map-nodes { gap: 7px; }
 
-            /* 固定贊助/回報按鈕 */
-            #sponsorBtn, #reportBtn {
+            /* 固定贊助/回報/使用說明按鈕 */
+            #sponsorBtn, #reportBtn, #manualBtn {
                 padding: 5px 10px;
                 font-size: 11px;
                 border-radius: 14px;
                 top: 8px;
             }
-            #sponsorBtn { right: 10px; }
-            #reportBtn  { right: 110px; }
+            #sponsorBtn  { right: 10px; }
+            #reportBtn   { right: 110px; }
         }
 
         /* ── 選船艇列：桌機橫排，手機直排 ── */
@@ -2187,45 +2449,6 @@
         </div>
     </div>
 </div>
-<script>
-function showAlert(msg) {
-    // 清除訊息開頭的 emoji 符號，統一由視窗 icon 呈現
-    const cleanMsg = msg.replace(/^[✅⚠️🔴🟡🟢❌⛔️ℹ️]+\s*/, '');
-    // 判斷類型
-    let type = 'info';
-    if (msg.startsWith('✅')) type = 'success';
-    else if (msg.startsWith('⚠️') || msg.includes('失敗') || msg.includes('錯誤')) type = 'warning';
-
-    const iconEl = document.getElementById('customAlertIcon');
-    const boxEl  = document.getElementById('customAlertBox');
-    const msgEl  = document.getElementById('customAlertMsg');
-
-    // icon 和顏色
-    const map = {
-        success: { icon: '✓', color: '#4caf7d' },
-        warning: { icon: '!',  color: '#e0904a' },
-        info:    { icon: 'i',  color: 'var(--accent-color)' },
-    };
-    const cfg = map[type];
-    iconEl.textContent = cfg.icon;
-    iconEl.style.color = cfg.color;
-    iconEl.style.borderColor = cfg.color;
-    msgEl.textContent = cleanMsg;
-    document.getElementById('customAlertOverlay').classList.add('visible');
-}
-// Close on overlay click
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('customAlertOverlay').addEventListener('click', function(e) {
-        if (e.target === this) this.classList.remove('visible');
-    });
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            document.getElementById('customAlertOverlay').classList.remove('visible');
-            if (typeof _confirmClose === 'function') _confirmClose(false);
-        }
-    });
-});
-</script>
 
 <!-- ── 自製 Confirm Modal ── -->
 <div class="custom-confirm-overlay" id="customConfirmOverlay">
@@ -2240,41 +2463,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
-<script>
-let _confirmResolve = null;
-let _confirmReject  = null;
-
-function showConfirm(msg, okLabel) {
-    return new Promise((resolve, reject) => {
-        _confirmResolve = resolve;
-        _confirmReject  = reject;
-        document.getElementById('customConfirmMsg').textContent = msg;
-        document.getElementById('customConfirmOk').textContent = okLabel || '確定';
-        document.getElementById('customConfirmOverlay').classList.add('visible');
-    });
-}
-
-function _confirmClose(result) {
-    document.getElementById('customConfirmOverlay').classList.remove('visible');
-    const res = _confirmResolve;
-    const rej = _confirmReject;
-    _confirmResolve = _confirmReject = null;
-    if (result) { res && res(true); }
-    else         { rej && rej(false); }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('customConfirmOverlay').addEventListener('click', function(e) {
-        if (e.target === this) _confirmClose(false);
-    });
-    document.getElementById('customConfirmOk').addEventListener('click', function() {
-        _confirmClose(true);
-    });
-    document.getElementById('customConfirmCancel').addEventListener('click', function() {
-        _confirmClose(false);
-    });
-});
-</script>
 
 <!-- ══ MOBILE HEADER（僅手機版顯示）══ -->
 <div id="mobileHeader" style="display:none;">
@@ -2322,6 +2510,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <h1>FF14 潛水艇計時器2.3.1 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
+                <button class="lp-icon-btn" onclick="openManual()" title="使用說明" style="font-size:15px;">📖</button>
                 <button class="lp-icon-btn" onclick="toggleTheme()" title="切換主題">🌙</button>
                 <button class="lp-icon-btn" onclick="requestNotificationPermission()" title="啟用通知">🔔</button>
                 <div class="lp-sound-group">
@@ -3389,6 +3578,80 @@ function subFindRoutes(rank,stats,mustInc,mustExcl,mustIncMaps,mustExclMaps,must
 const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土之碎晶","6":"雷之碎晶","7":"水之碎晶","8":"火之水晶","9":"冰之水晶","10":"風之水晶","11":"土之水晶","12":"雷之水晶","13":"水之水晶","14":"火之晶簇","15":"冰之晶簇","16":"風之晶簇","17":"土之晶簇","18":"雷之晶簇","19":"水之晶簇","5066":"綠金錠","5067":"玫瑰金錠","5069":"黃金錠","5113":"銀礦","5116":"鈷鐵礦","5118":"金礦","5120":"白金礦","5121":"玄鐵礦","5187":"紅寶石","5188":"鑽石","5189":"綠寶石","5192":"藍寶石","5226":"星砂礫","5230":"石灰岩","5231":"粉砂岩","5232":"矽岩","5365":"竹材","5384":"雪松原木","5391":"紅木原木","5392":"柚木原木","5395":"雲杉原木","5512":"玻璃板","5563":"白蠍","5564":"黑蠍","5630":"信力魔晶石貳型","5631":"信力魔晶石參型","5632":"信力魔晶石肆型","5633":"信力魔晶石伍型","5665":"神眼魔晶石貳型","5666":"神眼魔晶石參型","5667":"神眼魔晶石肆型","5668":"神眼魔晶石伍型","5671":"武略魔晶石參型","5672":"武略魔晶石肆型","5673":"武略魔晶石伍型","5675":"雄略魔晶石貳型","5676":"雄略魔晶石參型","5677":"雄略魔晶石肆型","5678":"雄略魔晶石伍型","5680":"剛柔魔晶石貳型","5681":"剛柔魔晶石參型","5682":"剛柔魔晶石肆型","5683":"剛柔魔晶石伍型","5690":"博識魔晶石貳型","5691":"博識魔晶石參型","5695":"器識魔晶石貳型","5696":"器識魔晶石參型","5698":"器識魔晶石伍型","5700":"名匠魔晶石貳型","5701":"名匠魔晶石參型","5705":"魔匠魔晶石貳型","5706":"魔匠魔晶石參型","5707":"魔匠魔晶石肆型","5710":"巨匠魔晶石貳型","5711":"巨匠魔晶石參型","5712":"巨匠魔晶石肆型","5715":"戰技魔晶石貳型","5716":"戰技魔晶石參型","5717":"戰技魔晶石肆型","5718":"戰技魔晶石伍型","5720":"詠唱魔晶石貳型","5721":"詠唱魔晶石參型","5722":"詠唱魔晶石肆型","5723":"詠唱魔晶石伍型","7008":"花崗岩","7009":"切石","7010":"大理石","7040":"貝拉哈迪亞玻璃","7047":"磨砂玻璃板","7588":"鎢鐵礦","7589":"自然金","7590":"緋紅樹汁","7621":"驅幻晶","7671":"純淨棱晶","8028":"偏光玻璃板","9298":"經典眼鏡","9360":"白金錠","9733":"聚靈棺","10099":"無屬性水晶","10335":"黑暗物質晶簇","10386":"6級黑暗物質","12220":"紅莫柯草","12221":"鐵刀木","12222":"合成生物的粗皮","12223":"蒼天石原石","12224":"藍鐵礦","12225":"深紅水晶","12226":"深紅晶簇","12227":"深綠水晶","12228":"深綠晶簇","12229":"深藍水晶","12230":"深藍晶簇","12520":"硬銀塊","12531":"靈銀沙","12532":"硬銀沙","12533":"皇金沙","12534":"靈銀礦","12537":"白鈦礦","12538":"堅鋼礦","12539":"白雲母","12544":"星紅石","12545":"星藍石","12551":"水淙石原石","12578":"暗栗木原木","12579":"樺木原木","12585":"暗栗樹枝","12586":"樺樹枝","12606":"星極油","12610":"水晶玻璃片","12657":"莫古利的王冠","12920":"天然黏土","12921":"石粉黏土","12922":"鍊金樹脂","12923":"竹片","12924":"輕木廢材","12925":"輕木木材","12926":"鍊金纖維","12927":"魔科學纖維","12928":"深色水晶","12929":"深色晶簇","14151":"菱鋅礦","14934":"古代野獸的化石片","14955":"光銀沙","14957":"樟木古樹","15976":"精梳毛布地毯","16725":"輝金礦","16906":"精梳毛布","16908":"強化玻璃板","17019":"仿製財寶","17837":"7級黑暗物質","18018":"神眼魔晶石陸型","18019":"武略魔晶石陸型","18020":"雄略魔晶石陸型","18021":"剛柔魔晶石陸型","18028":"戰技魔晶石陸型","18029":"詠唱魔晶石陸型","19930":"山毛櫸原木","19932":"柿木原木","19933":"櫸木原木","19934":"榧木原木","19938":"白銅塊","19952":"光銀礦","19956":"皇金礦","19957":"輝鉬礦","19962":"鋰輝石","19964":"星尖石","19967":"薔薇輝石","19980":"葛布","20014":"輝金沙","20270":"納夏薄絹","20791":"白雲花","21800":"幻象棱晶","21921":"舞海月","22441":"紅蓮珊瑚","22442":"石像的碎片","22500":"沉船戒指","22501":"沉船手鐲","22502":"沉船耳飾","22503":"沉船項鍊","22504":"上等沉船戒指","22505":"上等沉船手鐲","22506":"上等沉船耳飾","22507":"上等沉船項鍊","23222":"海產油脂","23337":"陳舊的樂譜：海中","23875":"天然水晶","24490":"天然綠水晶","24503":"海底的財寶","24505":"天然青水晶","24902":"南方度假獺獺","24908":"打撈上來的古錢","25008":"鐵紋礦石","25186":"信力魔晶石柒型","25187":"神眼魔晶石柒型","25188":"武略魔晶石柒型","25189":"雄略魔晶石柒型","25190":"剛柔魔晶石柒型","25197":"戰技魔晶石柒型","25198":"詠唱魔晶石柒型","26528":"黃檀木材","26529":"柳杉原木","26531":"純鈦礦","26802":"小判鮫級潛水艇","27287":"天然赤水晶","27293":"古董瓶","27683":"白橡木原木","27684":"仙果木原木","27685":"白梣木原木","27686":"沙柚木原木","27687":"癒瘡木原木","27696":"硬金沙","27697":"硬金礦","27698":"靈青岩","27699":"魔銀沙","27700":"鈦銅沙","27701":"鈦銅礦","27702":"暗銀沙","27703":"暗銀礦","27736":"海燕的粗皮","27753":"仙子棉","27759":"矮人棉","27773":"吸血草杯的卷鬚","27774":"吸血藤的樹汁","27801":"硬泥岩","27803":"凝灰岩","27817":"黃明礬","28136":"黃金水瓶","28621":"狐獴","28980":"天然黃水晶","29590":"海底黏土","30034":"燒結磨刀石","30093":"銀山雀兒","30386":"裝有結晶的背包","31322":"紫漆油紙傘","31671":"管弦樂琴樂譜：宿命","32205":"麥酒杯","32214":"仿古清洗台","32223":"皇家獅子雕像","32248":"景觀樹","32848":"希爾德拉級潛水艇P型","33120":"管弦樂琴樂譜：復仇","33287":"格斯塔拉的肖像畫","33695":"本本石","33848":"管弦樂琴樂譜：蓄意","33871":"古代生物的骨頭","33872":"生鏽的甲胄","33873":"壞掉的冰盒","36083":"裸麥","36086":"棕櫚糖漿","36087":"椰子","36089":"巨人新薯","36094":"高山茶葉","36096":"無花果","36097":"星外洋蔥","36164":"鉍礦","36165":"錳礦","36174":"紫黃晶原石","36175":"白鑞礦","36176":"弗里金礦","36177":"藍鋯石原石","36178":"星點石英原石","36180":"綠片岩","36181":"鐵雲母","36190":"馬栗木原木","36193":"鐵木原木","36194":"完滿木原木","36205":"絳紅莫柯草","36206":"迷彩棉","37083":"黑色黏土","37485":"藍色印花陽傘","37487":"幻象經典眼鏡","37489":"深海大理石","37490":"漂流種子","38580":"活常春藤壁飾","38607":"石製臺階","38608":"石製夾層樓板","38619":"雪峰瞭望塔遺跡","38684":"防塵疏水布","38685":"破舊的輕量管","39382":"炭火熨斗","39387":"古典水壺","39476":"鈴小龍","39585":"古舊的咒術道具碎片","39586":"青藍之手齒輪","39587":"白花崗岩","39588":"不祥裝甲板","39618":"管弦樂琴樂譜：夢中的天空","40381":"遮光器土偶","40638":"經典桌上餐具","40659":"自然原木隔離矮牆","40696":"古舊連接管","40697":"綠柄桑木木材","40698":"佈滿苔蘚的圓木","40699":"壞掉的邊桌","41103":"原木夾層樓板","41143":"藍帽蘑菇檯燈","41427":"精神吸取小妖庭院噴水器","41651":"阿爾扎達爾寶物地毯","41652":"深海靈性岩","41664":"管弦樂琴樂譜：槍旗飄揚","41665":"管弦樂琴樂譜：不屈不撓","41806":"高壓縮纖維板","41818":"六角小螈螈玩偶","41820":"水小滴輕飄飄玩偶","41821":"海牛玩偶","43974":"高級楓糖漿","43976":"圖拉爾玉米油","43978":"烏托姆番茄","43979":"高級楓樹樹液","43981":"圖拉爾玉米","43982":"高山岩鹽","43985":"亞斯拉尼蒜頭","43986":"白胡椒","43987":"牧豆樹豆子","43988":"圖拉爾鳳梨","43992":"奧闊鉻鐵礦","43993":"釕金礦","43994":"鈷鎢礦","43995":"鈦金礦","44002":"混金礦","44003":"河岸石原石","44004":"粉綠柱石原石","44005":"白黃金礦","44006":"黑星石原石","44007":"氧化鎂粉","44009":"河岸石","44014":"五加木原木","44015":"木棉原木","44016":"深紅木原木","44017":"相思木原木","44024":"雪木棉","44025":"高山亞麻","44026":"薄絹繭","44029":"雪木棉布","44031":"薄絹織物","44053":"奧闊銀狼的粗皮","44054":"錘頭鱷的粗皮","44055":"獰豹的粗皮","44060":"獰豹革","44326":"管弦樂琴樂譜：地下湖的水滴","44327":"管弦樂琴樂譜：技師工坊","44486":"小小巨嘴鳥","44488":"脊龍","44895":"抱石攀岩隔離牆","44900":"實驗桌","44911":"舊化的舷窗","45037":"管弦樂琴樂譜：自然的禮物","45073":"香木屑","43977":"高山食鹽","44030":"高山亞麻布","44010":"粉綠柱石","44012":"黑星石","43997":"奧闊鉻鐵錠","43998":"釕金錠","43999":"鈷鎢錠","43996":"黑鐵礦","44000":"鈦金塊","44001":"卡扎納爾錠","44058":"銀狼革","44059":"錘頭鱷革"};
 </script>
 <script>
+function showAlert(msg) {
+    // 清除訊息開頭的 emoji 符號，統一由視窗 icon 呈現
+    const cleanMsg = msg.replace(/^[✅⚠️🔴🟡🟢❌⛔️ℹ️]+\s*/, '');
+    // 判斷類型
+    let type = 'info';
+    if (msg.startsWith('✅')) type = 'success';
+    else if (msg.startsWith('⚠️') || msg.includes('失敗') || msg.includes('錯誤')) type = 'warning';
+
+    const iconEl = document.getElementById('customAlertIcon');
+    const boxEl  = document.getElementById('customAlertBox');
+    const msgEl  = document.getElementById('customAlertMsg');
+
+    // icon 和顏色
+    const map = {
+        success: { icon: '✓', color: '#4caf7d' },
+        warning: { icon: '!',  color: '#e0904a' },
+        info:    { icon: 'i',  color: 'var(--accent-color)' },
+    };
+    const cfg = map[type];
+    iconEl.textContent = cfg.icon;
+    iconEl.style.color = cfg.color;
+    iconEl.style.borderColor = cfg.color;
+    msgEl.textContent = cleanMsg;
+    document.getElementById('customAlertOverlay').classList.add('visible');
+}
+// Close on overlay click
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('customAlertOverlay').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('visible');
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('customAlertOverlay').classList.remove('visible');
+            if (typeof _confirmClose === 'function') _confirmClose(false);
+        }
+    });
+});
+window.showAlert = showAlert;
+
+let _confirmResolve = null;
+let _confirmReject  = null;
+
+function showConfirm(msg, okLabel) {
+    return new Promise((resolve, reject) => {
+        _confirmResolve = resolve;
+        _confirmReject  = reject;
+        document.getElementById('customConfirmMsg').textContent = msg;
+        document.getElementById('customConfirmOk').textContent = okLabel || '確定';
+        document.getElementById('customConfirmOverlay').classList.add('visible');
+    });
+}
+
+function _confirmClose(result) {
+    document.getElementById('customConfirmOverlay').classList.remove('visible');
+    const res = _confirmResolve;
+    const rej = _confirmReject;
+    _confirmResolve = _confirmReject = null;
+    if (result) { res && res(true); }
+    else         { rej && rej(false); }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('customConfirmOverlay').addEventListener('click', function(e) {
+        if (e.target === this) _confirmClose(false);
+    });
+    document.getElementById('customConfirmOk').addEventListener('click', function() {
+        _confirmClose(true);
+    });
+    document.getElementById('customConfirmCancel').addEventListener('click', function() {
+        _confirmClose(false);
+    });
+});
+window.showConfirm = showConfirm;
+
     function openModal(src) { document.getElementById('modalImg').src = src; document.getElementById('imageModal').style.display = 'flex'; }
     function toggleCollapse(id, btn) {
         const content = document.getElementById(id);
@@ -4259,11 +4522,12 @@ const ITEM_DB={"2":"火之碎晶","3":"冰之碎晶","4":"風之碎晶","5":"土
         const m = name.match(/[之第]([一二三四五六七八九十百\d]+)$|([一二三四五六七八九十百\d]+)[號]$|([一二三四五六七八九十百]+)$|(\d+)$/);
         return m ? (m[1] || m[2] || m[3] || m[4]) : null;
     }
-    // 判斷名字是否為「純數字 / 純中文數字 / 純英文字母」，這類名字不做模糊比對
+    // 判斷名字是否為「精確型」，這類名字每個字元都是關鍵，不做模糊比對
     function isPureSimple(name) {
         return /^[\d]+$/.test(name) ||                          // 純阿拉伯數字：123
                /^[一二三四五六七八九十百千萬]+$/.test(name) ||  // 純中文數字：一二三
-               /^[A-Za-z]+$/.test(name);                        // 純英文字母：ABC
+               /^[A-Za-z]+$/.test(name) ||                       // 純英文字母：ABC
+               /^[A-Za-z0-9]{1,4}$/.test(name);                  // 數字+英文混合短名：1A、2B、AB1（4字元以內）
     }
     function findFuzzyMatch(name, pool) {
         pool = pool || savedTimers;
@@ -8060,12 +8324,291 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         }).join('');
     }
 </script>
+<div id="manualOverlay" onclick="closeManual()"></div>
+<div id="manualDrawer">
+  <div class="manual-head">
+    <div class="manual-head-title">📖 使用說明</div>
+    <button class="manual-close" onclick="closeManual()">✕</button>
+  </div>
+  <div class="manual-body">
+    <div class="manual-nav">
+      <div class="manual-nav-item active" onclick="manualGo(0)">🚀 快速上手</div>
+      <div class="manual-nav-item" onclick="manualGo(1)">⚓ 艦隊管理</div>
+      <div class="manual-nav-item" onclick="manualGo(2)">🧭 路線規劃</div>
+      <div class="manual-nav-item" onclick="manualGo(3)">⚙️ 配件規劃</div>
+      <div class="manual-nav-item" onclick="manualGo(4)">🔨 配件製作</div>
+      <div class="manual-nav-item" onclick="manualGo(5)">☁️ 雲端同步</div>
+      <div class="manual-nav-item" onclick="manualGo(6)">👥 共同編輯</div>
+    </div>
+    <div class="manual-content">
+
+      <div class="manual-section active" id="ms0">
+        <div class="manual-chip">🌟 新手必看</div>
+        <div class="manual-h2">歡迎來到潛水艇艦隊</div>
+        <div class="manual-sub">這個網站幫你追蹤所有潛水艇的回港時間、規劃最佳航線、管理配件製作。<br>選一個你最想了解的功能開始吧！</div>
+        <div class="manual-intro-grid">
+          <div class="manual-intro-item" onclick="manualGo(1)">
+            <div class="manual-intro-icon">⏱</div>
+            <div class="manual-intro-title">追蹤回港時間</div>
+            <div class="manual-intro-desc">新增船艦、設定回港時間，計時卡片自動倒數</div>
+          </div>
+          <div class="manual-intro-item" onclick="manualGo(2)">
+            <div class="manual-intro-icon">🗺</div>
+            <div class="manual-intro-title">找最佳航線</div>
+            <div class="manual-intro-desc">輸入船艦等級，自動推薦 EXP 最高的路線</div>
+          </div>
+          <div class="manual-intro-item" onclick="manualGo(3)">
+            <div class="manual-intro-icon">⚙️</div>
+            <div class="manual-intro-title">規劃配件組合</div>
+            <div class="manual-intro-desc">查看目前配件的性能數值，確認是否達到探索門檻</div>
+          </div>
+          <div class="manual-intro-item" onclick="manualGo(4)">
+            <div class="manual-intro-icon">📋</div>
+            <div class="manual-intro-title">計算製作材料</div>
+            <div class="manual-intro-desc">選好目標配件，自動列出需要哪些素材</div>
+          </div>
+        </div>
+        <div class="manual-tip"><b>小提醒：</b>資料預設只存在你的瀏覽器裡，換裝置或清快取後會消失。建議開啟「雲端同步」功能來永久保存資料。</div>
+      </div>
+
+      <div class="manual-section" id="ms1">
+        <div class="manual-chip">⚓ 艦隊管理</div>
+        <div class="manual-h2">管理你的船艦</div>
+        <div class="manual-sub">新增船艦後，每艘船都有自己的計時卡片，回港時間一目了然。</div>
+        <div class="manual-tags">
+          <div class="manual-tag active" onclick="manualFilter(this,'all')">全部</div>
+          <div class="manual-tag" onclick="manualFilter(this,'a')">標籤一</div>
+          <div class="manual-tag" onclick="manualFilter(this,'b')">標籤二</div>
+        </div>
+        <div class="manual-demo-card" id="mdc1" data-group="a">
+          <div class="manual-demo-head">
+            <span class="manual-demo-name">範例一 <span style="font-size:11px;color:#888">[84級]</span></span>
+            <span class="manual-demo-timer" id="mt1">10:15:52</span>
+          </div>
+          <div class="manual-bar-bg"><div class="manual-bar" style="width:72%"></div></div>
+          <div class="manual-meta"><span>出航：08/23 14:22</span><span>回港：08/24 00:37</span></div>
+          <div class="manual-card-config">
+            <div class="manual-config-row">配件：1121</div>
+            <div class="manual-config-row">性能：探索84 / 收集143 / 航速152 / 航距124 / 恩惠103</div>
+          </div>
+          <div class="manual-card-footer">
+            <select class="manual-card-select"><option>標籤一</option><option>標籤二</option></select>
+            <div class="manual-card-btns">
+              <button class="manual-card-btn">路線規劃</button>
+              <button class="manual-card-btn">船艇設定</button>
+              <button class="manual-card-btn btn-del">刪除</button>
+            </div>
+          </div>
+        </div>
+        <div class="manual-demo-card" id="mdc2" data-group="b">
+          <div class="manual-demo-head">
+            <span class="manual-demo-name">範例二 <span style="font-size:11px;color:#888">[54級]</span></span>
+            <span class="manual-demo-timer" id="mt2">11:36:30</span>
+          </div>
+          <div class="manual-bar-bg"><div class="manual-bar" style="width:55%"></div></div>
+          <div class="manual-meta"><span>出航：08/23 12:17</span><span>回港：08/24 00:02</span></div>
+          <div class="manual-card-config">
+            <div class="manual-config-row">配件：2234</div>
+            <div class="manual-config-row">性能：探索30 / 收集110 / 航速110 / 航距70 / 恩惠70</div>
+          </div>
+          <div class="manual-card-footer">
+            <select class="manual-card-select"><option>標籤二</option><option>標籤一</option></select>
+            <div class="manual-card-btns">
+              <button class="manual-card-btn">路線規劃</button>
+              <button class="manual-card-btn">船艇設定</button>
+              <button class="manual-card-btn btn-del">刪除</button>
+            </div>
+          </div>
+        </div>
+        <div class="manual-step"><div class="manual-step-num">1</div><div class="manual-step-text">點右上角 <b>＋ 手動新增</b>，輸入船名、等級和回港時間</div></div>
+        <div class="manual-step"><div class="manual-step-num">2</div><div class="manual-step-text">建立 <b>標籤</b> 來分類不同艦隊，點標籤可快速篩選</div></div>
+        <div class="manual-step"><div class="manual-step-num">3</div><div class="manual-step-text">點卡片上的 <b>船艇設定</b> 可以修改配件等級或更新回港時間</div></div>
+      </div>
+
+      <div class="manual-section" id="ms2">
+        <div class="manual-chip">🧭 路線規劃</div>
+        <div class="manual-h2">找到最適合的航線</div>
+        <div class="manual-sub">告訴網站你的船艦等級和配件，它會幫你找出 EXP 最高的路線組合。</div>
+        <div class="manual-route-card">
+          <div class="manual-route-top">
+            <span class="manual-route-name">範例路線一</span>
+            <span class="manual-route-exp">128 EXP/分</span>
+          </div>
+          <div class="manual-route-stops">
+            <span class="manual-stop-badge">A</span><span>→</span>
+            <span class="manual-stop-badge">B</span><span>→</span>
+            <span class="manual-stop-badge">C</span><span>→</span>
+            <span class="manual-stop-badge">D</span><span>→</span>
+            <span class="manual-stop-badge">E</span>
+            <span style="margin-left:4px">預估 22:40 回港</span>
+          </div>
+        </div>
+        <div class="manual-route-card">
+          <div class="manual-route-top">
+            <span class="manual-route-name">範例路線二</span>
+            <span class="manual-route-exp">115 EXP/分</span>
+          </div>
+          <div class="manual-route-stops">
+            <span class="manual-stop-badge">A</span><span>→</span>
+            <span class="manual-stop-badge">B</span><span>→</span>
+            <span class="manual-stop-badge">C</span><span>→</span>
+            <span class="manual-stop-badge">D</span>
+            <span style="margin-left:4px">預估 18:20 回港</span>
+          </div>
+        </div>
+        <div class="manual-step"><div class="manual-step-num">1</div><div class="manual-step-text">選擇船艦或手動輸入 <b>等級</b> 與 <b>四部位配件</b></div></div>
+        <div class="manual-step"><div class="manual-step-num">2</div><div class="manual-step-text">設定 <b>時間限制</b>（幾小時內回港）或指定想拿的 <b>道具</b></div></div>
+        <div class="manual-step"><div class="manual-step-num">3</div><div class="manual-step-text">看結果清單，選一條路線後點 <b>套用路線</b>，自動填入回港時間</div></div>
+      </div>
+
+      <div class="manual-section" id="ms3">
+        <div class="manual-chip">⚙️ 配件規劃</div>
+        <div class="manual-h2">確認配件夠不夠力</div>
+        <div class="manual-sub">輸入你的配件組合，網站會幫你對照每個探索站點的門檻，一眼看出差了多少。</div>
+        <div class="manual-stat-row">
+          <div class="manual-stat-box"><div class="manual-stat-val">84</div><div class="manual-stat-label">探索</div></div>
+          <div class="manual-stat-box"><div class="manual-stat-val">143</div><div class="manual-stat-label">收集</div></div>
+          <div class="manual-stat-box"><div class="manual-stat-val">152</div><div class="manual-stat-label">航速</div></div>
+          <div class="manual-stat-box"><div class="manual-stat-val">124</div><div class="manual-stat-label">航距</div></div>
+          <div class="manual-stat-box"><div class="manual-stat-val">103</div><div class="manual-stat-label">恩惠</div></div>
+        </div>
+        <div class="manual-gear-row">
+          <div class="manual-gear-slot"><b>船體</b>配件一</div>
+          <div class="manual-gear-slot"><b>船尾</b>配件二</div>
+          <div class="manual-gear-slot"><b>船首</b>配件三</div>
+          <div class="manual-gear-slot"><b>艦橋</b>配件四</div>
+        </div>
+        <div class="manual-badge-row">
+          <div class="manual-badge green">✓ 達標 × 12 站</div>
+          <div class="manual-badge red">✕ 未達 × 3 站</div>
+          <div class="manual-badge purple">🔒 未開放 × 5 站</div>
+        </div>
+        <div class="manual-tip"><b>顏色代表什麼？</b>綠色是性能達標可以去的站點，紅色是還差一點的站點，鎖頭是你還沒開放的航點。</div>
+      </div>
+
+      <div class="manual-section" id="ms4">
+        <div class="manual-chip">🔨 配件製作</div>
+        <div class="manual-h2">算清楚需要什麼素材</div>
+        <div class="manual-sub">選好想製作的配件，網站自動列出所有需要的素材，打勾記錄完成進度。</div>
+        <div class="manual-demo-card">
+          <div style="font-size:13px;color:#bbb;margin-bottom:9px">目標：範例配件 IV × 1</div>
+          <div class="manual-craft-row">
+            <div class="manual-craft-check done" id="mck1" onclick="manualToggleCk(1)"></div>
+            <div class="manual-craft-name done" id="mcn1">素材一 × 8</div>
+            <div class="manual-craft-qty">已有 12</div>
+          </div>
+          <div class="manual-craft-row">
+            <div class="manual-craft-check done" id="mck2" onclick="manualToggleCk(2)"></div>
+            <div class="manual-craft-name done" id="mcn2">素材二 × 5</div>
+            <div class="manual-craft-qty">已有 7</div>
+          </div>
+          <div class="manual-craft-row">
+            <div class="manual-craft-check" id="mck3" onclick="manualToggleCk(3)"></div>
+            <div class="manual-craft-name" id="mcn3">素材三 × 3</div>
+            <div class="manual-craft-qty" style="color:#e07070">缺 2</div>
+          </div>
+          <div class="manual-craft-row">
+            <div class="manual-craft-check" id="mck4" onclick="manualToggleCk(4)"></div>
+            <div class="manual-craft-name" id="mcn4">素材四 × 2</div>
+            <div class="manual-craft-qty" style="color:#e07070">缺 1</div>
+          </div>
+        </div>
+        <div class="manual-step"><div class="manual-step-num">1</div><div class="manual-step-text">在左側選擇 <b>目標配件</b> 和製作數量</div></div>
+        <div class="manual-step"><div class="manual-step-num">2</div><div class="manual-step-text">填入 <b>已持有的庫存數量</b>，缺少的量自動標紅</div></div>
+        <div class="manual-step"><div class="manual-step-num">3</div><div class="manual-step-text">蒐集到素材後 <b>打勾</b>，追蹤製作進度</div></div>
+      </div>
+
+      <div class="manual-section" id="ms5">
+        <div class="manual-chip">☁️ 雲端同步</div>
+        <div class="manual-h2">讓資料跟著你走</div>
+        <div class="manual-sub">啟用後，所有船艦資料都會存到雲端，換電腦或手機登入同樣的 ID 就能繼續使用。</div>
+        <div class="manual-cloud-box">
+          <div class="manual-cloud-row">
+            <span class="manual-cloud-label">你的專屬 ID</span>
+            <span class="manual-cloud-val">a3f8-9c2d-1e7b</span>
+          </div>
+          <div style="font-size:13px;color:#bbb;margin-bottom:9px;line-height:1.6">這是你的帳號識別碼，請妥善保存。<br>換裝置時貼入這組 ID 就能取回所有資料。</div>
+          <button class="manual-sync-btn" onclick="this.textContent='已同步 ✓';setTimeout(()=>this.textContent='立即同步',1500)">立即同步</button>
+        </div>
+        <div class="manual-step"><div class="manual-step-num">1</div><div class="manual-step-text">展開左側 <b>共同編輯</b> 面板，點「啟用雲端同步」</div></div>
+        <div class="manual-step"><div class="manual-step-num">2</div><div class="manual-step-text"><b>複製並保存你的 ID</b>——這是取回資料的唯一方式，遺失無法復原</div></div>
+        <div class="manual-step"><div class="manual-step-num">3</div><div class="manual-step-text">換裝置時，貼入你的 ID 後點「載入」即可同步</div></div>
+        <div class="manual-tip"><b>重要提醒：</b>ID 一旦遺失就無法找回，建議截圖或記在備忘錄裡保存。</div>
+      </div>
+
+      <div class="manual-section" id="ms6">
+        <div class="manual-chip">👥 共同編輯</div>
+        <div class="manual-h2">和朋友一起管理艦隊</div>
+        <div class="manual-sub">建立一個房間，把代碼分享給朋友，就能即時看到對方的艦隊動態。</div>
+        <div class="manual-room-card">
+          <div style="font-size:13px;color:#aaa">我的房間代碼</div>
+          <div class="manual-room-code">J3PMW8</div>
+          <div style="font-size:13px;color:#bbb;margin-bottom:9px">把這組代碼傳給朋友，他們就能加入查看你的艦隊</div>
+          <div style="font-size:11.5px;color:#aaa;margin-bottom:5px;font-weight:600">已加入的成員</div>
+          <div class="manual-room-member"><div class="manual-member-dot"></div>成員一</div>
+          <div class="manual-room-member"><div class="manual-member-dot"></div>成員二</div>
+        </div>
+        <div class="manual-step"><div class="manual-step-num">1</div><div class="manual-step-text"><b>建立者</b>：點「建立房間」取得專屬代碼，分享給朋友</div></div>
+        <div class="manual-step"><div class="manual-step-num">2</div><div class="manual-step-text"><b>加入者</b>：輸入朋友給的代碼，點「加入」後自動新增分頁</div></div>
+        <div class="manual-step"><div class="manual-step-num">3</div><div class="manual-step-text">切換到朋友的分頁，即可即時查看他們的艦隊狀況</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
 <a id="reportBtn" href="https://forum.gamer.com.tw/C.php?bsn=17608&snA=30749&page=1&gothis=146463#146463" target="_blank" rel="noopener">📢 回報</a>
 <a id="sponsorBtn" href="https://ganknow.com/cxz089675/tip" target="_blank" rel="noopener">🐟 贊助貓罐頭</a>
 <div id="rpGlobalTip"></div>
 <div id="partStatTip"></div>
+<div id="gpThTipFloat"></div>
 <script>
+// ── 使用說明抽屜 ──
+window.openManual = function() {
+    document.getElementById('manualDrawer').classList.add('open');
+    document.getElementById('manualOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closeManual = function() {
+    document.getElementById('manualDrawer').classList.remove('open');
+    document.getElementById('manualOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+};
+window.manualGo = function(i) {
+    document.querySelectorAll('.manual-nav-item').forEach((n,j) => n.classList.toggle('active', i === j));
+    document.querySelectorAll('.manual-section').forEach((s,j) => s.classList.toggle('active', i === j));
+};
+window.manualFilter = function(el, g) {
+    el.closest('.manual-tags').querySelectorAll('.manual-tag').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['mdc1','mdc2'].forEach(id => {
+        const card = document.getElementById(id);
+        if (!card) return;
+        card.style.display = (g === 'all' || card.dataset.group === g) ? '' : 'none';
+    });
+};
+window.manualToggleCk = function(n) {
+    document.getElementById('mck'+n).classList.toggle('done');
+    document.getElementById('mcn'+n).classList.toggle('done');
+};
+// 使用說明示意計時器
 (function() {
+    let secs = [37952, 41790];
+    setInterval(() => {
+        secs = secs.map(v => Math.max(0, v - 1));
+        const fmt = v => {
+            const h = Math.floor(v/3600), m = Math.floor((v%3600)/60), s = v%60;
+            return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+        };
+        const t1 = document.getElementById('mt1'), t2 = document.getElementById('mt2');
+        if (t1) t1.textContent = fmt(secs[0]);
+        if (t2) t2.textContent = fmt(secs[1]);
+    }, 1000);
+})();
+// ESC 關閉
+document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeManual?.(); });
+
+(function() {
+    // ── Tooltip（從獨立 script 區塊合併）──
     const tip = document.getElementById('rpGlobalTip');
     document.addEventListener('mouseover', e => {
         const el = e.target.closest('.rp-has-tip[data-tip]');
@@ -8088,11 +8631,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         if (!el) return;
         tip.style.display = 'none';
     });
-})();
-</script>
-<div id="gpThTipFloat"></div>
-<script>
-(function() {
+
+    // ── CloudSync UI ──
     const floatTip = document.getElementById('gpThTipFloat');
     document.addEventListener('mouseover', e => {
         const el = e.target.closest('.gp-th-help[data-tip]');
