@@ -704,6 +704,38 @@
 
         /* ── 海圖跑點 ── */
         .map-block { padding: 10px 12px 14px; }
+        /* ── 海圖標籤 Tab ── */
+        .map-group-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .map-group-tab {
+            font-size: 12px;
+            padding: 3px 11px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #aaa;
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+        }
+        .map-group-tab:hover { border-color: rgba(155,126,200,0.4); color: #9b7ec8; }
+        .map-group-tab.active { background: #9b7ec8; color: #fff; border-color: #9b7ec8; }
+        body.light-mode .map-group-tab { border-color: rgba(0,0,0,0.12); color: #666; }
+        body.light-mode .map-group-tab:hover { border-color: rgba(155,126,200,0.4); color: #7c5cbf; }
+        body.light-mode .map-group-tab.active { background: #9b7ec8; color: #fff; }
+        /* ── 折疊箭頭 ── */
+        .map-collapse-arrow {
+            font-size: 9px;
+            color: #888;
+            margin-right: 4px;
+            display: inline-block;
+            transition: transform .15s;
+        }
+        .map-entry-header:hover .map-collapse-arrow { color: #9b7ec8; }
+
         .map-entry { margin-bottom: 14px; }
         .map-entry:last-child { margin-bottom: 0; }
         .map-entry-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
@@ -711,7 +743,19 @@
         .map-entry-actions { display:flex; gap:6px; }
         .map-node-btn { background:none; border:none; font-size:11px; color:#888; cursor:pointer; padding:2px 4px; border-radius:4px; }
         .map-node-btn:hover { color:var(--accent-color); }
-        .map-nodes { display:flex; flex-wrap:wrap; gap:5px; }
+        .map-nodes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            overflow: hidden;
+            max-height: 2000px;
+            transition: max-height 0.3s ease, opacity 0.15s ease;
+            opacity: 1;
+        }
+        .map-nodes.collapsing {
+            max-height: 0 !important;
+            opacity: 0;
+        }
         .map-node { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; border:1px solid #444; background:var(--edit-bg); color:var(--text-color); font-size:11px; font-weight:bold; cursor:pointer; user-select:none; transition:all 0.15s; }
         .map-node:hover { border-color:var(--accent-color); color:var(--accent-color); }
         .map-node.on { background:var(--accent-color); border-color:var(--accent-color); color:#fff; }
@@ -2507,7 +2551,7 @@
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.3.1 <span>阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.3.2 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button class="lp-icon-btn" onclick="openManual()" title="使用說明" style="font-size:15px;">📖</button>
@@ -2677,11 +2721,44 @@
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/13</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>海圖跑點新增依標籤分開記錄進度，切換艦隊標籤時海圖同步切換</li>
+                        <li>海圖各海圖區塊支援折疊／展開，含平滑動畫</li>
+                    </ul>
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/07</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>新增使用說明抽屜，含七個章節、互動示意卡片與真實倒數計時</li>
+                        <li>標籤列桌面版改為全展開換行，手機版維持橫向滑動；補上滑鼠滾輪橫捲支援</li>
+                        <li>彈跳視窗依訊息類型自動顯示對應顏色圖示，移除訊息內重複 emoji</li>
+                    </ul>
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/02</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>共同編輯：建立房間者不再產生額外分頁，僅顯示房間代碼供分享；加入者維持獨立分頁</li>
+                        <li>共同編輯：房主可即時查看已加入成員，並可移除成員</li>
+                        <li>共同編輯：修正重整後房主視圖恢復為分頁的問題</li>
+                        <li>共同編輯：防止使用者加入自己建立的房間</li>
+                        <li>修正更換配件後倒數計時跳動問題</li>
+                        <li>修正配件製作資料未同步至雲端，重整後遺失的問題</li>
+                        <li>地圖節點、自訂連結修改後補上雲端同步</li>
+                    </ul>
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/28</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>修正上傳截圖後出現重複船艇小卡的問題</li>
+                        <li>修正切換配件後倒數時間顯示異常</li>
+                        <li>移除每次雲端同步後的彈出提醒</li>
+                        <li>OCR 辨識：4 字元以內英數混合名稱（如 1A、2B）改為精確比對，不再模糊配對</li>
+                    </ul>
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/14</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>新增共同編輯功能：建立房間、加入房間、即時同步船艦資料</li>
+                        <li>新增雲端同步功能：透過專屬 ID 跨裝置同步所有資料</li>
+                    </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/13</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>船艇小卡新增「路線規劃」按鈕，點選後自動複製該船艇設定至路線規劃分頁並執行搜尋，原有目標物品與進階篩選設定維持不變</li>
                         <li>路線規劃結果小卡新增「使用此路線」按鈕，點選後以當前時間為出航點，將路線耗時套用至對應船艇小卡並更新回港時間；若路線規劃上方有變更等級或配件，一併更新</li>
-                        <li>整體 UI/UX 設計調整改善，含手機版響應式排版優化</li>
+                        <li>整體 UI/UX 設計調整改善，含手機版響應式排版調整</li>
                     </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/08/04</div>
                     <ul style="margin: 0; padding-left: 18px;">
@@ -3742,7 +3819,17 @@ window.showConfirm = showConfirm;
         if (savedActive) activeGroup = savedActive;
     }
     function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
-    function saveActiveGroup() { localStorage.setItem('sub_active_group', activeGroup); }
+    function saveActiveGroup() {
+        localStorage.setItem('sub_active_group', activeGroup);
+        // 艦隊切換標籤時，海圖同步切換到相同標籤
+        const validGroups = ['未分類', ...customGroups];
+        if (activeGroup === GROUP_ALL) {
+            // 選「全部」時，海圖維持目前選中的標籤不動
+        } else if (validGroups.includes(activeGroup)) {
+            activeMapGroup = activeGroup;
+            if (typeof renderMapNodes === 'function') renderMapNodes();
+        }
+    }
     function allGroupNames() {
         // 房間視圖用房間的群組清單，個人視圖用自己的
         const groups = _viewGroups !== null ? _viewGroups : customGroups;
@@ -3972,6 +4059,8 @@ window.showConfirm = showConfirm;
             if (allGroupNames().includes(name)) { showAlert('這個群組名稱已經存在'); return; }
             customGroups.push(name);
             saveGroups();
+            // 新標籤在 mapNodeState 建立空物件
+            if (!mapNodeState[name]) { mapNodeState[name] = {}; saveMapNodeState(); }
             renderGroupTabs();
             refreshAllCardGroupSelects();
         } else {
@@ -3983,6 +4072,13 @@ window.showConfirm = showConfirm;
                 savedTimers.forEach(t => { if (t.group === oldName) t.group = name; });
                 saveTimersToStorage();
                 if (activeGroup === oldName) { activeGroup = name; saveActiveGroup(); }
+                // 海圖標籤改名：把舊 key 資料搬到新 key
+                if (mapNodeState[oldName]) {
+                    mapNodeState[name] = mapNodeState[oldName];
+                    delete mapNodeState[oldName];
+                    saveMapNodeState();
+                }
+                if (activeMapGroup === oldName) activeMapGroup = name;
                 renderGroupTabs();
                 refreshAllCardGroupSelects();
                 applyGroupFilter();
@@ -4248,6 +4344,9 @@ window.showConfirm = showConfirm;
             savedTimers.forEach(t => { if (t.group === name) t.group = DEFAULT_GROUP; });
             saveTimersToStorage();
             if (activeGroup === name) { activeGroup = GROUP_ALL; saveActiveGroup(); }
+            // 刪除標籤時移除對應的海圖進度資料
+            if (mapNodeState[name]) { delete mapNodeState[name]; saveMapNodeState(); }
+            if (activeMapGroup === name) activeMapGroup = '未分類';
             renderGroupTabs();
             refreshAllCardGroupSelects();
             applyGroupFilter();
@@ -5154,14 +5253,25 @@ window.showConfirm = showConfirm;
         { id: 7, name: '7 - 北洋海',   nodes: genNodes(13) },
     ];
 
-    // 儲存格式：{ "1": ["A","C",...], "2": [...], ... }
+    // 儲存格式：{ "標籤": { "1": ["A","C",...], "2": [...] }, ... }
     let mapNodeState = {};
+    let activeMapGroup = '未分類'; // 海圖區目前選中的標籤
+    const _mapCollapsed = new Set(); // 已折疊的 mapId（記憶體，不 persist）
 
     function loadMapNodeState() {
         try {
             const data = localStorage.getItem('sub_map_nodes');
-            mapNodeState = data ? JSON.parse(data) : {};
-        } catch (e) { mapNodeState = {}; }
+            const parsed = data ? JSON.parse(data) : {};
+            // 偵測舊格式：key 是數字字串（如 "1", "2"）→ 轉換為新格式
+            const isOldFormat = Object.keys(parsed).every(k => /^\d+$/.test(k));
+            if (isOldFormat && Object.keys(parsed).length > 0) {
+                mapNodeState = { '未分類': parsed };
+            } else {
+                mapNodeState = parsed;
+            }
+            // 確保 DEFAULT_GROUP 存在
+            if (!mapNodeState['未分類']) mapNodeState['未分類'] = {};
+        } catch (e) { mapNodeState = { '未分類': {} }; }
     }
 
     function saveMapNodeState() {
@@ -5170,17 +5280,17 @@ window.showConfirm = showConfirm;
     }
 
     function isNodeOn(mapId, node) {
-        return (mapNodeState[mapId] || []).includes(node);
+        return ((mapNodeState[activeMapGroup] || {})[mapId] || []).includes(node);
     }
 
     function toggleMapNode(mapId, node, el) {
-        if (!mapNodeState[mapId]) mapNodeState[mapId] = [];
-        const arr = mapNodeState[mapId];
+        if (!mapNodeState[activeMapGroup]) mapNodeState[activeMapGroup] = {};
+        if (!mapNodeState[activeMapGroup][mapId]) mapNodeState[activeMapGroup][mapId] = [];
+        const arr = mapNodeState[activeMapGroup][mapId];
         const idx = arr.indexOf(node);
         if (idx === -1) { arr.push(node); el.classList.add('on'); }
         else { arr.splice(idx, 1); el.classList.remove('on'); }
         saveMapNodeState();
-        // 更新計數顯示
         const countEl = document.getElementById(`map-count-${mapId}`);
         if (countEl) countEl.innerText = `(${arr.length}/${MAP_DATA.find(m=>m.id===mapId).nodes.length})`;
     }
@@ -5188,10 +5298,10 @@ window.showConfirm = showConfirm;
     function setAllMapNodes(mapId, on) {
         const map = MAP_DATA.find(m => m.id === mapId);
         if (!map) return;
-        mapNodeState[mapId] = on ? [...map.nodes] : [];
+        if (!mapNodeState[activeMapGroup]) mapNodeState[activeMapGroup] = {};
+        mapNodeState[activeMapGroup][mapId] = on ? [...map.nodes] : [];
         saveMapNodeState();
         renderMapNodes();
-        // 重新展開高度
         const contentEl = document.getElementById('content2');
         if (contentEl && contentEl.style.maxHeight) contentEl.style.maxHeight = contentEl.scrollHeight + 'px';
     }
@@ -5200,34 +5310,94 @@ window.showConfirm = showConfirm;
         const block = document.getElementById('mapNodeBlock');
         if (!block) return;
         block.innerHTML = '';
+
+        // ── 標籤 Tab 列 ──
+        const allGroups = ['未分類', ...customGroups];
+        const tabBar = document.createElement('div');
+        tabBar.className = 'map-group-tabs';
+        allGroups.forEach(g => {
+            const tab = document.createElement('div');
+            tab.className = 'map-group-tab' + (g === activeMapGroup ? ' active' : '');
+            tab.textContent = g;
+            tab.onclick = () => { activeMapGroup = g; renderMapNodes(); };
+            tabBar.appendChild(tab);
+        });
+        block.appendChild(tabBar);
+
+        // ── 各海圖 ──
         MAP_DATA.forEach((map, idx) => {
-            const onNodes = (mapNodeState[map.id] || []);
+            const groupData = (mapNodeState[activeMapGroup] || {});
+            const onNodes = (groupData[map.id] || []);
             const total = map.nodes.length;
             const count = onNodes.length;
+            const collapsed = _mapCollapsed.has(map.id);
 
             const entry = document.createElement('div');
             entry.className = 'map-entry';
-            entry.innerHTML = `
-                <div class="map-entry-header">
-                    <span class="map-entry-title">${map.name} <span id="map-count-${map.id}" style="font-size:11px; color:#888; font-weight:normal;">(${count}/${total})</span></span>
-                    <div class="map-entry-actions">
-                        <button class="map-node-btn" onclick="setAllMapNodes(${map.id}, true)">全選</button>
-                        <button class="map-node-btn" onclick="setAllMapNodes(${map.id}, false)">全清</button>
-                    </div>
-                </div>
-                <div class="map-nodes" id="map-nodes-${map.id}"></div>
-                ${idx < MAP_DATA.length - 1 ? '<hr class="map-divider">' : ''}
-            `;
-            block.appendChild(entry);
 
-            const nodesEl = document.getElementById(`map-nodes-${map.id}`);
+            const header = document.createElement('div');
+            header.className = 'map-entry-header';
+            header.style.cursor = 'pointer';
+            header.innerHTML = `
+                <span class="map-entry-title">
+                    <span class="map-collapse-arrow">${collapsed ? '▶' : '▼'}</span>
+                    ${map.name} <span id="map-count-${map.id}" style="font-size:11px; color:#888; font-weight:normal;">(${count}/${total})</span>
+                </span>
+                <div class="map-entry-actions">
+                    <button class="map-node-btn" onclick="event.stopPropagation();setAllMapNodes(${map.id}, true)">全選</button>
+                    <button class="map-node-btn" onclick="event.stopPropagation();setAllMapNodes(${map.id}, false)">全清</button>
+                </div>`;
+            header.onclick = () => {
+                const wrap = document.getElementById(`map-nodes-${map.id}`);
+                const arrowEl = header.querySelector('.map-collapse-arrow');
+                if (_mapCollapsed.has(map.id)) {
+                    // 展開
+                    _mapCollapsed.delete(map.id);
+                    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                    wrap.classList.remove('collapsing');
+                    if (arrowEl) arrowEl.textContent = '▼';
+                    // 動畫結束後移除 max-height 限制（讓內容可自由伸展）
+                    wrap.addEventListener('transitionend', function onEnd() {
+                        wrap.style.maxHeight = '2000px';
+                        wrap.removeEventListener('transitionend', onEnd);
+                    }, { once: true });
+                } else {
+                    // 收合：先固定當前高度，再設 0 觸發動畫
+                    _mapCollapsed.add(map.id);
+                    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            wrap.classList.add('collapsing');
+                            if (arrowEl) arrowEl.textContent = '▶';
+                        });
+                    });
+                }
+                const contentEl = document.getElementById('content2');
+                if (contentEl && contentEl.style.maxHeight) {
+                    setTimeout(() => { contentEl.style.maxHeight = contentEl.scrollHeight + 'px'; }, 310);
+                }
+            };
+
+            const nodesWrap = document.createElement('div');
+            nodesWrap.className = 'map-nodes' + (collapsed ? ' collapsing' : '');
+            nodesWrap.id = `map-nodes-${map.id}`;
+
             map.nodes.forEach(node => {
                 const btn = document.createElement('span');
                 btn.className = 'map-node' + (isNodeOn(map.id, node) ? ' on' : '');
                 btn.innerText = node;
                 btn.onclick = () => toggleMapNode(map.id, node, btn);
-                nodesEl.appendChild(btn);
+                nodesWrap.appendChild(btn);
             });
+
+            entry.appendChild(header);
+            entry.appendChild(nodesWrap);
+            if (idx < MAP_DATA.length - 1) {
+                const hr = document.createElement('hr');
+                hr.className = 'map-divider';
+                entry.appendChild(hr);
+            }
+            block.appendChild(entry);
         });
     }
 
@@ -9061,6 +9231,8 @@ window.toggleUploadZone = function(btn) {
             if (typeof craftRenderChips === 'function') craftRenderChips();
             if (typeof craftRenderResult === 'function') craftRenderResult();
         }
+        // 重載海圖進度
+        if (typeof loadMapNodeState === 'function') { loadMapNodeState(); renderMapNodes(); }
     });
 
     function _setStatus(msg, ok) {
