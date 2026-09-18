@@ -2551,7 +2551,7 @@
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.3.2 <span>阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.3.3 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button class="lp-icon-btn" onclick="openManual()" title="使用說明" style="font-size:15px;">📖</button>
@@ -2721,6 +2721,19 @@
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/18</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>路線規劃：進階篩選新增「僅搜尋已開放海點」選項，依選中船艦的標籤海圖進度過濾站點</li>
+                        <li>路線規劃：手動輸入或標籤進度全空時自動視為全開，不受海點過濾影響</li>
+                        <li>路線規劃：保存排序選擇，重新進入時自動還原</li>
+                        <li>配件規劃：選擇船艦後自動依標籤切換海圖進度，站點鎖定狀態即時更新</li>
+                        <li>OCR 辨識：4 字元以內英數混合名稱改為精確比對</li>
+                    </ul>
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/14</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>海圖跑點新增依標籤分開記錄進度，切換艦隊標籤時海圖同步切換</li>
+                        <li>海圖各海圖支援折疊／展開，含平滑動畫</li>
+                    </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/13</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>海圖跑點新增依標籤分開記錄進度，切換艦隊標籤時海圖同步切換</li>
@@ -3053,6 +3066,9 @@
                                 <div id="rpSectorExclChips" class="rp-chips"></div>
                             </div>
                         </div>
+                    </div>
+                    <div class="rp-row" style="margin-top:12px;">
+                        <label class="rp-chk"><input type="checkbox" id="rpNodeFilter"> 僅搜尋已開放海點（依船艇標籤的海圖進度設定）</label>
                     </div>
                 </div>
 
@@ -3593,7 +3609,7 @@ function subBestOrder(homeId,ids){
   return{order:bestOrd,totalDist:survD+bestTD,totalRng:survR+bestTR};
 }
 function subCalcStats(rank,h,s,b,br){const rb=SUB_RANKS[rank]||[0,0,0,0,0,0];const sum=i=>[h,s,b,br].reduce((t,p)=>t+(p?p[i]:0),0);return{sur:sum(2)+rb[3],ret:sum(3)+rb[4],spd:sum(4)+rb[1],rng:sum(5)+rb[2],fav:sum(6)+rb[5]};}
-function subFindRoutes(rank,stats,mustInc,mustExcl,mustIncMaps,mustExclMaps,mustLootIds,desiredMin,useTime,letterOnly,lootStrict){
+function subFindRoutes(rank,stats,mustInc,mustExcl,mustIncMaps,mustExclMaps,mustLootIds,desiredMin,useTime,letterOnly,lootStrict,filterByNodeState){
   const results=[];
   const explore=stats.explore||0;
 
@@ -3612,7 +3628,7 @@ function subFindRoutes(rank,stats,mustInc,mustExcl,mustIncMaps,mustExclMaps,must
     if(mustIncMaps.length&&!mustIncMaps.includes(mapId))return;
     if(mustExclMaps.includes(mapId))return;
     const homeId=SUB_HOMES[String(mapId)];if(homeId===undefined)return;
-    const mapSecs=SUB_SECTORS.filter(s=>s[1]===mapId&&s[5]<=rank&&!mustExcl.includes(s[0]));
+    const mapSecs=SUB_SECTORS.filter(s=>s[1]===mapId&&s[5]<=rank&&!mustExcl.includes(s[0])&&(!filterByNodeState||isNodeOn(s[1],s[2])));
     const mustInMap=mustInc.filter(id=>{const s=SECTOR_MAP.get(id);return s&&s[1]===mapId;});
     if(mustInMap.some(id=>!mapSecs.some(s=>s[0]===id)))return;
     const required=mustInMap.map(id=>SECTOR_MAP.get(id));
@@ -5280,7 +5296,11 @@ window.showConfirm = showConfirm;
     }
 
     function isNodeOn(mapId, node) {
-        return ((mapNodeState[activeMapGroup] || {})[mapId] || []).includes(node);
+        const groupState = mapNodeState[activeMapGroup] || {};
+        // 該標籤完全沒有任何勾選時，視為全開
+        const hasAnyNode = Object.values(groupState).some(arr => Array.isArray(arr) && arr.length > 0);
+        if (!hasAnyNode) return true;
+        return (groupState[mapId] || []).includes(node);
     }
 
     function toggleMapNode(mapId, node, el) {
@@ -5437,6 +5457,9 @@ window.showConfirm = showConfirm;
         if (presetSel) presetSel.value = '';
         const presetRow = document.getElementById('gpPresetStatRow');
         if (presetRow) presetRow.style.display = 'none';
+        // 依船艦標籤切換 activeMapGroup
+        const shipGroup = t.group || '未分類';
+        activeMapGroup = shipGroup;
         gpRecalc();
     }
 
@@ -7807,6 +7830,12 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
     }
 
     function initRoutePlanner() {
+        // 還原上次的排序選擇
+        const savedRpSort = localStorage.getItem('sub_rp_sort');
+        if (savedRpSort) {
+            const sel = document.getElementById('rpSortSel');
+            if (sel) sel.value = savedRpSort;
+        }
         // ① 船艇下拉（依群組分組）
         const shipSel = document.getElementById('rpShipSelect');
         shipSel.innerHTML = buildShipGroupedOptions();
@@ -8179,6 +8208,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
     function rpApplySort() {
         if (!rpAllResults.length) return;
         const mode = (document.getElementById('rpSortSel') || {}).value || 'epm_desc';
+        // 保存排序選擇
+        localStorage.setItem('sub_rp_sort', mode);
         const sorted = [...rpAllResults].sort((a, b) => {
             if (mode === 'exp_desc') return b.exp - a.exp;
             if (mode === 'eta_desc') return b.timeMins - a.timeMins;
@@ -8194,6 +8225,24 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
 
         const stats = rpGetCurrentStats();
         const rank = level;
+
+        // ── 依選中船艦的標籤切換 activeMapGroup ──
+        const shipSel = document.getElementById('rpShipSelect');
+        const selectedTimerId = shipSel ? shipSel.value : '';
+        const selectedTimer = selectedTimerId ? getActiveTimers().find(x => x.id === selectedTimerId) : null;
+        const shipGroup = selectedTimer ? (selectedTimer.group || '未分類') : null;
+        if (shipGroup) activeMapGroup = shipGroup;
+
+        // ── 判斷是否視為全開 ──
+        // 條件：手動輸入（非選擇船艦）或該標籤的海圖進度完全沒有任何勾選
+        const isManual = !selectedTimer;
+        const groupNodeState = mapNodeState[activeMapGroup] || {};
+        const hasAnyNode = Object.values(groupNodeState).some(arr => Array.isArray(arr) && arr.length > 0);
+        const treatAsFullOpen = isManual || !hasAnyNode;
+
+        // ── 讀取「僅搜尋已開放海點」checkbox ──
+        const nodeFilterChecked = (document.getElementById('rpNodeFilter') || {}).checked;
+        const filterByNodeState = nodeFilterChecked && !treatAsFullOpen;
 
         const timeMode = document.querySelector('input[name="rpTimeMode"]:checked').value;
         let useTime = false, desiredMin = 0;
@@ -8244,7 +8293,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         setTimeout(() => {
             let results = [];
             try {
-                results = subFindRoutes(rank, rpStats, mustInc, mustExcl, mustIncMaps, mustExclMaps, mustLootIds, desiredMin, useTime, false, lootStrict);
+                results = subFindRoutes(rank, rpStats, mustInc, mustExcl, mustIncMaps, mustExclMaps, mustLootIds, desiredMin, useTime, false, lootStrict, filterByNodeState);
             } catch (e) {
                 console.error(e);
                 statusEl.innerText = '搜尋時發生錯誤，請檢查篩選條件';
@@ -8255,7 +8304,11 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             rpMustLootIds = mustLootIds;
             rpPlayerExplore = rpStats.explore;
             rpApplySort();
-            statusEl.innerText = `共找到 ${results.length} 條符合路線，顯示前 ${Math.min(100, results.length)} 條`;
+            if (results.length === 0 && filterByNodeState) {
+                statusEl.innerText = '找不到符合路線，可能是海圖進度尚未設定，或已開放海點不足以組成路線';
+            } else {
+                statusEl.innerText = `共找到 ${results.length} 條符合路線，顯示前 ${Math.min(100, results.length)} 條`;
+            }
             btn.disabled = false;
         }, 30);
     }
@@ -8362,7 +8415,11 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         const sectorExclChips = document.getElementById('rpSectorExclChips');
         if (sectorExclChips) sectorExclChips.innerHTML = '';
 
-        // 4. 清除結果與狀態
+        // 4. 已開放海點篩選 checkbox
+        const nodeFilter = document.getElementById('rpNodeFilter');
+        if (nodeFilter) nodeFilter.checked = false;
+
+        // 5. 清除結果與狀態
         document.getElementById('routeResults').innerHTML = '';
         document.getElementById('rpStatusText').innerText = '';
     }
