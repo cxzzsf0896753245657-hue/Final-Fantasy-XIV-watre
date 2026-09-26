@@ -2551,7 +2551,7 @@
     <!-- ══ LEFT PANEL ══ -->
     <div class="left-panel">
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.3.3 <span>阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.3.4 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button class="lp-icon-btn" onclick="openManual()" title="使用說明" style="font-size:15px;">📖</button>
@@ -2721,6 +2721,10 @@
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/26</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>修正配件製作部分素材目標欄與缺少欄顯示邏輯</li>
+                    </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/18</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>路線規劃：進階篩選新增「僅搜尋已開放海點」選項，依選中船艦的標籤海圖進度過濾站點</li>
@@ -7419,7 +7423,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
     // 建立庫存表格的一列 HTML
     // name：資料 key（用於 craftOwnedMap / CRAFT_PARTS / CRAFT_MATS 查找，須為真實素材或配件 key）
     // displayLabel：畫面顯示用的文字（可省略，預設與 name 相同）
-    function craftMakeInvRow(name, needed, isTransition, displayLabel, isGear, hideTargetTd) {
+    function craftMakeInvRow(name, needed, isTransition, displayLabel, isGear, hideTargetTd, displayTarget) {
         const owned = craftOwnedMap[name] || 0;
         // 半成品（isTransition）仍需顯示製作數量，shortage 永遠計算
         const shortage = Math.max(0, needed - owned);
@@ -7427,6 +7431,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         const safeName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const label = displayLabel || name;
 
+        // 目標欄顯示值：優先用 displayTarget（直接需求量），沒有就用 needed
+        const targetDisplay = (displayTarget !== undefined && displayTarget !== null) ? displayTarget : needed;
         // 目標欄：hideTargetTd=true（基礎素材）完全不輸出 td；
         //         isTransition=true（過度半成品）輸出 td 但顯示 -；其餘顯示數字
         const targetCell = hideTargetTd
@@ -7447,7 +7453,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
                </td>`
                 : isTransition
                     ? `<td class="craft-inv-target" style="color:#555;text-align:center;">-</td>`
-                    : `<td class="craft-inv-target">${needed}</td>`;
+                    : `<td class="craft-inv-target">${targetDisplay}</td>`;
 
         // 缺少欄：所有素材都計算缺少數量
         let shortClass, shortText;
@@ -7533,7 +7539,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         // ── 欄 3：半成品（直接素材中 level=1，初階加工的中間品，如錠、塊、怪物素材）──
         // 注意：directMatTotals 包含配件直接用到的所有材料，依 CRAFT_MATS.level 分流
         const finishedMatTotals = new Map(); // 成品（level=2）
-        const semiMatTotals     = new Map(); // 半成品（level=1 或無 level 但有配方）
+        const semiMatTotals     = new Map(); // 半成品（level=1）總需求量（直接+間接展開），用於缺少欄
+        const directSemiNeeded  = new Map(); // 半成品直接需求量（只來自配件配方直接用到的），用於目標欄顯示
 
         directMatTotals.forEach((qty, name) => {
             const mat = CRAFT_MATS[name];
@@ -7542,6 +7549,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
                     finishedMatTotals.set(name, qty);
                 } else {
                     semiMatTotals.set(name, qty);
+                    // 記錄直接需求量（目標欄用）
+                    directSemiNeeded.set(name, qty);
                 }
             } else {
                 // 無配方的直接素材視為基礎素材，已由 leafTotals 涵蓋，不重複列出
@@ -7599,7 +7608,9 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             let catRow = '';
             if (cat !== lastCat3) { catRow = craftCatRow(cat); lastCat3 = cat; }
             const isTransit = transitionalSemi.has(name);
-            return catRow + craftMakeInvRow(name, qty, isTransit);
+            // displayTarget：若有直接需求就顯示直接需求量，過度半成品則為 null（顯示 -）
+            const displayTarget = isTransit ? null : (directSemiNeeded.get(name) ?? qty);
+            return catRow + craftMakeInvRow(name, qty, isTransit, null, false, false, displayTarget);
         }).join('');
 
         // ── 欄 4：基礎素材（原礦、水晶、怪物掉落、採集品等，無配方）──
