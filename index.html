@@ -9295,9 +9295,20 @@ window.toggleUploadZone = function(btn) {
         if (typeof loadCustomLinks === 'function') loadCustomLinks();
         // 重載配件製作資料（Firebase 同步後更新記憶體與 UI）
         if (typeof craftLoadFromStorage === 'function') {
+            // 比對 craftSelectedParts 是否有實質變化，有才整頁重建（避免打勾/改庫存時畫面跳回頂部）
+            const prevParts = JSON.stringify(craftSelectedParts);
             craftLoadFromStorage();
+            const nextParts = JSON.stringify(craftSelectedParts);
             if (typeof craftRenderChips === 'function') craftRenderChips();
-            if (typeof craftRenderResult === 'function') craftRenderResult();
+            if (nextParts !== prevParts) {
+                // 配件清單有變動，需要完整重建
+                if (typeof craftRenderResult === 'function') craftRenderResult();
+            } else {
+                // 配件清單沒變，只重新整理各列的缺少數量（不動 DOM 結構）
+                if (typeof craftRefreshInventoryRow === 'function') {
+                    Object.keys(craftOwnedMap).forEach(name => craftRefreshInventoryRow(name));
+                }
+            }
         }
         // 重載海圖進度
         if (typeof loadMapNodeState === 'function') { loadMapNodeState(); renderMapNodes(); }
