@@ -915,6 +915,24 @@
         .fleet-add-btn:hover { opacity: 0.88; box-shadow: 0 3px 12px rgba(155,126,200,0.4); }
         .fleet-add-icon { font-size: 15px; line-height: 1; }
 
+        /* 路線結果：詳細／簡化 切換按鈕 */
+        .rp-view-toggle {
+            display: inline-flex; gap: 2px; padding: 2px;
+            background: var(--edit-bg); border: 1px solid var(--edit-border);
+            border-radius: 8px;
+        }
+        .rp-view-btn {
+            border: none; background: transparent; color: #999;
+            font-size: 12px; font-weight: 600; font-family: inherit;
+            padding: 4px 12px; border-radius: 6px; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .rp-view-btn:hover:not(.active) { color: var(--accent-color); }
+        .rp-view-btn.active { background: var(--accent-color); color: #fff; }
+        body.light-mode .rp-view-toggle { background: #f1f2f6; border-color: #dcdde1; }
+        body.light-mode .rp-view-btn { color: #777; }
+        body.light-mode .rp-view-btn.active { color: #fff; }
+
         /* 排序選單 */
         .fleet-sort-wrap {
             display: inline-flex; align-items: center; gap: 6px;
@@ -1366,6 +1384,38 @@
         body.light-mode .custom-alert-box { border-color: #dde3ec; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
 
         /* ── 自製 Confirm Modal ── */
+        /* ── 更新內容通知（一次性）── */
+        .update-notice-overlay {
+            display: none; position: fixed; inset: 0; z-index: 10001;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+            align-items: center; justify-content: center; padding: 16px;
+        }
+        .update-notice-overlay.visible { display: flex; }
+        .update-notice-box {
+            background: var(--card-color); border: 1px solid var(--edit-border);
+            border-radius: 14px; width: 100%; max-width: 440px; max-height: 80vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(155,126,200,0.12);
+            animation: alertPop 0.16s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .update-notice-head {
+            display: flex; align-items: center; gap: 8px;
+            padding: 18px 22px 10px; font-size: 17px; font-weight: 700; color: var(--accent-color);
+        }
+        .update-notice-date { margin-left: auto; font-size: 12px; font-weight: 400; color: #888; }
+        .update-notice-list {
+            margin: 0; padding: 4px 22px 6px 40px; overflow-y: auto;
+            font-size: 14px; line-height: 1.7; color: var(--text-color);
+        }
+        .update-notice-list li { margin-bottom: 6px; }
+        .update-notice-foot { padding: 10px 22px 18px; display: flex; justify-content: flex-end; }
+        .update-notice-btn {
+            background: var(--accent-color); color: #fff; border: none;
+            padding: 8px 22px; border-radius: 8px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+        }
+        .update-notice-btn:hover { opacity: 0.85; }
+
         .custom-confirm-overlay {
             display: none; position: fixed; inset: 0; z-index: 9999;
             background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
@@ -1405,6 +1455,9 @@
 
         /* ── 道具分層（T3/T2/T1）── */
         .rp-tiered-loot { display: flex; flex-direction: column; gap: 8px; }
+        /* 簡化顯示：只保留排名、路線、統計列與按鈕 */
+        .rp-results.rp-compact .rp-loot-legend,
+        .rp-results.rp-compact .rp-result-loot { display: none; }
         .rp-tier-group { border: 1px solid var(--edit-border); border-radius: 8px; overflow: hidden; }
         .rp-tier-head {
             display: flex; align-items: center; gap: 10px;
@@ -2494,6 +2547,15 @@
     </div>
 </div>
 
+<!-- ── 更新內容通知（一次性）── -->
+<div class="update-notice-overlay" id="updateNoticeOverlay">
+    <div class="update-notice-box">
+        <div class="update-notice-head"><span>🆕 更新內容</span><span class="update-notice-date" id="updateNoticeDate"></span></div>
+        <ul class="update-notice-list" id="updateNoticeList"></ul>
+        <div class="update-notice-foot"><button class="update-notice-btn" onclick="closeUpdateNotice()">我知道了</button></div>
+    </div>
+</div>
+
 <!-- ── 自製 Confirm Modal ── -->
 <div class="custom-confirm-overlay" id="customConfirmOverlay">
     <div class="custom-confirm-box" onclick="event.stopPropagation()">
@@ -2721,6 +2783,16 @@
             <button class="collapsible-btn" onclick="toggleCollapse('content4', this)"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div style="max-height: 300px; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.8; color: var(--text-color); scrollbar-width: thin; scrollbar-color: rgba(155,126,200,0.45) transparent;">
+                   <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/11/02</div>
+                    <ul style="margin: 0; padding-left: 18px;">
+                        <li>路線規劃、配件規劃：目標物品新增「全部物品」類別，可搜尋所有道具</li>
+                        <li>路線規劃：結果新增「詳細／簡化」切換，簡化模式僅顯示路線與統計資料，並自動記住選擇</li>
+                        <li>配件製作：打勾或修改庫存後，畫面不再跳回頂部，已收合的素材列表維持原狀</li>
+                        <li>切換艦隊標籤後，配件規劃自動更新站點開放狀態，路線規劃會提示重新搜尋</li>
+                        <li>修正 126～130 級經驗資料，以及部分等級的性能數值</li>
+                        <li>船艇設定視窗的回港時間欄位調整為單行顯示</li>
+                        <li>新增更新內容通知視窗</li>
+                    </ul>
                    <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 6px;">📋 2026/09/26</div>
                     <ul style="margin: 0; padding-left: 18px;">
                         <li>修正配件製作部分素材目標欄與缺少欄顯示邏輯</li>
@@ -3001,6 +3073,7 @@
                             <label>類別</label>
                             <select id="rpItemCategory" style="width:160px;" onchange="rpOnCategoryChange()">
                                 <option value="">— 選擇類別 —</option>
+                                <option value="all">全部物品</option>
                                 <option value="workshop">工坊材料</option>
                                 <option value="other">其他材料</option>
                                 <option value="rare">稀有物品</option>
@@ -3080,7 +3153,11 @@
                     <button class="rp-search-btn" id="rpSearchBtn" onclick="runRoutePlanner()">🔍 搜尋前 100 條路線</button>
                     <button class="rp-reset-btn" onclick="rpResetAll()" title="清除所有篩選條件">↺ 重製選擇</button>
                     <span id="rpStatusText"></span>
-                    <div style="margin-left:auto;">
+                    <div style="margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <div class="rp-view-toggle" id="rpViewToggle">
+                            <button type="button" class="rp-view-btn active" data-view="detail" onclick="rpSetView('detail')">詳細</button>
+                            <button type="button" class="rp-view-btn" data-view="compact" onclick="rpSetView('compact')">簡化</button>
+                        </div>
                         <div class="fleet-sort-wrap">
                             <span class="fleet-sort-icon">⇅</span>
                             <select id="rpSortSel" onchange="rpApplySort()">
@@ -3179,6 +3256,7 @@
                             <label>類別</label>
                             <select id="gpItemCategory" style="width:160px;" onchange="gpOnCategoryChange()">
                                 <option value="">— 選擇類別 —</option>
+                                <option value="all">全部物品</option>
                                 <option value="workshop">工坊材料</option>
                                 <option value="other">其他材料</option>
                                 <option value="rare">稀有物品</option>
@@ -3818,6 +3896,34 @@ window.showConfirm = showConfirm;
     let customGroups = [];
     let activeGroup = GROUP_ALL;
 
+    // ── 更新內容通知（每位使用者、每個瀏覽器只顯示一次）──
+    // 之後要再通知：改 id 與 items，所有人就會再看到一次
+    const UPDATE_NOTICE = {
+        id: '2026-11-02',
+        date: '2026/11/02',
+        items: [
+            '路線規劃、配件規劃：目標物品新增「全部物品」類別，可搜尋所有道具',
+            '路線規劃：結果新增「詳細／簡化」切換，簡化模式僅顯示路線與統計資料，並自動記住選擇'
+        ]
+    };
+    function showUpdateNoticeIfNeeded() {
+        try { if (localStorage.getItem('sub_seen_update') === UPDATE_NOTICE.id) return; } catch (e) { return; }
+        document.getElementById('updateNoticeDate').textContent = UPDATE_NOTICE.date;
+        document.getElementById('updateNoticeList').innerHTML =
+            UPDATE_NOTICE.items.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+        document.getElementById('updateNoticeOverlay').classList.add('visible');
+    }
+    function closeUpdateNotice() {
+        document.getElementById('updateNoticeOverlay').classList.remove('visible');
+        try { localStorage.setItem('sub_seen_update', UPDATE_NOTICE.id); } catch (e) {}
+    }
+    document.getElementById('updateNoticeOverlay').addEventListener('click', e => {
+        if (e.target.id === 'updateNoticeOverlay') closeUpdateNotice();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.getElementById('updateNoticeOverlay').classList.contains('visible')) closeUpdateNotice();
+    });
+
     window.onload = function() {
         if(localStorage.getItem('sub_theme') === 'light') document.body.classList.add('light-mode');
         loadGroups(); loadTimersFromStorage(); loadCustomLinks(); initOCR(); initSubConfigModal(); initMapNodes(); initRoutePlanner(); initGearPlanner();
@@ -3830,6 +3936,7 @@ window.showConfirm = showConfirm;
                 groupTabsEl.scrollLeft += e.deltaY;
             }, { passive: false });
         }
+        setTimeout(showUpdateNoticeIfNeeded, 500);
     };
 
     function loadGroups() {
@@ -6699,7 +6806,8 @@ window.showConfirm = showConfirm;
         })();
 
         let ids;
-        if (cat === 'workshop') ids = [...WORKSHOP_IDS].filter(id => lootIdSet.has(id));
+        if (cat === 'all') ids = [...lootIdSet];
+        else if (cat === 'workshop') ids = [...WORKSHOP_IDS].filter(id => lootIdSet.has(id));
         else if (cat === 'rare')     ids = [...RARE_IDS].filter(id => lootIdSet.has(id));
         else ids = [...lootIdSet].filter(id => !WORKSHOP_IDS.has(id) && !RARE_IDS.has(id));
 
@@ -6722,7 +6830,7 @@ window.showConfirm = showConfirm;
         if (filtered.length === 0) {
             box.innerHTML = `<div class="rp-suggest-empty">無符合結果</div>`;
         } else {
-            box.innerHTML = filtered.slice(0, 60).map(x =>
+            box.innerHTML = filtered.slice(0, 500).map(x =>
                 `<div class="rp-suggest-item" onmousedown="gpAddItemById(${x.id},'${x.name.replace(/'/g,"\\'")}'); document.getElementById('gpItemSearch').value=''; document.getElementById('gpSuggestBox').style.display='none';">${x.name}</div>`
             ).join('');
         }
@@ -7862,6 +7970,8 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             const sel = document.getElementById('rpSortSel');
             if (sel) sel.value = savedRpSort;
         }
+        // 還原結果顯示方式（詳細／簡化）
+        rpApplyView();
         // ① 船艇下拉（依群組分組）
         const shipSel = document.getElementById('rpShipSelect');
         shipSel.innerHTML = buildShipGroupedOptions();
@@ -7948,13 +8058,13 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         44059, 44060
     ]);
 
-    let rpItemCategories = { workshop: [], other: [], rare: [] };
+    let rpItemCategories = { all: [], workshop: [], other: [], rare: [] };
 
     // 目標道具下拉選單排除規則：魔晶石全系列、及「○之水晶」「○之晶簇」元素結晶
     const RP_ITEM_EXCLUDE_PATTERN = /魔晶石|之(碎晶|水晶|晶簇)$|黑暗物質/;
 
     function rpBuildItemCategories() {
-        rpItemCategories = { workshop: [], other: [], rare: [] };
+        rpItemCategories = { all: [], workshop: [], other: [], rare: [] };
         for (const idStr in ITEM_DB) {
             const id = parseInt(idStr, 10);
             if (!RP_LOOT_ID_SET.has(id)) continue;
@@ -7976,6 +8086,9 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         sort(rpItemCategories.workshop);
         sort(rpItemCategories.other);
         sort(rpItemCategories.rare);
+        // 全部物品：三類合併後依名稱排序
+        rpItemCategories.all = [...rpItemCategories.workshop, ...rpItemCategories.other, ...rpItemCategories.rare];
+        sort(rpItemCategories.all);
     }
 
     // ── 地圖兩段式選擇 helpers ─────────────────────────────────
@@ -8127,7 +8240,7 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
         if (filtered.length === 0) {
             box.innerHTML = `<div class="rp-suggest-empty">無符合結果</div>`;
         } else {
-            box.innerHTML = filtered.slice(0, 60).map(x =>
+            box.innerHTML = filtered.slice(0, 500).map(x =>
                 `<div class="rp-suggest-item" onmousedown="rpAddItemById(${x.id},'${x.name.replace(/'/g,"\\'")}'); document.getElementById('rpItemSearch').value=''; document.getElementById('rpSuggestBox').style.display='none';">${x.name}</div>`
             ).join('');
         }
@@ -8243,6 +8356,19 @@ const CRAFT_BASE = {"火之碎晶":"水晶","冰之碎晶":"水晶","風之碎�
             return b.epm - a.epm; // epm_desc (default)
         });
         rpRenderResults(sorted.slice(0, 100), rpMustLootIds, rpPlayerExplore);
+    }
+
+    function rpSetView(mode) {
+        localStorage.setItem('sub_rp_view', mode === 'compact' ? 'compact' : 'detail');
+        rpApplyView();
+    }
+    function rpApplyView() {
+        const mode = localStorage.getItem('sub_rp_view') === 'compact' ? 'compact' : 'detail';
+        const box = document.getElementById('routeResults');
+        if (box) box.classList.toggle('rp-compact', mode === 'compact');
+        document.querySelectorAll('#rpViewToggle .rp-view-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.view === mode);
+        });
     }
 
     function runRoutePlanner() {
