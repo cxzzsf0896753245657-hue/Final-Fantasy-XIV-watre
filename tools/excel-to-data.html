@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>數據總表 → 網站數據 轉換工具｜FF14 潛水艇計時器</title>
+<style>
+  :root { --bg:#121212; --card:#1e1e1e; --text:#e0e0e0; --muted:#9a9a9a; --accent:#9b7ec8; --ok:#4caf50; --warn:#f0b429; --err:#e07070; --line:#333; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--text); font-family:'PingFang TC','Microsoft JhengHei',sans-serif; line-height:1.6; }
+  main { max-width:820px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13.5px; margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:16px; }
+  ol { margin:0; padding-left:20px; } li { margin:4px 0; }
+  #drop { border:2px dashed #555; border-radius:12px; padding:34px 16px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+  #drop:hover, #drop.over, #drop:focus-visible { border-color:var(--accent); background:rgba(155,126,200,.07); outline:none; }
+  #drop strong { color:var(--accent); }
+  .status { margin-top:12px; font-size:14px; min-height:1.6em; }
+  .status.ok { color:var(--ok); } .status.err { color:var(--err); }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; }
+  .files { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  button, a.btn { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:8px 14px; font-size:13.5px; font-weight:700; cursor:pointer; text-decoration:none; font-family:inherit; }
+  button.secondary { background:#2e2e2e; color:var(--text); border:1px solid #444; }
+  button:focus-visible, a.btn:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+  .warn-list { margin:8px 0 0; padding-left:18px; color:var(--warn); font-size:13px; max-height:260px; overflow:auto; }
+  code { background:#2a2a2a; padding:1px 6px; border-radius:5px; font-size:13px; }
+  .ver { font-size:15px; color:var(--warn); font-weight:700; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>數據總表 → 網站數據 轉換工具</h1>
+  <p class="sub">把「FF14潛水艇數據表.xlsx」轉成網站 <code>data</code> 資料夾裡的 6 個檔案。全部在你的瀏覽器裡處理，不會上傳到任何地方。</p>
+
+  <section class="card" aria-labelledby="stepsTitle">
+    <h2 id="stepsTitle" style="font-size:15px;margin:0 0 8px">使用步驟</h2>
+    <ol>
+      <li>在數據總表裡改好資料並存檔。</li>
+      <li>把 xlsx 拖到下面的框裡（或點一下框選擇檔案）。</li>
+      <li>確認下方的統計與提醒，按「下載全部 6 個檔案」。</li>
+      <li>用下載的檔案覆蓋網站 <code>data</code> 資料夾裡的同名檔案，就完成了（版本號已包含在 <code>version.js</code> 裡，玩家的瀏覽器會自動抓新數據）。</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <div id="drop" role="button" tabindex="0" aria-describedby="dropHelp">
+      <div><strong>拖曳 xlsx 到這裡</strong>，或點一下選擇檔案</div>
+      <div id="dropHelp" class="sub" style="margin:4px 0 0">只接受數據總表格式（.xlsx）</div>
+    </div>
+    <input id="file" type="file" accept=".xlsx" hidden>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <section id="result" class="card" hidden aria-labelledby="resultTitle">
+    <h2 id="resultTitle" style="font-size:15px;margin:0 0 8px">轉換結果</h2>
+    <table><tbody id="summary"></tbody></table>
+    <p style="margin:14px 0 0">數據版本號：<span id="ver" class="ver"></span>（已寫進 version.js）</p>
+    <div class="files">
+      <button id="dlAll" type="button">下載全部 6 個檔案</button>
+      <span id="dlEach" class="files" style="margin:0"></span>
+    </div>
+    <div id="warnBox" hidden>
+      <h3 style="font-size:14px;margin:16px 0 0;color:var(--warn)">提醒（<span id="warnCount"></span>）</h3>
+      <ul id="warnings" class="warn-list"></ul>
+    </div>
+  </section>
+</main>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="convert.js"></script>
+<script>
+  const drop = document.getElementById('drop'), file = document.getElementById('file'), status = document.getElementById('status');
+  let result = null;
+  const setStatus = (msg, cls) => { status.textContent = msg; status.className = 'status ' + (cls || ''); };
+
+  drop.addEventListener('click', () => file.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } });
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+  file.addEventListener('change', () => { if (file.files[0]) handle(file.files[0]); });
+
+  async function handle(f) {
+    document.getElementById('result').hidden = true;
+    if (!/\.xlsx$/i.test(f.name)) { setStatus('請選擇 .xlsx 檔案', 'err'); return; }
+    setStatus('讀取中…');
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      result = convertWorkbook(XLSX, wb);
+      render(f.name);
+      setStatus(`「${f.name}」轉換完成`, 'ok');
+    } catch (e) {
+      console.error(e);
+      setStatus('轉換失敗：' + e.message, 'err');
+    }
+  }
+
+  function render() {
+    const s = result.summary, rows = [
+      ['海域', s.海域], ['地點', s.地點],
+      ['航行距離', `由座標計算 ${s.航行距離.由座標計算} 筆、取自「路線距離」分頁 ${s.航行距離.取自分頁} 筆` + (s.航行距離.缺少 ? `、缺少 ${s.航行距離.缺少} 筆` : '')],
+      ['等級', `1–${s.等級} 級`], ['部件', s.部件], ['物品', s.物品], ['路線用掉落', s.路線用掉落 + ' 筆'], ['製作部件', s.製作部件]];
+    document.getElementById('summary').innerHTML = rows.map(([k, v]) => `<tr><th scope="row">${k}</th><td>${v}</td></tr>`).join('');
+    document.getElementById('ver').textContent = result.version;
+    const each = document.getElementById('dlEach'); each.innerHTML = '';
+    for (const fn of Object.keys(result.files)) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'secondary'; b.textContent = fn;
+      b.addEventListener('click', () => download(fn)); each.appendChild(b);
+    }
+    const w = result.warnings, box = document.getElementById('warnBox');
+    box.hidden = !w.length;
+    document.getElementById('warnCount').textContent = w.length + ' 項';
+    document.getElementById('warnings').innerHTML = w.map(x => `<li>${x.replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))}</li>`).join('');
+    document.getElementById('result').hidden = false;
+  }
+
+  function download(fn) {
+    const url = URL.createObjectURL(new Blob([result.files[fn]], { type: 'text/javascript;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  document.getElementById('dlAll').addEventListener('click', async () => {
+    for (const fn of Object.keys(result.files)) { download(fn); await new Promise(r => setTimeout(r, 350)); }
+  });
+</script>
+</body>
+</html>
