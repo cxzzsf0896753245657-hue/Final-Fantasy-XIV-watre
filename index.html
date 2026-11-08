@@ -119,6 +119,7 @@ window.UI_ACTIONS = {
     a112: function (event) { this.textContent='已同步 ✓';setTimeout(()=>this.textContent='立即同步',1500) },
     a113: function (event) { manualGo(7) },
     a114: function (event) { subGroupRedepart() },
+    a128: function (event) { setRoomPerm(this.dataset.perm) },
     a123: function (event) { cfgRtToggle(+this.dataset.sec) },
     a124: function (event) { cfgRtFastest() },
     a125: function (event) { cfgRtClear() },
@@ -629,6 +630,45 @@ window.UI_ACTIONS = {
         .cloud-status-badge { margin-left: auto; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: rgba(102,102,102,0.2); color: #888; }
         .cloud-status-badge.connected { background: rgba(76,175,80,0.15); color: #4caf50; }
         .cloud-status-badge.error { background: rgba(255,83,112,0.15); color: #ff5370; }
+        /* 房間視圖：用固定的青綠色和自己的艦隊明顯區分（不跟主題色） */
+        :root { --room-rgb: 70,180,160; --room-color: rgb(var(--room-rgb)); }
+        .room-view-banner { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 9px 12px; border-radius: 10px;
+            background: rgba(var(--room-rgb), .13); border: 1px solid rgba(var(--room-rgb), .55); color: var(--text-color); }
+        .room-view-banner[hidden] { display: none; }
+        .rvb-ico { font-size: 18px; flex: none; }
+        .rvb-text { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; }
+        .rvb-text b { color: var(--room-color); margin-right: 6px; }
+        .rvb-text span { opacity: .85; }
+        .rvb-back { flex: none; background: none; border: 1px solid rgba(var(--room-rgb), .6); color: var(--room-color); border-radius: 7px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+        .rvb-back:hover { background: rgba(var(--room-rgb), .15); }
+        #panelFleet.room-mode .fleet-toolbar { border-color: rgba(var(--room-rgb), .45); }
+        #panelFleet.room-mode .timer-card { border-color: rgba(var(--room-rgb), .5) !important; box-shadow: inset 3px 0 0 var(--room-color); }
+        #panelFleet.room-mode .fleet-view-tab.active { color: var(--room-color); }
+        /* 唯讀房間：藏起所有會修改資料的按鈕 */
+        #panelFleet.room-readonly .btn-delete, #panelFleet.room-readonly .btn-config, #panelFleet.room-readonly .btn-route,
+        #panelFleet.room-readonly .delete-btn-wrapper, #panelFleet.room-readonly .btn-redepart, #panelFleet.room-readonly #groupRedepartBtn,
+        #panelFleet.room-readonly .fleet-add-btn, #panelFleet.room-readonly .group-tab-add, #panelFleet.room-readonly .group-tab-edit,
+        #panelFleet.room-readonly .group-tab-x, #panelFleet.room-readonly .group-tab-handle { display: none !important; }
+        #panelFleet.room-readonly .card-group-select { pointer-events: none; opacity: .6; }
+        @media (max-width: 640px) { .room-view-banner { flex-wrap: wrap; } .rvb-back { margin-left: 28px; } }
+        .room-perm { margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+        .room-perm[hidden] { display: none; }
+        .room-perm-label { font-size: 12px; color: #888; font-weight: 700; }
+        .room-perm-seg { display: inline-flex; border: 1px solid var(--edit-border); border-radius: 7px; overflow: hidden; }
+        .room-perm-seg button { background: none; border: 0; color: var(--text-color); opacity: .65; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+        .room-perm-seg button[aria-pressed="true"] { background: rgba(var(--accent-rgb), .2); color: var(--accent-color); opacity: 1; font-weight: 700; }
+        .room-perm-hint { flex-basis: 100%; font-size: 11.5px; opacity: .6; }
+        .sync-choice-box { max-width: 420px; text-align: left; }
+        .sync-choice-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+        .sync-choice-desc { font-size: 13px; opacity: .75; margin-bottom: 14px; line-height: 1.6; }
+        .sync-choice-list { display: flex; flex-direction: column; gap: 8px; }
+        .sync-choice-btn { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--edit-border, rgba(255,255,255,.15)); background: rgba(255,255,255,.03); color: var(--text-color); cursor: pointer; }
+        .sync-choice-btn b { font-size: 14px; }
+        .sync-choice-btn span { font-size: 12px; opacity: .7; }
+        .sync-choice-btn:hover { border-color: var(--accent-color); }
+        .sync-choice-btn.main { border-color: var(--accent-color); background: rgba(var(--accent-rgb,167,139,219),.12); }
+        .sync-choice-cancel { margin-top: 12px; background: none; border: 0; color: var(--text-color); opacity: .6; cursor: pointer; font-size: 12.5px; padding: 4px; }
+        .sync-choice-cancel:hover { opacity: 1; }
         body.light-mode .cloud-status-badge { background: rgba(0,0,0,0.07); color: #999; }
 
         /* ── 房間列表小卡 ── */
@@ -845,6 +885,15 @@ window.UI_ACTIONS = {
         /* ── 海圖跑點 ── */
         .map-block { padding: 10px 12px 14px; }
         /* ── 海圖標籤 Tab ── */
+        #roomActionWrap.owns-room [data-on-click="a31"], #roomActionWrap .own-only, #roomActionWrap.owns-room .own-not { display: none; }
+        #roomActionWrap.owns-room .own-only { display: inline; }
+        #roomActionWrap.owns-room { margin-top: 10px; }
+        .map-room-hint { margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5;
+            background: rgba(var(--room-rgb, 70,180,160), .12); border: 1px solid rgba(var(--room-rgb, 70,180,160), .45); color: var(--text-color); }
+        .map-room-hint b { color: rgb(var(--room-rgb, 70,180,160)); font-weight: 600; }
+        #mapNodeBlock.map-room .map-entry { border-left: 3px solid rgba(var(--room-rgb, 70,180,160), .6); padding-left: 8px; }
+        #mapNodeBlock.map-readonly .map-node { pointer-events: none; }
+        #mapNodeBlock.map-readonly .map-node-btn { display: none; }
         .map-group-tabs {
             display: flex;
             flex-wrap: wrap;
@@ -2831,33 +2880,6 @@ window.UI_ACTIONS = {
             if (!uuid) { uuid = generateUUID(); localStorage.setItem('sub_user_uuid', uuid); }
             return uuid;
         }
-        function collectLocalData() {
-            return {
-                timers:     JSON.parse(localStorage.getItem('ffxiv_submarine_timers') || '[]'),
-                groups:     JSON.parse(localStorage.getItem('sub_groups') || '[]'),
-                mapNodes:   JSON.parse(localStorage.getItem('sub_map_nodes') || '{}'),
-                craftParts: JSON.parse(localStorage.getItem('sub_craft_selected_parts') || '[]'),
-                craftOwned: JSON.parse(localStorage.getItem('sub_craft_owned_map') || '{}'),
-                links:      JSON.parse(localStorage.getItem('sub_custom_links') || '[]'),
-                updatedAt:  Date.now()
-            };
-        }
-        let _applyRemoteDebounce = null;
-        function applyRemoteData(data) {
-            if (!data) return;
-            if (data.timers)     localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(data.timers));
-            if (data.groups)     localStorage.setItem('sub_groups', JSON.stringify(data.groups));
-            if (data.mapNodes)   localStorage.setItem('sub_map_nodes', JSON.stringify(data.mapNodes));
-            if (data.craftParts) localStorage.setItem('sub_craft_selected_parts', JSON.stringify(data.craftParts));
-            if (data.craftOwned) localStorage.setItem('sub_craft_owned_map', JSON.stringify(data.craftOwned));
-            if (data.links)      localStorage.setItem('sub_custom_links', JSON.stringify(data.links));
-            // debounce：避免 pushMyData 後 Firebase 回流造成連續觸發 cloudDataLoaded
-            clearTimeout(_applyRemoteDebounce);
-            _applyRemoteDebounce = setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('cloudDataLoaded'));
-            }, 800);
-        }
-
         const myUUID = getMyUUID();
         let _userListener = null, _roomListeners = {}, _syncEnabled = false;
 
@@ -2899,21 +2921,23 @@ window.UI_ACTIONS = {
         window._getMyNickname = getMyNickname;
         window._setMyNickname = setMyNickname;
 
+        let _userListenerRef = null;
         window.CloudSync = {
             myUUID,
-            async pushMyData() {
-                if (!_syncEnabled) return;
-                await set(ref(db, `users/${myUUID}`), collectLocalData());
-            },
-            async pullMyData() {
+            // 相容舊呼叫：有資料變動時交給 SubSync 處理
+            pushMyData() { window.SubSync?.changed(); },
+            async getUser() {
                 const snap = await get(ref(db, `users/${myUUID}`));
-                if (snap.exists()) applyRemoteData(snap.val());
+                return snap.exists() ? snap.val() : null;
             },
-            listenMyData() {
+            // 只寫入有變動的欄位（多路徑更新），不再整包覆蓋
+            async writeUser(patch) {
+                if (!_syncEnabled) return;
+                await update(ref(db, `users/${myUUID}`), patch);
+            },
+            listenUser(cb) {
                 if (_userListener) off(ref(db, `users/${myUUID}`), 'value', _userListener);
-                _userListener = onValue(ref(db, `users/${myUUID}`), snap => {
-                    if (snap.exists()) applyRemoteData(snap.val());
-                });
+                _userListener = onValue(ref(db, `users/${myUUID}`), snap => cb(snap.exists() ? snap.val() : null));
             },
             async createRoom(name) {
                 const roomId = generateRoomCode();
@@ -2922,7 +2946,7 @@ window.UI_ACTIONS = {
                     name: name||'共同艦隊', owner: myUUID,
                     members:{[myUUID]:true},
                     memberNames:{[myUUID]: myName},
-                    timers:[], groups:[], updatedAt:Date.now()
+                    updatedAt:Date.now()
                 });
                 const rooms = _getSavedRooms();
                 if (!rooms.find(r => r.id === roomId)) {
@@ -2933,7 +2957,7 @@ window.UI_ACTIONS = {
             },
             async joinRoom(roomId) {
                 const snap = await get(ref(db, `rooms/${roomId}`));
-                if (!snap.exists()) throw new Error('找不到此房間代碼');
+                if (!snap.exists() || snap.val().closed || !snap.val().owner) throw new Error('找不到此房間代碼');
                 const myName = getMyNickname() || myUUID.slice(0,8);
                 await update(ref(db, `rooms/${roomId}/members`), {[myUUID]:true});
                 await update(ref(db, `rooms/${roomId}/memberNames`), {[myUUID]: myName});
@@ -2948,7 +2972,7 @@ window.UI_ACTIONS = {
             listenRoom(roomId, cb) {
                 if (_roomListeners[roomId]) off(ref(db, `rooms/${roomId}`), 'value', _roomListeners[roomId]);
                 _roomListeners[roomId] = onValue(ref(db, `rooms/${roomId}`), snap => {
-                    if (snap.exists()) cb(snap.val());
+                    cb(snap.exists() ? snap.val() : null);
                 });
             },
             stopListenRoom(roomId) {
@@ -2957,8 +2981,8 @@ window.UI_ACTIONS = {
                     delete _roomListeners[roomId];
                 }
             },
-            async pushRoomData(roomId, data) {
-                await update(ref(db, `rooms/${roomId}`), { ...data, updatedAt: Date.now() });
+            async writeRoom(roomId, patch) {
+                await update(ref(db, `rooms/${roomId}`), { ...patch, updatedAt: Date.now() });
             },
             leaveRoom(roomId) {
                 this.stopListenRoom(roomId);
@@ -2967,8 +2991,13 @@ window.UI_ACTIONS = {
             },
             getSavedRooms() { return _getSavedRooms(); },
             async pushNickname() { await pushNickname(); },
-            enable() { _syncEnabled = true; this.listenMyData(); },
+            enable() { _syncEnabled = true; },
             isEnabled() { return _syncEnabled; },
+            // 房主解散房間：先標記已解散（成員立刻收到），再刪除整個房間
+            async closeRoom(roomId) {
+                await update(ref(db, `rooms/${roomId}`), { closed: Date.now() });
+                try { await remove(ref(db, `rooms/${roomId}`)); } catch (e) { console.warn('刪除房間失敗（已標記解散）', e); }
+            },
             async kickMember(roomId, targetUUID) {
                 await remove(ref(db, `rooms/${roomId}/members/${targetUUID}`));
                 await remove(ref(db, `rooms/${roomId}/memberNames/${targetUUID}`));
@@ -3083,6 +3112,20 @@ window.SubPalette = (function () {
     </div>
 </div>
 
+<!-- ── 雲端同步：第一次連線時兩邊都有資料 ── -->
+<div class="custom-confirm-overlay sync-choice-overlay" id="syncChoiceOverlay" role="dialog" aria-modal="true" aria-labelledby="syncChoiceTitle">
+    <div class="custom-confirm-box sync-choice-box" data-stop-click>
+        <div class="sync-choice-title" id="syncChoiceTitle">☁️ 雲端和這台裝置都有資料</div>
+        <div class="sync-choice-desc" id="syncChoiceDesc"></div>
+        <div class="sync-choice-list">
+            <button type="button" class="sync-choice-btn main" data-choice="merge"><b>合併兩邊（建議）</b><span>兩邊的船都保留；同一艘船以較新的資料為準</span></button>
+            <button type="button" class="sync-choice-btn" data-choice="remote"><b>使用雲端資料</b><span>這台裝置的資料會被雲端取代</span></button>
+            <button type="button" class="sync-choice-btn" data-choice="local"><b>使用這台裝置的資料</b><span>雲端的資料會被這台取代，其他裝置也會跟著更新</span></button>
+        </div>
+        <button type="button" class="sync-choice-cancel" data-choice="">先不要啟用</button>
+    </div>
+</div>
+
 <!-- ══ MOBILE HEADER（僅手機版顯示）══ -->
 <div id="mobileHeader" style="display:none;">
     <h2>⚓ FF14 潛水艇計時器</h2>
@@ -3149,7 +3192,7 @@ window.SubPalette = (function () {
             <button type="button" class="drawer-close" id="drawerClose" aria-label="關閉面板" title="關閉（Esc）">✕</button>
         </div>
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.4.0 <span>阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.4.1 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button type="button" class="lp-icon-btn u1" data-on-click="a11" title="使用說明" aria-label="使用說明">📖</button>
@@ -3292,12 +3335,21 @@ window.SubPalette = (function () {
                                         <button type="button" class="u29" data-on-click="a30" style="background: transparent; border: 1px solid rgba(255,83,112,0.3); color: #e06070; border-radius: 6px; cursor: pointer;">離開</button>
                                     </div>
                                 </div>
+                                <!-- 成員權限（房主可見） -->
+                                <div class="room-perm" id="roomPermWrap" hidden>
+                                    <span class="room-perm-label">成員權限</span>
+                                    <div class="room-perm-seg" role="group" aria-label="成員權限">
+                                        <button type="button" data-perm="edit" data-on-click="a128" aria-pressed="true">可以修改</button>
+                                        <button type="button" data-perm="view" data-on-click="a128" aria-pressed="false">只能看</button>
+                                    </div>
+                                    <div class="room-perm-hint" id="roomPermHint">成員的修改會寫回你的船隊</div>
+                                </div>
                                 <!-- 成員列表（房主可見） -->
                                 <div class="u30" id="currentRoomMembers" style="display: none;"></div>
                             </div>
                             <div class="u28" id="roomActionWrap" style="display: flex;">
                                 <button type="button" class="u31" data-on-click="a31" style="background: rgba(var(--accent-rgb),0.12); border: 1px solid rgba(var(--accent-rgb),0.3); color: var(--accent-color); border-radius: 8px; cursor: pointer;">＋ 建立房間</button>
-                                <button type="button" class="u31" data-on-click="a32" style="background: rgba(255,255,255,0.04); border: 1px solid var(--edit-border); color: #aaa; border-radius: 8px; cursor: pointer;">加入房間</button>
+                                <button type="button" class="u31" data-on-click="a32" style="background: rgba(255,255,255,0.04); border: 1px solid var(--edit-border); color: #aaa; border-radius: 8px; cursor: pointer;"><span class="own-only">加入別人的房間</span><span class="own-not">加入房間</span></button>
                             </div>
                             <!-- 建立房間名稱輸入列 -->
                             <div class="u32" id="createRoomInputWrap" style="display: none;">
@@ -3320,11 +3372,23 @@ window.SubPalette = (function () {
             <button type="button" class="collapsible-btn" data-on-click="a36" aria-expanded="false" aria-controls="content4"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div class="u38" style="color: var(--text-color);">
-                   <div class="u39" style="color: var(--accent-color);">📋 2026/11/07　v2.4.0</div>
+                   <div class="u39" style="color: var(--accent-color);">📋 2026/11/08　v2.4.1</div>
+                    <ul class="u40">
+                        <li>雲端同步改版：每艘船各自記錄修改時間並合併，兩台同時修改、離線修改都不會再互相蓋掉；刪除會同步（包含刪光所有船）；上傳失敗會自動補傳</li>
+                        <li>雲端同步：第一次啟用或匯入 ID 時，若雲端和這台都有資料，會先詢問要合併、用雲端或用這台；匯入 ID 後自動重新整理並改用新 ID</li>
+                        <li>共同艦隊：房主的修改會即時更新到房間，成員在房間裡的修改也會寫回房主的船隊；建立房間後成員列表即時顯示</li>
+                        <li>共同艦隊：檢視別人的房間時，上方顯示「正在檢視○○的艦隊」提示列，船卡改用青綠色邊框；上方船數依目前畫面顯示；房主可設定成員「可以修改／只能看」</li>
+                        <li>共同艦隊：海圖也一起共用。檢視房間時，海圖顯示房間的標籤和已開放的海點，成員修改會同步給房主（房主設定「只能看」時無法修改）；路線規劃與配件規劃的船艇選單也會換成房間的船，搜尋時使用房間的海圖</li>
+                        <li>共同艦隊：修正建立自己的房間後，無法再加入別人房間的問題；「已加入的房間」不再重複列出自己的房間；房主離開房間時房間會解散，成員會自動離開並收到通知；被房主移除的成員也會自動離開</li>
+                        <li>截圖辨識改善：辨識前先轉灰階、反白並放大，船名與時間更準；括號殘字、「7/小時」這類雜訊能正確解析，時間沒讀完整的船不會被更新</li>
+                        <li>截圖辨識比對改善：同一張截圖裡每艘船只會對到一次，相似名字（如星海船／月海船）會用排除法、等級與回港時間判斷，分不出來就不更新；5 字以上英文名字不分大小寫；名字有空格（如 Rubber Duck）、含「探索」等字也能正確對上</li>
+                        <li>修正：截圖辨識更新等級後，「再出發」可能重複加上一趟的經驗</li>
+                        <li>船艇設定新增「目前航線」：可直接點選海域與地點設定航線（依點選順序，可一鍵排成最快順序），不必經過路線規劃</li>
+                    </ul>
+                    <div class="u39" style="color: var(--accent-color);">📋 2026/11/07</div>
                     <ul class="u40">
                         <li>新增「再出發」：記住上次航線，回港後一鍵照原航線重新計時，並自動推算經驗與升級後的時間</li>
                         <li>新增「全部／群組再出發」：一次讓目前標籤內已回港的船一起出發</li>
-                        <li>船艇設定新增「目前航線」：可直接點選海域與地點設定航線（依點選順序，可一鍵排成最快順序），不必經過路線規劃</li>
                         <li>船卡顯示上次航線與下次回港時間；船艇設定新增選填的「本級經驗」</li>
                         <li>路線規劃：結果改為欄位對齊的列表，點欄位名稱排序、點一行展開掉落物</li>
                         <li>路線規劃：新增回港時段篩選，可選「只要」或「避開」的小時，支援拖曳複選</li>
@@ -3506,7 +3570,7 @@ window.SubPalette = (function () {
 
     <!-- ══ RIGHT PANEL ══ -->
     <div class="right-panel">
-        <div class="desk-brand" aria-hidden="true">FF14 潛水艇計時器 <span>2.4.0・阿緋@鳳凰</span></div>
+        <div class="desk-brand" aria-hidden="true">FF14 潛水艇計時器 <span>2.4.1・阿緋@鳳凰</span></div>
         <!-- 分頁切換列 -->
         <div class="rp-panel-tabs" id="rpPanelTabs" role="tablist" aria-label="主要功能">
             <button type="button" class="rp-panel-tab active" id="tabFleet" role="tab" aria-controls="panelFleet" aria-selected="true" data-on-click="a37">⚓ 潛水艇艦隊 <span class="u43" id="fleetCount" style="background: rgba(var(--accent-rgb),0.2); color: var(--accent-color); border: 1px solid #555; border-radius: 6px; display: inline-block; min-width: 36px;">0 艘</span></button>
@@ -3522,6 +3586,11 @@ window.SubPalette = (function () {
                 <div class="fleet-seg-control" id="fleetSegControl">
         <button type="button" class="fleet-view-tab active" id="fleetTabMine" data-view="mine" data-on-click="a42">我的艦隊</button>
                 </div>
+            </div>
+            <div class="room-view-banner" id="roomViewBanner" hidden>
+                <span class="rvb-ico" aria-hidden="true">👥</span>
+                <span class="rvb-text"><b id="rvbTitle"></b><span id="rvbSub"></span></span>
+                <button type="button" class="rvb-back" data-on-click="a42">回到我的艦隊</button>
             </div>
             <div class="fleet-toolbar">
                 <div class="fleet-toolbar-left">
@@ -4425,32 +4494,23 @@ window.showConfirm = showConfirm;
     // ── 更新內容通知（每位使用者、每個瀏覽器只顯示一次）──
     // 之後要再通知：改 id 與 items，所有人就會再看到一次
     const UPDATE_NOTICE = {
-        id: '2.4.0',
-        title: '🆕 2.4.0 更新',
-        date: '2026/11/07',
+        id: '2.4.1',
+        title: '🆕 2.4.1 更新',
+        date: '2026/11/08',
         pages: [
-            { tab: '再出發', icon: '⚓', title: '回港後一鍵再出發',
-              lead: '不用每次重新規劃，照上次的航線直接出發。',
-              items: ['在路線規劃按「使用」，網站就會記住這艘船的航線',
-                      '船回港後按船卡上的「再出發」，會自動加上經驗、判斷有沒有升級，再用新等級算時間',
-                      '艦隊右上角的「全部再出發」可以一次讓整個標籤的船出發',
-                      '船卡會直接顯示下次回港時間'] },
-            { tab: '路線規劃', icon: '🧭', title: '結果更好比較，還能挑回港時段',
-              lead: '找航線時，最重要的數字一眼就看得到。',
-              items: ['結果改成對齊的列表，EXP/分 最醒目，點欄位名稱就能排序',
-                      '點任一行展開那條航線的掉落物',
-                      '新增「回港時段」：選「只要」或「避開」的小時，例如避開睡覺時間；可以拖曳一次選多格'] },
-            { tab: '主題', icon: '🎨', title: '32 種護眼主題',
-              lead: '低飽和、適合長時間使用，深色 18 種、淺色 14 種。',
-              items: ['左側工具列的「主題」（手機在「工具」分頁）點一下就套用',
-                      '原本的深淺色切換已合併進主題',
-                      '預設的「紫夜」「晨光」和以前長得一樣'] },
+            { tab: '雲端同步', icon: '☁️', title: '同步更穩定，資料不會互相蓋掉',
+              lead: '多台裝置一起用也不怕。',
+              items: ['兩台裝置同時修改、離線修改，都會正確合併',
+                      '換裝置匯入 ID 時，會先問你要合併、用雲端還是用這台'] },
+            { tab: '共同艦隊', icon: '👥', title: '和部隊成員一起顧船',
+              lead: '房主和成員的修改會即時互通。',
+              items: ['房主可以設定成員「可以修改」或「只能看」',
+                      '進入房間時，海圖和路線規劃也會改用房間的資料',
+                      '有自己的房間也能加入別人的房間；房主離開時房間會解散'] },
             { tab: '其他', icon: '✨', title: '其他改進',
               lead: '完整內容請看左側「日記」。',
-              items: ['船卡一排可以放 3～4 張；部隊標籤整齊排列，顯示船數與已回港綠點',
-                      '配件製作：點格子就 +1，格子裡直接顯示數量',
-                      '自訂連結、使用說明重新設計',
-                      '修正標籤要點兩下才選取、截圖辨識會清空等級等問題'] }
+              items: ['截圖辨識更準，名字相似的船不會再對錯',
+                      '船艇設定可以直接設定目前航線'] }
         ]
     };
     let _unPage = 0;
@@ -4515,11 +4575,11 @@ window.showConfirm = showConfirm;
         const savedActive = localStorage.getItem('sub_active_group');
         if (savedActive) activeGroup = savedActive;
     }
-    function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
+    function saveGroups() { localStorage.setItem('sub_groups', JSON.stringify(customGroups)); window.SubSync?.changed(); }
     function saveActiveGroup() {
         localStorage.setItem('sub_active_group', activeGroup);
         // 艦隊切換標籤時，海圖同步切換到相同標籤
-        const validGroups = ['未分類', ...customGroups];
+        const validGroups = allGroupNames();
         if (activeGroup === GROUP_ALL) {
             // 選「全部」時，海圖維持目前選中的標籤不動
         } else if (validGroups.includes(activeGroup)) {
@@ -5183,7 +5243,7 @@ window.showConfirm = showConfirm;
         renderCustomLinks();
     }
 
-    function saveCustomLinks() { localStorage.setItem('sub_custom_links', JSON.stringify(customLinks)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
+    function saveCustomLinks() { localStorage.setItem('sub_custom_links', JSON.stringify(customLinks)); window.SubSync?.changed(); }
 
     function linkHost(url) {
         try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; }
@@ -5373,8 +5433,185 @@ window.showConfirm = showConfirm;
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
     document.addEventListener('paste', (e) => { const cbd = e.clipboardData; if (!cbd) return; for (let i = 0; i < cbd.items.length; i++) { if (cbd.items[i].type.indexOf('image') !== -1) { const pastedFile = cbd.items[i].getAsFile(); handleFile(pastedFile); break; } } });
 
-    function handleFile(file) { if (!file || !worker) return; statusText.innerText = "🔍 正在分析圖片..."; const reader = new FileReader(); reader.onload = async function(e) { try { const ret = await worker.recognize(e.target.result); parseTextToTimers(ret.data.text); } catch (error) { statusText.innerText = "❌ 辨識失敗。"; } }; reader.readAsDataURL(file); }
-    function parseTextToTimers(text) { const lines = text.split('\n'); let parsedCount = 0; lines.forEach(line => { let currentLine = line.replace(/\s+/g, ''); if (!currentLine) return; const dayMatch = currentLine.match(/(\d{1,2})天/); const hourMatch = currentLine.match(/(\d{1,2})小時/); const minMatch = currentLine.match(/(\d{1,2})分鐘/); if (!dayMatch && !hourMatch && !minMatch) return; let namePart = currentLine.split(/正在探索|剩餘時間|\d{1,2}天|\d{1,2}小時|\d{1,2}分鐘/)[0]; let cleanName = namePart.replace(/\[\d+級\]/g, '').replace(/正在探.{0,2}[：:]*|剩.{0,2}時間|素狐餘時間|餘時間|請選擇|探索|所持/g, '').replace(/[\[\]：:]/g, '').trim(); let level = (currentLine.match(/(\d+)級/) || [])[1] ? (currentLine.match(/(\d+)級/)[1] + "級") : ""; const totalSeconds = ((dayMatch ? parseInt(dayMatch[1]) : 0) * 86400) + ((hourMatch ? parseInt(hourMatch[1]) : 0) * 3600) + ((minMatch ? parseInt(minMatch[1]) : 0) * 60); if (totalSeconds > 0) { saveOrUpdateTimer(cleanName, level, totalSeconds); parsedCount++; } }); statusText.innerText = parsedCount > 0 ? `🎉 同步 ${parsedCount} 艘潛水艇！${activeGroup !== GROUP_ALL ? `（範圍：${activeGroup}）` : ''}` : "⚠️ 找不到資料。"; }
+    // 截圖前處理：遊戲是淺色字＋深色半透明底，轉灰階並反白成「白底黑字」，小圖放大後辨識率明顯提升。
+    // 只截對話框的小圖放大 2 倍並用「整塊文字」模式；整張螢幕的大圖不放大，改用自動版面分析。
+    function ocrPrepareImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const w0 = img.naturalWidth, h0 = img.naturalHeight;
+                const big = w0 > 1800;
+                const sc = big ? 1 : (w0 <= 1100 ? 2 : 1.5);
+                const cv = document.createElement('canvas');
+                cv.width = Math.round(w0 * sc); cv.height = Math.round(h0 * sc);
+                const ctx = cv.getContext('2d', { willReadFrequently: true });
+                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, cv.width, cv.height);
+                const id = ctx.getImageData(0, 0, cv.width, cv.height), px = id.data;
+                for (let i = 0; i < px.length; i += 4) {
+                    const g = 255 - Math.round(px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114);
+                    px[i] = px[i + 1] = px[i + 2] = g; px[i + 3] = 255;
+                }
+                ctx.putImageData(id, 0, 0);
+                resolve({ canvas: cv, psm: big ? '3' : '6' });
+            };
+            img.onerror = reject;
+            img.src = dataUrl;
+        });
+    }
+    function handleFile(file) {
+        if (!file || !worker) return;
+        statusText.innerText = "🔍 正在分析圖片...";
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+            try {
+                const prep = await ocrPrepareImage(e.target.result);
+                await worker.setParameters({ tessedit_pageseg_mode: prep.psm });
+                const ret = await worker.recognize(prep.canvas);
+                parseTextToTimers(ret.data.text);
+            } catch (error) { statusText.innerText = "❌ 辨識失敗。"; }
+        };
+        reader.readAsDataURL(file);
+    }
+    // ── 截圖辨識：解析一行文字 ──────────────────────────────
+    // 遊戲格式：「船名 [N級] [正在探索：剩餘時間 X天Y小時Z分鐘]」
+    // 船名在第一個括號或「N級」之前切開；保留字母、數字、「-」與英文單字間的空白。
+    function ocrCleanName(raw) {
+        let n = raw.replace(/[^\p{L}\p{N}\- ]/gu, ' ');
+        // 中文字之間的空白是辨識產生的；只保留英數字之間的空白（如 Rubber Duck）
+        n = n.replace(/\s+/g, ' ').replace(/ (?=[^A-Za-z0-9])|(?<=[^A-Za-z0-9]) /g, '');
+        return n.replace(/^[\s\-]+|[\s\-]+$/g, '').trim();
+    }
+    function ocrParseLine(line) {
+        const flat = line.replace(/\s+/g, '');
+        if (!flat) return null;
+        // 時間只看「正在探索／剩餘時間」之後，避免船名裡的「天」「時間」等字被誤判
+        const ti = flat.search(/正在探|剩.{0,2}時間/);
+        let tp = ti >= 0 ? flat.slice(ti) : flat;
+        // 數字和單位之間的雜訊（如「7/小時」）先去掉
+        tp = tp.replace(/(\d)[^\d\p{Script=Han}]{1,2}(?=天|小時|分鐘)/gu, '$1');
+        const d = tp.match(/(\d{1,2})天/), h = tp.match(/(\d{1,2})小時/), m = tp.match(/(\d{1,2})分鐘/);
+        if (!d && !h && !m) return null;
+        // 時間是否完整：原文有單位卻讀不到數字、或數值不合理 → 這一行不更新
+        const bad = (/小時/.test(tp) && !h) || (/分鐘/.test(tp) && !m) || (/\d天|天\d/.test(tp) && !d)
+                 || (h && +h[1] > 23) || (m && +m[1] > 59);
+        // 船名：第一個括號／「N級」／「正在探索」之前
+        const cut = line.search(/[\[【〔「（(［|]|\d{1,3}\s*級|正\s*在\s*探|剩\s*.{0,2}\s*時\s*間|\d{1,2}\s*(天|小\s*時|分\s*鐘)/);
+        let name = ocrCleanName(cut > 0 ? line.slice(0, cut) : (cut === 0 ? '' : line));
+        name = name.replace(/^(請選擇潛水艇|請選擇|所持燃料數|所持)/, '');
+        const lvM = flat.match(/(\d{1,3})級/);
+        const secs = ((d ? +d[1] : 0) * 86400) + ((h ? +h[1] : 0) * 3600) + ((m ? +m[1] : 0) * 60);
+        return { name, level: lvM ? lvM[1] + '級' : '', lvNum: lvM ? +lvM[1] : 0, secs, bad: !!bad || secs <= 0 };
+    }
+
+    // ── 截圖辨識：把一張截圖的每一行對應到船 ───────────────
+    const ocrNorm = n => (n || '').replace(/\s+/g, '');
+    // 每一行的候選船：完全一致 → 候選就是它；否則模糊比對，距離最小的全部列為候選（平手不再取第一個）
+    function ocrCandidates(name, pool) {
+        const nn = ocrNorm(name);
+        if (!nn) return { exact: false, list: [] };
+        const ex = pool.filter(t => ocrNorm(t.name) === nn);
+        if (ex.length) return { exact: true, list: ex };
+        if (isPureSimple(nn)) {
+            // 5 字以上的純英文名字：不分大小寫、允許差 1 個字（如 Zzephyr → Zephyr）；4 字以內維持精確比對
+            if (/^[A-Za-z]{5,}$/.test(nn)) {
+                const low = nn.toLowerCase();
+                return { exact: false, list: pool.filter(t => /^[A-Za-z]{5,}$/.test(ocrNorm(t.name)) && levenshtein(low, ocrNorm(t.name).toLowerCase()) <= 1) };
+            }
+            return { exact: false, list: [] };
+        }
+        const maxDist = Math.max(1, Math.floor(nn.length * 0.3));
+        const srcSerial = getSerialSuffix(nn);
+        let best = Infinity, list = [];
+        pool.forEach(t => {
+            const tn = ocrNorm(t.name);
+            if (isPureSimple(tn)) return;
+            const tgtSerial = getSerialSuffix(tn);
+            if (srcSerial !== null && tgtSerial !== null && srcSerial !== tgtSerial) return;
+            const dist = levenshtein(nn, tn);
+            if (dist > maxDist) return;
+            if (dist < best) { best = dist; list = [t]; } else if (dist === best) list.push(t);
+        });
+        // 名字前後多出 1–2 個雜字（如「革深海大鳳梨」）：船隊裡的名字出現在開頭或結尾也算候選
+        if (!list.length && nn.length >= 3) {
+            list = pool.filter(t => { const tn = ocrNorm(t.name); return tn.length >= 2 && nn.length - tn.length <= 2 && (nn.startsWith(tn) || nn.endsWith(tn)) && !isPureSimple(tn); });
+            if (list.length > 1) { const L = Math.max(...list.map(t => ocrNorm(t.name).length)); list = list.filter(t => ocrNorm(t.name).length === L); }
+        }
+        return { exact: false, list };
+    }
+    // 一張截圖裡每艘船只出現一次：先定完全一致的，再用排除法 → 等級 → 回港時間吻合 決定；仍分不出來就不更新
+    function ocrAssign(rows, pool) {
+        const now = Date.now();
+        const res = rows.map(() => ({ ship: null, state: 'new' }));
+        const C = rows.map(r => ocrCandidates(r.name, pool));
+        // 完全一致但有兩行搶同一艘（例如「星」被讀成「月」）：兩行都改用「自己＋只差 1 字的船」重新判斷
+        const claim = new Map();
+        C.forEach((c, i) => { if (c.exact && c.list.length === 1) { const k = c.list[0]; claim.set(k, (claim.get(k) || 0) + 1); } });
+        C.forEach((c, i) => {
+            if (c.exact && c.list.length === 1 && claim.get(c.list[0]) > 1) {
+                const nn = ocrNorm(rows[i].name), ss = getSerialSuffix(nn);
+                c.exact = false;
+                c.list = pool.filter(t => {
+                    const tn = ocrNorm(t.name);
+                    if (tn === nn) return true;
+                    if (isPureSimple(tn)) return false;
+                    const ts = getSerialSuffix(tn);
+                    if (ss !== null && ts !== null && ss !== ts) return false;
+                    return levenshtein(nn, tn) <= 1;
+                });
+            }
+        });
+        const taken = new Set();
+        const pend = [];
+        C.forEach((c, i) => {
+            if (rows[i].bad) { res[i].state = 'badtime'; return; }
+            if (c.exact && c.list.length === 1) { res[i] = { ship: c.list[0], state: 'ok' }; taken.add(c.list[0]); }
+            else if (c.list.length) pend.push(i);
+        });
+        const lvOf = t => parseInt(t.level, 10) || 0;
+        let changed = true;
+        while (changed && pend.length) {
+            changed = false;
+            for (const i of [...pend]) {
+                const r = rows[i];
+                let c = C[i].list.filter(t => !taken.has(t));
+                if (c.length > 1 && r.lvNum) { const c2 = c.filter(t => lvOf(t) === r.lvNum); if (c2.length) c = c2; }
+                if (c.length > 1) {
+                    const c2 = c.filter(t => t.endTime > now && Math.abs((t.endTime - now) / 1000 - r.secs) <= 180);
+                    if (c2.length) c = c2;
+                }
+                if (c.length === 1) { res[i] = { ship: c[0], state: 'ok' }; taken.add(c[0]); pend.splice(pend.indexOf(i), 1); changed = true; }
+                // 相近的船都已被這張截圖的其他行對走 → 這一行是另一艘（例如船隊裡還沒有的新船）
+                else if (!c.length) { pend.splice(pend.indexOf(i), 1); res[i].state = 'new'; }
+            }
+        }
+        pend.forEach(i => { res[i].state = 'ambiguous'; });
+        return res;
+    }
+    function parseTextToTimers(text) {
+        if (typeof _currentFleetView !== 'undefined' && _currentFleetView !== 'mine' && _rooms[_currentFleetView]?.perm === 'view') {
+            statusText.innerText = '⚠️ 這個房間設定為只能看，截圖不會更新。請先切回「我的艦隊」。';
+            return;
+        }
+        const rows = text.split('\n').map(ocrParseLine).filter(Boolean);
+        // 依目前選定的群組篩選比對範圍：選「全部」時不限範圍，選特定群組時只在該群組內比對
+        const pool = (activeGroup === GROUP_ALL) ? getActiveTimers() : getActiveTimers().filter(t => (t.group || DEFAULT_GROUP) === activeGroup);
+        const plan = ocrAssign(rows, pool);
+        let ok = 0, added = 0; const skipped = [], badTime = [];
+        rows.forEach((r, i) => {
+            const p = plan[i];
+            if (p.state === 'badtime') { badTime.push(r.name || '?'); return; }
+            if (p.state === 'ambiguous') { skipped.push(r.name || '?'); return; }
+            if (p.state === 'new' && !r.name) return;
+            saveOrUpdateTimer(r.name, r.level, r.secs, p.state === 'ok' ? p.ship : null);
+            if (p.state === 'ok') ok++; else added++;
+        });
+        const n = ok + added;
+        let msg = n > 0 ? `🎉 同步 ${n} 艘潛水艇！${added ? `（新增 ${added} 艘）` : ''}${activeGroup !== GROUP_ALL ? `（範圍：${activeGroup}）` : ''}` : (rows.length ? '⚠️ 沒有可以更新的船。' : '⚠️ 找不到資料。');
+        if (skipped.length) msg += `　${skipped.length} 艘無法判斷是哪一艘（${skipped.join('、')}），未更新`;
+        if (badTime.length) msg += `　${badTime.length} 艘時間沒讀完整（${badTime.join('、')}），未更新`;
+        statusText.innerText = msg;
+    }
 
     // ── 模糊比對：Levenshtein Distance ───────────────────────
     function levenshtein(a, b) {
@@ -5417,19 +5654,12 @@ window.showConfirm = showConfirm;
         return bestIndex;
     }
 
-    function saveOrUpdateTimer(name, level, totalSeconds) {
+    // matched：截圖比對到的船（ocrAssign 決定）；null 代表新船
+    function saveOrUpdateTimer(name, level, totalSeconds, matched) {
         const now = Date.now();
         const endTime = now + (totalSeconds * 1000);
 
-        // 依目前選定的群組篩選比對範圍：選「全部」時不限範圍，選特定群組時只在該群組內比對
-        const pool = (activeGroup === GROUP_ALL) ? savedTimers : savedTimers.filter(t => (t.group || DEFAULT_GROUP) === activeGroup);
-
-        // 先嘗試完全比對，再嘗試模糊比對（皆限定在 pool 範圍內）
-        let poolIndex = pool.findIndex(t => t.name === name);
-        if (poolIndex === -1) poolIndex = findFuzzyMatch(name, pool);
-
-        if (poolIndex !== -1) {
-            const matched = pool[poolIndex];
+        if (matched) {
             const matchedName = matched.name;
             const matchedGroup = matched.group || DEFAULT_GROUP;
             // 保留原本手動設定的配件，OCR 流程不會覆寫此欄位；性能一律於顯示當下自動計算
@@ -5437,15 +5667,22 @@ window.showConfirm = showConfirm;
 
             // 清除同群組內同名卡片（含已完成的），避免舊卡與新計時並存；不影響其他群組內的同名船
             const activeArr = getActiveTimers();
-            const toRemove = activeArr.filter(t => t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup);
+            const toRemove = activeArr.filter(t => t === matched || (t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup));
             toRemove.forEach(t => document.getElementById(`card-${t.id}`)?.remove());
-            setActiveTimers(activeArr.filter(t => !(t.name === matchedName && (t.group || DEFAULT_GROUP) === matchedGroup)));
+            setActiveTimers(activeArr.filter(t => !toRemove.includes(t)));
 
             // 用原本正確的名字建立新計時，並帶回原本的配件設定與群組
             const keepLevel = level || matched.level || '';
-            const timerData = { id: 'timer_' + Date.now() + '_' + (++_timerIdCounter) + '_' + Math.random().toString(36).substr(2, 5), name: matchedName, level: keepLevel, startTime: now, endTime, totalSeconds, parts: prevParts, group: matchedGroup };
+            const timerData = { id: matched.id, name: matchedName, level: keepLevel, startTime: now, endTime, totalSeconds, parts: prevParts, group: matchedGroup };
             if (matched.expTrack) timerData.expTrack = matched.expTrack;
-            if (matched.lastRoute) timerData.lastRoute = matched.lastRoute;
+            if (matched.lastRoute) {
+                // 截圖顯示「正在探索」：
+                //  ・剩餘時間和原本記錄的回港時間吻合（±10 分）→ 同一趟航行，航線紀錄不動
+                //  ・否則是遊戲裡已重新出發 → 上一趟的經驗已含在現在的等級裡，標記為已計入，避免「再出發」重複加經驗
+                const sameTrip = matched.endTime > now && Math.abs(matched.endTime - endTime) <= 10 * 60 * 1000;
+                timerData.lastRoute = sameTrip ? matched.lastRoute
+                    : Object.assign({}, matched.lastRoute, { credited: true, departLevel: parseInt(keepLevel, 10) || matched.lastRoute.departLevel });
+            }
             getActiveTimers().push(timerData);
             saveActiveTimers();
             createTimerCard(timerData);
@@ -6052,10 +6289,11 @@ window.showConfirm = showConfirm;
     function updateFleetCount() {
         const el = document.getElementById("fleetCount");
         if (!el) return;
+        const list = getActiveTimers();
         if (activeGroup === GROUP_ALL) {
-            el.innerText = savedTimers.length + " 艘";
+            el.innerText = list.length + " 艘";
         } else {
-            const visible = savedTimers.filter(t => (t.group || DEFAULT_GROUP) === activeGroup).length;
+            const visible = list.filter(t => (t.group || DEFAULT_GROUP) === activeGroup).length;
             el.innerText = visible + " / " + savedTimers.length + " 艘";
         }
     }
@@ -6068,13 +6306,19 @@ window.showConfirm = showConfirm;
         if (_timerIntervals.has(id)) { clearInterval(_timerIntervals.get(id)); _timerIntervals.delete(id); }
         updateFleetCount();
     }
-    function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData(); }
+    function saveTimersToStorage() { localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers)); window.SubSync?.changed(); }
 
     // ── 房間視圖的 timers 寫回 Firebase ──
     async function saveRoomTimers(roomId) {
         if (!roomId || !_rooms[roomId]) return;
+        if (_rooms[roomId].perm === 'view') {
+            window.SubSync?.roomRestore(_rooms[roomId]);
+            if (_currentFleetView === roomId) switchFleetView(roomId);
+            showAlert('⚠️ 房主設定為「只能看」，修改不會儲存');
+            return;
+        }
         _rooms[roomId].timers = _viewTimers || [];
-        await window.CloudSync?.pushRoomData(roomId, { timers: _rooms[roomId].timers });
+        await window.SubSync?.saveRoom(roomId);
     }
 
     // 依目前視圖儲存（個人 or 房間）
@@ -6201,9 +6445,15 @@ window.showConfirm = showConfirm;
     let activeMapGroup = '未分類'; // 海圖區目前選中的標籤
     const _mapCollapsed = new Set(); // 已折疊的 mapId（記憶體，不 persist）
 
+    // 目前在檢視別人的房間 → 海圖改用房間的資料
+    function mapRoom() {
+        if (typeof _currentFleetView === 'undefined' || _currentFleetView === 'mine' || typeof _rooms === 'undefined') return null;
+        return _rooms[_currentFleetView] || null;
+    }
     function loadMapNodeState() {
         try {
-            const data = localStorage.getItem('sub_map_nodes');
+            const room = mapRoom();
+            const data = room ? (room.mapNodes && room.mapNodes.d !== 'null' ? room.mapNodes.d : null) : localStorage.getItem('sub_map_nodes');
             const parsed = data ? JSON.parse(data) : {};
             // 偵測舊格式：key 是數字字串（如 "1", "2"）→ 轉換為新格式
             const isOldFormat = Object.keys(parsed).every(k => /^\d+$/.test(k));
@@ -6218,8 +6468,18 @@ window.showConfirm = showConfirm;
     }
 
     function saveMapNodeState() {
+        const room = mapRoom();
+        if (room) {
+            if (room.perm === 'view') {
+                loadMapNodeState(); renderMapNodes();
+                showAlert('⚠️ 房主設定為「只能看」，海圖無法修改');
+                return;
+            }
+            window.SubSync?.saveRoomMap(_currentFleetView, JSON.stringify(mapNodeState));
+            return;
+        }
         localStorage.setItem('sub_map_nodes', JSON.stringify(mapNodeState));
-        if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData();
+        window.SubSync?.changed();
     }
 
     function isNodeOn(mapId, node) {
@@ -6258,8 +6518,22 @@ window.showConfirm = showConfirm;
         if (!block) return;
         block.innerHTML = '';
 
+        // ── 房間檢視：提示正在編輯誰的海圖 ──
+        const room = mapRoom();
+        block.classList.toggle('map-room', !!room);
+        block.classList.toggle('map-readonly', !!room && room.perm === 'view');
+        if (room) {
+            const hint = document.createElement('div');
+            hint.className = 'map-room-hint';
+            const owner = (room.memberNames || {})[room.owner] || '房主';
+            hint.innerHTML = `<b>👥 「${escapeHtml(room.name || '共同艦隊')}」的海圖</b>・${escapeHtml(owner)}` +
+                (room.perm === 'view' ? '・房主設定為只能看' : '・你的修改會同步給房主');
+            block.appendChild(hint);
+        }
+
         // ── 標籤 Tab 列 ──
-        const allGroups = ['未分類', ...customGroups];
+        const allGroups = allGroupNames();
+        if (!allGroups.includes(activeMapGroup)) activeMapGroup = DEFAULT_GROUP;
         const tabBar = document.createElement('div');
         tabBar.className = 'map-group-tabs';
         allGroups.forEach(g => {
@@ -7009,7 +7283,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             localStorage.setItem(CRAFT_STORAGE_PARTS, JSON.stringify(craftSelectedParts));
             localStorage.setItem(CRAFT_STORAGE_OWNED, JSON.stringify(craftOwnedMap));
             // 同步推上雲端，確保重整後資料一致
-            if (window.CloudSync?.isEnabled()) window.CloudSync.pushMyData();
+            window.SubSync?.changed();
         } catch(e) {}
     }
 
@@ -7020,6 +7294,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         } catch(e) { craftSelectedParts = []; }
         try {
             const owned = localStorage.getItem(CRAFT_STORAGE_OWNED);
+            Object.keys(craftOwnedMap).forEach(k => delete craftOwnedMap[k]);
             if (owned) Object.assign(craftOwnedMap, JSON.parse(owned));
         } catch(e) {}
     }
@@ -7792,7 +8067,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const order = allGroupNames(); // [DEFAULT_GROUP, ...customGroups]
         const groupMap = new Map();
 
-        savedTimers.forEach(t => {
+        // 依目前檢視：我的艦隊用自己的船，房間用房間的船
+        getActiveTimers().forEach(t => {
             const g = t.group || DEFAULT_GROUP;
             if (!groupMap.has(g)) groupMap.set(g, []);
             groupMap.get(g).push(t);
@@ -7827,7 +8103,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
 
         // 記住目前選中的船名（而非 id，因為 id 可能已更換）
         const prevSelectedId = shipSel.value;
-        const prevTimer = savedTimers.find(t => t.id === prevSelectedId);
+        const prevTimer = getActiveTimers().find(t => t.id === prevSelectedId);
         const prevName = prevTimer ? prevTimer.name : null;
 
         // 重建分組選項
@@ -7835,7 +8111,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
 
         // 嘗試用船名恢復選中狀態
         if (prevName) {
-            const matched = savedTimers.find(t => t.name === prevName);
+            const matched = getActiveTimers().find(t => t.name === prevName);
             if (matched) {
                 shipSel.value = matched.id;
                 // 若船艇仍被選中，立即同步等級與配件到路線規劃欄位
@@ -9328,7 +9604,46 @@ window.toggleUploadZone = function(btn) {
             (_viewTimers).forEach(t => createTimerCard(t));
             applyGroupFilter();
         }
+        updateRoomBanner();
+        if (typeof updateFleetCount === 'function') updateFleetCount();
+        if (typeof loadMapNodeState === 'function') { loadMapNodeState(); renderMapNodes(); }
+        // 路線規劃／配件規劃的船艇選單也換成目前檢視的船
+        if (typeof refreshRpShipSelect === 'function') refreshRpShipSelect();
+        if (typeof gpRefreshShipList === 'function') gpRefreshShipList();
     };
+
+    // 房間視圖提示：正在看誰的艦隊、修改會不會同步給房主
+    function updateRoomBanner() {
+        const panel = document.getElementById('panelFleet');
+        const banner = document.getElementById('roomViewBanner');
+        const room = _currentFleetView !== 'mine' ? _rooms[_currentFleetView] : null;
+        const ro = !!room && room.perm === 'view';
+        if (panel) { panel.classList.toggle('room-mode', !!room); panel.classList.toggle('room-readonly', ro); }
+        if (!banner) return;
+        banner.hidden = !room;
+        if (!room) return;
+        const ownerName = (room.memberNames || {})[room.owner] || (room.owner || '').slice(0, 8) || '房主';
+        document.getElementById('rvbTitle').textContent = `正在檢視「${room.name || '共同艦隊'}」`;
+        document.getElementById('rvbSub').textContent = `${ownerName} 的艦隊・` + (ro ? '房主設定為只能看，無法修改' : '你的修改會同步給房主');
+    }
+    window.updateRoomBanner = updateRoomBanner;
+
+    // 房主：設定成員權限
+    window.setRoomPerm = async function (perm) {
+        const rid = window._ownedRoomId; if (!rid || !window.CloudSync) return;
+        if (_rooms[rid]) _rooms[rid].perm = perm;
+        renderRoomPerm(perm);
+        try { await window.CloudSync.writeRoom(rid, { perm }); } catch (e) { showAlert('⚠️ 權限設定失敗，請確認網路'); }
+    };
+    function renderRoomPerm(perm) {
+        const wrap = document.getElementById('roomPermWrap'); if (!wrap) return;
+        wrap.hidden = !window._ownedRoomId;
+        const p = perm === 'view' ? 'view' : 'edit';
+        wrap.querySelectorAll('[data-perm]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.perm === p)));
+        const hint = document.getElementById('roomPermHint');
+        if (hint) hint.textContent = p === 'view' ? '成員只能查看，無法修改你的船' : '成員的修改會寫回你的船隊';
+    }
+    window.renderRoomPerm = renderRoomPerm;
 
     function _addRoomTab(roomId, roomName) {
         const seg = document.getElementById('fleetSegControl');
@@ -9369,12 +9684,36 @@ window.toggleUploadZone = function(btn) {
         }
         window._roomListenerType[roomId] = 'owner';
         window.CloudSync.listenRoom(roomId, function(roomData) {
-            if (!_rooms[roomId]) return;
+            if (!_rooms[roomId] || !roomData || roomData.closed) return;
             _rooms[roomId].memberNames = roomData.memberNames || {};
             _rooms[roomId].owner = roomData.owner || '';
             if (window._ownedRoomId === roomId) window.renderOwnedRoomMembers?.(roomId);
+            _rooms[roomId].perm = roomData.perm === 'view' ? 'view' : 'edit';
+            if (window._ownedRoomId === roomId) renderRoomPerm(_rooms[roomId].perm);
+            // 房主：成員的修改寫回自己的船隊；自己較新的資料補傳到房間
+            window.SubSync?.ownerRoomSync(roomId, roomData);
         });
     }
+
+    // 成員端：房間已解散或自己已被移除 → 回傳原因
+    function _roomGoneReason(roomData) {
+        if (!roomData || roomData.closed || !roomData.owner) return 'closed';
+        const me = window.CloudSync?.myUUID || '';
+        if (roomData.members && me && !roomData.members[me] && roomData.owner !== me) return 'kicked';
+        return null;
+    }
+    // 成員端：自動離開房間並通知
+    function _dropRoom(roomId, reason) {
+        const name = (_rooms[roomId] && _rooms[roomId].name) || '共同艦隊';
+        window.CloudSync?.leaveRoom(roomId);
+        delete _rooms[roomId];
+        if (window._roomListenerType) delete window._roomListenerType[roomId];
+        _removeRoomTab(roomId);
+        document.getElementById(`room-card-${roomId}`)?.remove();
+        window.renderRoomList();
+        showAlert(reason === 'kicked' ? `你已被房主移出「${name}」` : `房主已解散「${name}」，已自動離開這個房間`);
+    }
+    window._roomGoneReason = _roomGoneReason;
 
     function _listenRoomTimers(roomId, roomName) {
         if (!_rooms[roomId]) _rooms[roomId] = { name: roomName, timers: [], groups: [], owner: '', memberNames: {} };
@@ -9386,8 +9725,9 @@ window.toggleUploadZone = function(btn) {
         window._roomListenerType[roomId] = 'member';
         window.CloudSync.listenRoom(roomId, function(roomData) {
             if (!_rooms[roomId]) return;
-            _rooms[roomId].timers = roomData.timers || [];
-            _rooms[roomId].groups = roomData.groups || [];
+            const gone = _roomGoneReason(roomData);
+            if (gone) return _dropRoom(roomId, gone);
+            window.SubSync?.roomLoad(_rooms[roomId], roomData);
             _rooms[roomId].owner = roomData.owner || '';
             _rooms[roomId].memberNames = roomData.memberNames || {};
             _rooms[roomId].name = roomData.name || roomName;
@@ -9401,6 +9741,7 @@ window.toggleUploadZone = function(btn) {
     // 房間命名：點建立房間先展開輸入框
     window.cloudCreateRoom = async function() {
         if (!window.CloudSync?.isEnabled()) return showAlert('請先啟用雲端同步');
+        if (window._ownedRoomId) return showAlert('你已經有自己的房間了，要建立新房間請先按「離開」');
         const wrap = document.getElementById('createRoomInputWrap');
         if (wrap) { wrap.style.display = 'flex'; document.getElementById('createRoomNameInput')?.focus(); }
     };
@@ -9415,7 +9756,9 @@ window.toggleUploadZone = function(btn) {
         if (!myNick) return showAlert('請先設定暱稱才能建立房間');
         try {
             const roomId = await window.CloudSync.createRoom(roomName);
-            await window.CloudSync.pushRoomData(roomId, { timers: savedTimers, groups: customGroups });
+            // 先建立房間資料，成員加入時房主才看得到成員列表；船隊由監聽時的 ownerRoomSync 上傳
+            const myId = window.CloudSync.myUUID;
+            _rooms[roomId] = { name: roomName, timers: [], groups: [], owner: myId, memberNames: { [myId]: myNick } };
             // 房主不需要獨立分頁，資料就是自己的 savedTimers
             // 只顯示代碼區塊供分享
             const labelEl = document.getElementById('currentRoomLabel');
@@ -9425,12 +9768,13 @@ window.toggleUploadZone = function(btn) {
             const actions = document.getElementById('roomActionWrap');
             if (code) code.textContent = roomId;
             if (wrap) wrap.style.display = 'block';
-            if (actions) actions.style.display = 'none';
+            if (actions) { actions.style.display = 'flex'; actions.classList.add('owns-room'); }
             // 記錄自己建立的房間代碼，重整後用來還原代碼顯示
             localStorage.setItem('sub_owned_room_id', roomId);
             // 記錄房主正在管理的房間 ID，供成員列表使用
             window._ownedRoomId = roomId;
             window.renderOwnedRoomMembers?.(roomId);
+            renderRoomPerm('edit');
             // 房主監聽 Firebase，以便即時更新成員列表（不切換視圖）
             _listenOwnerRoom(roomId);
             showAlert(`✅ 房間「${roomName}」建立成功！代碼：${roomId}`);
@@ -9448,7 +9792,8 @@ window.toggleUploadZone = function(btn) {
         try {
             const data = await window.CloudSync.joinRoom(roomId);
             const roomName = data.name || '共同艦隊';
-            _rooms[roomId] = { name: roomName, timers: data.timers || [], groups: data.groups || [], owner: data.owner || '', memberNames: data.memberNames || {} };
+            _rooms[roomId] = { name: roomName, owner: data.owner || '', memberNames: data.memberNames || {} };
+            window.SubSync?.roomLoad(_rooms[roomId], data);
             _addRoomTab(roomId, roomName);
             _listenRoomTimers(roomId, roomName);
             window.renderRoomList();
@@ -9502,14 +9847,16 @@ window.toggleUploadZone = function(btn) {
         } catch(e) { showAlert('⚠️ 移除失敗：' + e.message); }
     };
 
-    window.cloudLeaveRoom = function() {
-        if (_currentFleetView !== 'mine') {
-            // 加入的房間才需要走分頁離開流程
-            cloudLeaveRoomById({ stopPropagation:()=>{} }, _currentFleetView);
-        }
-        // 房主：停止 Firebase 監聽、清除記憶體資料
+    window.cloudLeaveRoom = async function() {
         const ownedId = window._ownedRoomId;
-        if (ownedId) {
+        if (!ownedId) return;
+        const n = Object.keys((_rooms[ownedId] || {}).memberNames || {}).filter(u => u !== (window.CloudSync?.myUUID || '')).length;
+        try { await showConfirm(`離開後房間「${(_rooms[ownedId] || {}).name || ownedId}」會解散${n ? `，${n} 位成員也會一起被移出` : ''}。你自己的艦隊資料不受影響。確定要離開嗎？`, '解散房間'); }
+        catch (e) { return; }
+        try { await window.CloudSync?.closeRoom(ownedId); }
+        catch (e) { showAlert('⚠️ 解散房間失敗，請確認網路後再試一次'); return; }
+        // 房主：停止 Firebase 監聽、清除記憶體資料
+        {
             window.CloudSync?.leaveRoom(ownedId);
             if (_rooms[ownedId]) delete _rooms[ownedId];
             if (window._roomListenerType) delete window._roomListenerType[ownedId];
@@ -9518,10 +9865,11 @@ window.toggleUploadZone = function(btn) {
         const actions = document.getElementById('roomActionWrap');
         const labelEl = document.getElementById('currentRoomLabel');
         if (wrap) wrap.style.display = 'none';
-        if (actions) actions.style.display = 'flex';
+        if (actions) { actions.style.display = 'flex'; actions.classList.remove('owns-room'); }
         if (labelEl) labelEl.textContent = '目前加入的房間';
         localStorage.removeItem('sub_owned_room_id');
         window._ownedRoomId = null;
+        renderRoomPerm('edit');
         const membersEl = document.getElementById('currentRoomMembers');
         if (membersEl) membersEl.style.display = 'none';
         window.renderRoomList();
@@ -9538,18 +9886,24 @@ window.toggleUploadZone = function(btn) {
         const nickEl = document.getElementById('myNicknameInput');
         if (nickEl && savedNick) nickEl.value = savedNick;
 
-        if (localStorage.getItem('sub_cloud_enabled') === '1') _doEnableSync();
+        if (localStorage.getItem('sub_cloud_enabled') === '1') window.SubSync?.enable();
 
         // ── 重整後還原所有已加入的房間 ──
         const savedRooms = window.CloudSync?.getSavedRooms() || [];
         savedRooms.forEach(async ({ id: roomId, name: roomName }) => {
             try {
                 const snap = await window._fbGet(roomId);
-                if (!snap) { window.CloudSync?.leaveRoom(roomId); return; }
+                const gone = snap && snap.owner === (window.CloudSync?.myUUID || '') ? (snap.closed ? 'closed' : null) : window._roomGoneReason(snap);
+                if (gone) {
+                    window.CloudSync?.leaveRoom(roomId);
+                    if (!snap || snap.owner !== (window.CloudSync?.myUUID || '')) showAlert(gone === 'kicked' ? `你已被房主移出「${snap.name || roomName}」` : `房主已解散「${snap?.name || roomName}」，已自動離開這個房間`);
+                    return;
+                }
                 const actualName = snap.name || roomName;
                 const myUUID = window.CloudSync?.myUUID || '';
                 const isOwner = snap.owner === myUUID;
-                _rooms[roomId] = { name: actualName, timers: snap.timers || [], groups: snap.groups || [], owner: snap.owner || '', memberNames: snap.memberNames || {} };
+                _rooms[roomId] = { name: actualName, owner: snap.owner || '', memberNames: snap.memberNames || {} };
+                window.SubSync?.roomLoad(_rooms[roomId], snap);
 
                 if (isOwner) {
                     // 房主：只還原代碼顯示區塊，不新增分頁
@@ -9560,7 +9914,7 @@ window.toggleUploadZone = function(btn) {
                     if (labelEl) labelEl.textContent = '我的房間（分享代碼給其他人加入）';
                     if (code) code.textContent = roomId;
                     if (wrap) wrap.style.display = 'block';
-                    if (actions) actions.style.display = 'none';
+                    if (actions) { actions.style.display = 'flex'; actions.classList.add('owns-room'); }
                     window._ownedRoomId = roomId;
                     window.renderOwnedRoomMembers?.(roomId);
                     _listenOwnerRoom(roomId);
@@ -9588,8 +9942,10 @@ window.toggleUploadZone = function(btn) {
     window.renderRoomList = function renderRoomList() {
         const wrap = document.getElementById('roomListWrap');
         if (!wrap) return;
-        const roomIds = Object.keys(_rooms);
-        if (!roomIds.length) { wrap.style.display = 'none'; return; }
+        // 自己的房間已在上方「我的房間」管理，這裡只列別人的房間
+        const myId = window.CloudSync?.myUUID || '';
+        const roomIds = Object.keys(_rooms).filter(id => id !== window._ownedRoomId && _rooms[id].owner !== myId);
+        if (!roomIds.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
         wrap.style.display = 'flex';
         wrap.innerHTML = '<div style="font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#666; margin-bottom:4px;">已加入的房間</div>';
         roomIds.forEach(roomId => {
@@ -9612,6 +9968,7 @@ window.toggleUploadZone = function(btn) {
                 <div class="room-card-meta">
                     <strong>持有人：</strong>${ownerName}<br>
                     ${members.length ? `<strong>成員：</strong>${members.join('、')}` : '<span style="opacity:0.5">尚無其他成員</span>'}
+                    ${room.owner !== (window.CloudSync?.myUUID || '') ? `<br><strong>權限：</strong>${room.perm === 'view' ? '只能看' : '可以修改'}` : ''}
                 </div>
                 <div class="room-card-actions">
                     ${room.owner !== (window.CloudSync?.myUUID || '') ? `<button class="room-card-btn enter" onclick="switchFleetView('${roomId}'); switchRpTab('fleet');">切換視圖</button>` : ''}
@@ -9623,7 +9980,9 @@ window.toggleUploadZone = function(btn) {
 
     window.addEventListener('cloudDataLoaded', () => {
         if (typeof loadGroups === 'function') loadGroups();             // 先載群組，供 loadTimersFromStorage 補齊使用
-        if (typeof loadTimersFromStorage === 'function') loadTimersFromStorage();
+        if (typeof _currentFleetView !== 'undefined' && _currentFleetView !== 'mine') {
+            try { savedTimers = JSON.parse(localStorage.getItem('ffxiv_submarine_timers') || '[]'); } catch (e) {}
+        } else if (typeof loadTimersFromStorage === 'function') loadTimersFromStorage();
         if (typeof loadCustomLinks === 'function') loadCustomLinks();
         // 重載配件製作資料（Firebase 同步後更新記憶體與 UI）
         if (typeof craftLoadFromStorage === 'function') {
@@ -9660,28 +10019,16 @@ window.toggleUploadZone = function(btn) {
         }
     }
 
-    function _doEnableSync() {
-        if (!window.CloudSync) return;
-        localStorage.setItem('sub_cloud_enabled', '1');
-        window.CloudSync.enable();
-        _setStatus('連線中...', null);
-        window.CloudSync.pullMyData().then(() => {
-            _setStatus('✅ 已連線，同步中', true);
-            const w = document.getElementById('cloudEnableWrap');
-            if (w) w.style.display = 'none';
-        }).catch(() => _setStatus('⚠️ 連線失敗，請確認網路', false));
-    }
-
     function _showRoomUI(roomId) {
         const wrap = document.getElementById('currentRoomWrap');
         const code = document.getElementById('currentRoomCode');
         const actions = document.getElementById('roomActionWrap');
         if (wrap) wrap.style.display = 'block';
         if (code) code.textContent = roomId;
-        if (actions) actions.style.display = 'none';
+        if (actions) { actions.style.display = 'flex'; actions.classList.add('owns-room'); }
     }
 
-    window.cloudEnableSync = _doEnableSync;
+    window.cloudEnableSync = () => window.SubSync?.enable();
 
     window.copyMyUUID = function() {
         const val = document.getElementById('myUUIDDisplay')?.value;
@@ -9692,10 +10039,14 @@ window.toggleUploadZone = function(btn) {
     window.cloudImportUUID = async function() {
         const newUUID = document.getElementById('importUUIDInput')?.value.trim();
         if (!newUUID) return showAlert('請輸入 ID');
+        if (newUUID === window.CloudSync?.myUUID) return showAlert('這就是目前使用的 ID');
+        // 換 ID 後重新整理頁面，同步模組才會改用新的 ID；重新整理後若兩邊都有資料會先詢問
         localStorage.setItem('sub_user_uuid', newUUID);
-        showAlert('正在載入資料...');
-        try { await window.CloudSync.pullMyData(); }
-        catch(e) { showAlert('⚠️ 載入失敗，請確認 ID'); }
+        localStorage.setItem('sub_cloud_enabled', '1');
+        localStorage.setItem('sub_sync_import', '1');
+        window.SubSync?.resetBase();
+        showAlert('正在切換 ID 並載入資料...');
+        setTimeout(() => location.reload(), 400);
     };
 
     window.cloudShowJoinRoom = function() {
@@ -9712,6 +10063,368 @@ window.toggleUploadZone = function(btn) {
     window.copyRoomCode = function() {
         const code = document.getElementById('currentRoomCode')?.textContent;
         if (code) navigator.clipboard?.writeText(code).then(() => showAlert('✅ 已複製房間代碼'));
+    };
+})();
+</script>
+
+<script>
+/* ══ 雲端同步 v2 ══════════════════════════════════════════════
+   雲端格式：users/{id}/ships/{船id} = { t: 修改時間, d: '船的 JSON' }，刪除 → { t, x: 1 }
+             users/{id}/meta/{項目} = { t, d: 'JSON' }（群組、海圖、配件製作、自訂連結）
+             rooms/{代碼}/ships/…、rooms/{代碼}/meta/groups 同上
+   ・每艘船各自記錄修改時間，兩邊合併時以較新的為準，不再整包覆蓋
+   ・刪除也會記錄（保留 60 天），刪光所有船也能同步
+   ・資料以 JSON 字串存放，空清單不會被 Firebase 丟掉
+   ・上傳失敗會自動重試，連線恢復時補傳
+   ════════════════════════════════════════════════════════════ */
+(function () {
+    const KEY = 'sub_sync_state';
+    const META = { groups: 'sub_groups', mapNodes: 'sub_map_nodes', craftParts: 'sub_craft_selected_parts', craftOwned: 'sub_craft_owned_map', links: 'sub_custom_links' };
+    const LEGACY_KEYS = ['timers', 'groups', 'mapNodes', 'craftParts', 'craftOwned', 'links'];
+    const TOMB_KEEP = 60 * 864e5;
+    const hash = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + str.length; };
+    const toArr = v => Array.isArray(v) ? v.filter(Boolean) : (v && typeof v === 'object' ? Object.values(v) : []);
+    let st = null;
+    function load() {
+        if (st) return st;
+        try { st = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { st = null; }
+        if (!st) st = { init: false, base: null, shipT: {}, tomb: {}, snap: {}, metaT: {}, msnap: {}, dirty: {}, mdirty: {} };
+        return st;
+    }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+    const metaRaw = k => localStorage.getItem(META[k]);
+
+    // 掃描本機資料，找出有修改的船與設定（第一次只建立基準，不算修改）
+    function scan() {
+        load();
+        const now = Date.now(), cur = {};
+        (savedTimers || []).forEach(t => { cur[t.id] = hash(JSON.stringify(t)); });
+        if (!st.init) {
+            st.snap = cur; st.shipT = {}; Object.keys(cur).forEach(id => { st.shipT[id] = 0; });
+            Object.keys(META).forEach(k => { const v = metaRaw(k); st.msnap[k] = v == null ? null : hash(v); st.metaT[k] = 0; });
+            st.init = true; save(); return;
+        }
+        Object.keys(cur).forEach(id => { if (st.snap[id] !== cur[id]) { st.snap[id] = cur[id]; st.shipT[id] = now; delete st.tomb[id]; st.dirty[id] = 1; } });
+        Object.keys(st.snap).forEach(id => { if (!(id in cur)) { delete st.snap[id]; delete st.shipT[id]; st.tomb[id] = now; st.dirty[id] = 1; } });
+        Object.keys(META).forEach(k => { const v = metaRaw(k), h = v == null ? null : hash(v); if (h !== st.msnap[k]) { st.msnap[k] = h; st.metaT[k] = now; st.mdirty[k] = 1; } });
+        Object.keys(st.tomb).forEach(id => { if (now - st.tomb[id] > TOMB_KEEP) delete st.tomb[id]; });
+        save();
+    }
+    function localEntry(id) {
+        const t = savedTimers.find(x => x.id === id);
+        if (t) return { t: st.shipT[id] || 0, d: JSON.stringify(t) };
+        if (id in st.tomb) return { t: st.tomb[id], x: 1 };
+        return null;
+    }
+    const localMeta = k => { const v = metaRaw(k); return { t: st.metaT[k] || 0, d: v == null ? 'null' : v }; };
+    const wire = e => e.x ? { t: e.t, x: 1 } : { t: e.t, d: e.d };
+    const same = (a, b) => !!a && !!b && !!a.x === !!b.x && (a.x || a.d === b.d);
+
+    // 解讀雲端資料（相容舊格式：整包 timers 陣列）
+    function decodeShips(raw) {
+        const out = {};
+        if (raw && raw.ships) {
+            Object.keys(raw.ships).forEach(id => { const e = raw.ships[id]; if (e && (e.d || e.x)) out[id] = e.x ? { t: +e.t || 0, x: 1 } : { t: +e.t || 0, d: e.d }; });
+        } else if (raw && raw.timers) {
+            toArr(raw.timers).forEach(t => { if (t && t.id) out[t.id] = { t: +raw.updatedAt || 0, d: JSON.stringify(t) }; });
+        }
+        return out;
+    }
+    function decodeMeta(raw) {
+        const out = {};
+        if (!raw) return out;
+        Object.keys(META).forEach(k => {
+            const e = raw.meta && raw.meta[k];
+            if (e && e.d != null) out[k] = { t: +e.t || 0, d: e.d };
+            else if (!raw.meta && raw[k] != null) out[k] = { t: +raw.updatedAt || 0, d: JSON.stringify(Array.isArray(raw[k]) || k === 'groups' || k === 'links' || k === 'craftParts' ? toArr(raw[k]) : raw[k]) };
+        });
+        return out;
+    }
+    const isLegacy = raw => !!raw && !raw.ships && !raw.meta && LEGACY_KEYS.some(k => raw[k] != null);
+    // 舊格式升級：全部船與設定都要用新格式完整上傳一次，之後才清掉舊欄位
+    function markAll() {
+        savedTimers.forEach(t => { st.dirty[t.id] = 1; });
+        Object.keys(META).forEach(k => { if (metaRaw(k) != null) st.mdirty[k] = 1; });
+        save();
+    }
+
+    // 把一筆雲端資料套用到本機陣列
+    function applyEntry(arr, id, R) {
+        const i = arr.findIndex(x => x.id === id);
+        if (R.x) { if (i >= 0) arr.splice(i, 1); st.tomb[id] = R.t; delete st.shipT[id]; delete st.snap[id]; }
+        else {
+            let obj; try { obj = JSON.parse(R.d); } catch (e) { return false; }
+            if (i >= 0) arr[i] = obj; else arr.push(obj);
+            st.shipT[id] = R.t; st.snap[id] = hash(R.d); delete st.tomb[id];
+        }
+        delete st.dirty[id];
+        return true;
+    }
+    // 合併雲端 → 本機。prefer：newer（較新者）／remote（雲端為準）／local（本機為準）
+    function merge(remote, rmeta, prefer) {
+        const arr = savedTimers.slice(); let changed = false;
+        const ids = new Set([...Object.keys(remote), ...arr.map(t => t.id), ...Object.keys(st.tomb)]);
+        ids.forEach(id => {
+            const L = localEntry(id), R = remote[id];
+            if (same(L, R)) { if (R.t > L.t) { if (R.x) st.tomb[id] = R.t; else st.shipT[id] = R.t; } delete st.dirty[id]; return; }
+            if (!R) {
+                if (prefer === 'remote' && L && !L.x) { const i = arr.findIndex(x => x.id === id); arr.splice(i, 1); delete st.shipT[id]; delete st.snap[id]; delete st.dirty[id]; changed = true; }
+                else if (L && !L.x) st.dirty[id] = 1;
+                return;
+            }
+            if (!L) { if (prefer === 'local') { if (!R.x) { st.tomb[id] = Date.now(); st.dirty[id] = 1; } } else if (applyEntry(arr, id, R) && !R.x) changed = true; return; }
+            const useR = prefer === 'remote' ? true : prefer === 'local' ? false : R.t >= L.t;
+            if (useR) { if (applyEntry(arr, id, R)) changed = true; } else st.dirty[id] = 1;
+        });
+        if (changed) { savedTimers = arr; localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(arr)); }
+        let mchanged = false;
+        Object.keys(META).forEach(k => {
+            const L = localMeta(k), R = rmeta[k];
+            if (!R) { if (prefer !== 'remote' && L.d !== 'null') st.mdirty[k] = 1; return; }
+            if (L.d === R.d) { st.metaT[k] = Math.max(L.t, R.t); delete st.mdirty[k]; return; }
+            const useR = prefer === 'remote' ? true : prefer === 'local' ? false : R.t >= L.t;
+            if (useR) {
+                if (R.d === 'null') localStorage.removeItem(META[k]); else localStorage.setItem(META[k], R.d);
+                st.msnap[k] = R.d === 'null' ? null : hash(R.d); st.metaT[k] = R.t; delete st.mdirty[k]; mchanged = true;
+            } else st.mdirty[k] = 1;
+        });
+        save();
+        if (changed || mchanged) refreshUI();
+        return changed || mchanged;
+    }
+    // 第一次合併兩台裝置時：同名同群組、id 不同的船只留回港時間較新的那艘
+    function dedupe(localOnly, remoteOnly) {
+        const byKey = {};
+        savedTimers.forEach(t => { const k = t.name + '\u0001' + (t.group || ''); (byKey[k] = byKey[k] || []).push(t); });
+        const drop = new Set();
+        Object.values(byKey).forEach(list => {
+            if (list.length < 2) return;
+            const mixed = list.some(t => localOnly.has(t.id)) && list.some(t => remoteOnly.has(t.id));
+            if (!mixed) return;
+            const keep = list.reduce((a, b) => ((b.endTime || 0) > (a.endTime || 0) ? b : a));
+            list.forEach(t => { if (t !== keep) drop.add(t.id); });
+        });
+        if (!drop.size) return;
+        savedTimers = savedTimers.filter(t => !drop.has(t.id));
+        localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(savedTimers));
+        scan(); refreshUI();
+    }
+    let _refreshT = null;
+    function refreshUI() { clearTimeout(_refreshT); _refreshT = setTimeout(() => window.dispatchEvent(new CustomEvent('cloudDataLoaded')), 60); }
+
+    function setStatus(msg, ok) {
+        const dot = document.getElementById('cloudSyncDot'), txt = document.getElementById('cloudSyncMsg'), badge = document.getElementById('cloudStatusBadge');
+        const box = document.getElementById('cloudSyncStatus'); if (box) box.style.display = '';
+        if (dot) dot.style.background = ok === true ? '#4caf50' : ok === false ? '#ff5370' : '#ffcb6b';
+        if (txt) txt.textContent = msg;
+        if (badge) {
+            badge.textContent = ok === true ? '已連線' : ok === false ? '連線失敗' : '連線中...';
+            badge.className = 'cloud-status-badge' + (ok === true ? ' connected' : ok === false ? ' error' : '');
+        }
+    }
+
+    // ── 上傳 ──
+    let pushing = false, again = false, retryT = null, online = false;
+    async function push() {
+        const CS = window.CloudSync;
+        if (!CS || !CS.isEnabled() || !online) return;
+        if (pushing) { again = true; return; }
+        pushing = true;
+        const ids = Object.keys(st.dirty), mk = Object.keys(st.mdirty), patch = {};
+        ids.forEach(id => { const e = localEntry(id); if (e) patch['ships/' + id] = wire(e); else delete st.dirty[id]; });
+        mk.forEach(k => { patch['meta/' + k] = localMeta(k); });
+        if (st.legacy) LEGACY_KEYS.forEach(k => { patch[k] = null; });
+        if (Object.keys(patch).length) {
+            patch.updatedAt = Date.now();
+            try {
+                await CS.writeUser(patch);
+                ids.forEach(id => { const e = localEntry(id); if (e && patch['ships/' + id] && e.t === patch['ships/' + id].t) delete st.dirty[id]; });
+                mk.forEach(k => { if ((st.metaT[k] || 0) === patch['meta/' + k].t) delete st.mdirty[k]; });
+                st.legacy = false; save();
+                setStatus('✅ 已連線，同步中', true);
+            } catch (e) {
+                setStatus('⚠️ 上傳失敗，連線恢復後會自動補傳', false);
+                clearTimeout(retryT); retryT = setTimeout(push, 15000);
+            }
+            pushOwnedRoom(ids, mk);
+        }
+        pushing = false;
+        if (again) { again = false; push(); }
+    }
+    window.addEventListener('online', () => { if (online) push(); else if (localStorage.getItem('sub_cloud_enabled') === '1') enable(); });
+
+    // ── 啟用同步 ──
+    function askChoice(lCount, rCount) {
+        return new Promise(resolve => {
+            const ov = document.getElementById('syncChoiceOverlay');
+            document.getElementById('syncChoiceDesc').textContent = `雲端有 ${rCount} 艘船，這台裝置有 ${lCount} 艘船。要怎麼處理？`;
+            const btns = [...ov.querySelectorAll('[data-choice]')];
+            // 對話框本身會擋掉往外冒泡的點擊，所以直接綁在每個按鈕上
+            const onBtn = e => done(e.currentTarget.dataset.choice || null);
+            const onOv = e => { if (e.target === ov) done(null); };
+            const done = v => { ov.classList.remove('visible'); btns.forEach(b => b.removeEventListener('click', onBtn)); ov.removeEventListener('click', onOv); resolve(v); };
+            btns.forEach(b => b.addEventListener('click', onBtn));
+            ov.addEventListener('click', onOv);
+            ov.classList.add('visible');
+            btns[0].focus();
+        });
+    }
+    let enabling = false;
+    async function enable() {
+        const CS = window.CloudSync;
+        if (!CS || enabling) return;
+        enabling = true;
+        try {
+            // 船隊在 window.onload 才載入；等載入完成再比對，避免把「還沒載入」誤判成「全部刪除」
+            if (document.readyState !== 'complete') await new Promise(r => window.addEventListener('load', () => setTimeout(r, 0), { once: true }));
+            load(); scan();
+            const uuid = CS.myUUID;
+            // 舊版就已經啟用同步的裝置：視為和雲端同步過，不再詢問
+            if (!st.base && localStorage.getItem('sub_cloud_enabled') === '1' && !localStorage.getItem('sub_sync_import')) st.base = uuid;
+            setStatus('連線中...', null);
+            let raw;
+            try { raw = await CS.getUser(); }
+            catch (e) { setStatus('⚠️ 連線失敗，請確認網路', false); clearTimeout(retryT); retryT = setTimeout(() => { enabling = false; enable(); }, 15000); return; }
+            const remote = decodeShips(raw), rmeta = decodeMeta(raw);
+            st.legacy = isLegacy(raw);
+            let prefer = 'newer', first = st.base !== uuid;
+            if (first) {
+                const rIds = Object.keys(remote).filter(id => !remote[id].x);
+                const lIds = savedTimers.map(t => t.id);
+                const identical = rIds.length === lIds.length && lIds.every(id => remote[id] && !remote[id].x && hash(remote[id].d) === hash(JSON.stringify(savedTimers.find(t => t.id === id))));
+                let choice;
+                if (rIds.length && lIds.length && !identical) {
+                    choice = await askChoice(lIds.length, rIds.length);
+                    if (!choice) { setStatus('尚未啟用', null); return; }
+                } else choice = rIds.length ? 'remote' : 'local';
+                if (choice === 'local') {
+                    const now = Date.now();
+                    savedTimers.forEach(t => { st.shipT[t.id] = now; st.dirty[t.id] = 1; });
+                    Object.keys(META).forEach(k => { if (metaRaw(k) != null) { st.metaT[k] = now; st.mdirty[k] = 1; } });
+                }
+                prefer = choice === 'merge' ? 'newer' : choice;
+                const localOnly = new Set(lIds.filter(id => !remote[id])), remoteOnly = new Set(rIds.filter(id => !lIds.includes(id)));
+                localStorage.setItem('sub_cloud_enabled', '1');
+                localStorage.removeItem('sub_sync_import');
+                CS.enable(); online = true;
+                merge(remote, rmeta, prefer);
+                if (choice === 'merge') dedupe(localOnly, remoteOnly);
+            } else {
+                localStorage.setItem('sub_cloud_enabled', '1');
+                CS.enable(); online = true;
+                merge(remote, rmeta, 'newer');
+            }
+            st.base = uuid; save();
+            if (st.legacy) markAll();
+            await push();
+            CS.listenUser(r => { if (!r) return; const lg = isLegacy(r); if (lg) st.legacy = true; merge(decodeShips(r), decodeMeta(r), 'newer'); if (lg) markAll(); push(); });
+            // 房主：重新連線後把房間和自己的船隊對齊一次
+            const own = window._ownedRoomId;
+            if (own && window._fbGet) window._fbGet(own).then(r => { if (r) ownerRoomSync(own, r); }).catch(() => {});
+            else if (pendingOwner) setTimeout(() => { if (pendingOwner) ownerRoomSync(...pendingOwner); }, 0);
+            setStatus('✅ 已連線，同步中', true);
+            const w = document.getElementById('cloudEnableWrap'); if (w) w.style.display = 'none';
+        } finally {
+            enabling = false;
+            if (pendingOwner && window.CloudSync?.isEnabled()) { const p = pendingOwner; setTimeout(() => ownerRoomSync(...p), 0); }
+        }
+    }
+
+    // ── 共同艦隊房間 ──
+    function roomTimers(raw) {
+        if (raw && raw.ships) return Object.values(decodeShips(raw)).filter(e => !e.x).map(e => { try { return JSON.parse(e.d); } catch (x) { return null; } }).filter(Boolean);
+        return toArr(raw && raw.timers);
+    }
+    function roomGroups(raw) {
+        const e = raw && raw.meta && raw.meta.groups;
+        if (e && e.d) { try { return JSON.parse(e.d); } catch (x) {} }
+        return toArr(raw && raw.groups);
+    }
+    // 成員端：讀入房間資料
+    function roomLoad(room, raw) {
+        room.raw = decodeShips(raw); room.legacy = !(raw && raw.ships);
+        room.timers = roomTimers(raw); room.groups = roomGroups(raw);
+        room.owner = raw.owner || room.owner || ''; room.memberNames = raw.memberNames || room.memberNames || {};
+        room.name = raw.name || room.name;
+        room.perm = raw.perm === 'view' ? 'view' : 'edit';
+        const m = raw.meta && raw.meta.mapNodes;
+        room.mapNodes = m && m.d != null ? { t: +m.t || 0, d: m.d } : null;
+    }
+    // 成員端：在房間檢視修改海圖 → 上傳到房間（房主會寫回自己的海圖）
+    function saveRoomMap(roomId, d) {
+        const room = _rooms[roomId]; if (!room || !window.CloudSync) return;
+        const e = { t: Date.now(), d };
+        room.mapNodes = e;
+        return window.CloudSync.writeRoom(roomId, { 'meta/mapNodes': e }).catch(() => showAlert('⚠️ 房間資料上傳失敗，請確認網路'));
+    }
+    // 唯讀房間：把畫面上被改動的資料還原成房間的原始資料
+    function roomRestore(room) {
+        room.timers = Object.values(room.raw || {}).filter(e => !e.x).map(e => { try { return JSON.parse(e.d); } catch (x) { return null; } }).filter(Boolean);
+        if (_currentFleetView !== 'mine' && _rooms[_currentFleetView] === room) _viewTimers = room.timers;
+    }
+    // 成員端：在房間視圖修改 → 只上傳有變動的船（房主會把它寫回自己的船隊）
+    function saveRoom(roomId) {
+        const room = _rooms[roomId]; if (!room || !window.CloudSync) return;
+        const prev = room.raw || {}, now = Date.now(), patch = {}, seen = new Set();
+        (room.timers || []).forEach(t => {
+            seen.add(t.id);
+            const d = JSON.stringify(t), p = prev[t.id];
+            if (room.legacy || !p || p.x || p.d !== d) { patch['ships/' + t.id] = { t: now, d }; prev[t.id] = { t: now, d }; }
+        });
+        Object.keys(prev).forEach(id => { if (!prev[id].x && !seen.has(id)) { patch['ships/' + id] = { t: now, x: 1 }; prev[id] = { t: now, x: 1 }; } });
+        if (room.legacy) { patch.timers = null; room.legacy = false; }
+        room.raw = prev;
+        if (Object.keys(patch).length) return window.CloudSync.writeRoom(roomId, patch).catch(() => showAlert('⚠️ 房間資料上傳失敗，請確認網路'));
+    }
+    // 房主端：把自己有變動的船同步到房間
+    function pushOwnedRoom(ids, mk) {
+        const rid = window._ownedRoomId; if (!rid || !window.CloudSync) return;
+        const patch = {};
+        ids.forEach(id => { const e = localEntry(id); if (e) patch['ships/' + id] = wire(e); });
+        if (mk.includes('groups')) patch['meta/groups'] = { t: st.metaT.groups || 0, d: metaRaw('groups') || '[]' };
+        if (mk.includes('mapNodes')) patch['meta/mapNodes'] = { t: st.metaT.mapNodes || 0, d: metaRaw('mapNodes') || '{}' };
+        if (Object.keys(patch).length) window.CloudSync.writeRoom(rid, patch).catch(() => {});
+    }
+    // 房主端：房間有較新的資料（成員修改）→ 寫回自己的船隊；自己較新的 → 補傳到房間
+    let pendingOwner = null;
+    function ownerRoomSync(roomId, raw) {
+        if (roomId !== window._ownedRoomId) return;
+        // 還沒連線完成就收到房間資料 → 先記下，連線完成後再對齊
+        if (!window.CloudSync?.isEnabled() || enabling) { pendingOwner = [roomId, raw]; return; }
+        pendingOwner = null;
+        load(); scan();
+        const legacy = !raw.ships, remote = legacy ? {} : decodeShips(raw), patch = {};
+        const arr = savedTimers.slice(); let changed = false;
+        const ids = new Set([...Object.keys(remote), ...arr.map(t => t.id), ...Object.keys(st.tomb)]);
+        ids.forEach(id => {
+            const L = localEntry(id), R = remote[id];
+            if (same(L, R)) return;
+            // 房間設為「只能看」時，成員的修改一律不採用，並用房主的資料蓋回去
+            if (R && (!L || R.t > L.t) && raw.perm !== 'view') { if (applyEntry(arr, id, R)) { st.dirty[id] = 1; changed = true; } }
+            else if (L && !(L.x && !R)) patch['ships/' + id] = wire(L);
+            else if (R && !L && raw.perm === 'view' && !R.x) patch['ships/' + id] = { t: Date.now(), x: 1 };
+        });
+        const g = metaRaw('groups') || '[]', rg = raw.meta && raw.meta.groups;
+        if (!rg || rg.d !== g) patch['meta/groups'] = { t: st.metaT.groups || 0, d: g };
+        // 海圖：成員較新的修改寫回房主（只能看時不採用，改用房主的蓋回去）
+        const lm = metaRaw('mapNodes') || '{}', lmt = st.metaT.mapNodes || 0, rm = raw.meta && raw.meta.mapNodes;
+        let mapChanged = false;
+        if (rm && rm.d != null && rm.d !== lm && (+rm.t || 0) > lmt && raw.perm !== 'view') {
+            localStorage.setItem('sub_map_nodes', rm.d);
+            st.msnap.mapNodes = hash(rm.d); st.metaT.mapNodes = +rm.t; st.mdirty.mapNodes = 1; mapChanged = true;
+        } else if (!rm || rm.d !== lm) patch['meta/mapNodes'] = { t: raw.perm === 'view' && rm && (+rm.t || 0) >= lmt ? Date.now() : lmt, d: lm };
+        if (legacy) { patch.timers = null; patch.groups = null; }
+        if (changed) { savedTimers = arr; localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(arr)); }
+        if (changed || mapChanged) { save(); refreshUI(); push(); }
+        if (Object.keys(patch).length) window.CloudSync.writeRoom(roomId, patch).catch(() => {});
+    }
+
+    window.SubSync = {
+        enable,
+        changed() { if (document.readyState !== 'complete' || !savedTimers) return; scan(); push(); },
+        resetBase() { load(); st.base = null; save(); },
+        saveRoom, saveRoomMap, roomLoad, roomRestore, roomTimers, roomGroups, ownerRoomSync, decodeShips,
+        _state: () => load()
     };
 })();
 </script>
