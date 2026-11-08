@@ -119,6 +119,11 @@ window.UI_ACTIONS = {
     a112: function (event) { this.textContent='已同步 ✓';setTimeout(()=>this.textContent='立即同步',1500) },
     a113: function (event) { manualGo(7) },
     a114: function (event) { subGroupRedepart() },
+    a123: function (event) { cfgRtToggle(+this.dataset.sec) },
+    a124: function (event) { cfgRtFastest() },
+    a125: function (event) { cfgRtClear() },
+    a126: function (event) { cfgRtSetMap(+this.value) },
+    a127: function (event) { cfgRtRemove(+this.dataset.idx) },
     a115: function (event) { SubPalette.apply(this.dataset.pal, true) },
     a116: function (event) { toggleCollapse('content_palette', this) },
     a117: function (event) { linkStartEdit(this.closest('.link-item')) },
@@ -1122,6 +1127,37 @@ window.UI_ACTIONS = {
         .sub-modal-close { cursor:pointer; background:none; border:none; color:var(--text-color); font-size:18px; line-height:1; }
         .sub-modal-section-title { font-size:13px; color:var(--accent-color); font-weight:bold; margin:14px 0 8px; border-left:3px solid var(--accent-color); padding-left:8px; }
         .sub-modal-section-title:first-of-type { margin-top:0; }
+        .cfg-rt-note { font-weight:normal; color: var(--sub-text-color, #999); font-size:12px; margin-left:8px; opacity:.85; }
+        .cfg-rt { border:1px solid var(--edit-border); border-radius:10px; padding:10px; background: rgba(var(--accent-rgb,167,139,219),.04); }
+        .cfg-rt-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .cfg-rt-map { background: var(--edit-bg); color: var(--text-color); border:1px solid var(--edit-border); padding:6px 10px; border-radius:6px; font-size:14px; outline:none; }
+        .cfg-rt-chips { flex:1 1 220px; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height:32px; }
+        .cfg-rt-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 6px 4px 4px; border-radius:7px; background: rgba(var(--accent-rgb,167,139,219),.16); border:1px solid rgba(var(--accent-rgb,167,139,219),.45); font-size:13px; color: var(--text-color); cursor:pointer; }
+        .cfg-rt-chip b { display:grid; place-items:center; min-width:20px; height:20px; border-radius:5px; background: var(--accent-color); color:#fff; font-size:12px; }
+        .cfg-rt-chip .x { opacity:.55; font-size:12px; }
+        .cfg-rt-chip:hover .x { opacity:1; }
+        .cfg-rt-arrow { opacity:.45; font-size:12px; }
+        .cfg-rt-empty { font-size:13px; opacity:.6; }
+        .cfg-rt-tools { display:flex; gap:6px; margin-left:auto; }
+        .cfg-rt-btn { background:none; border:1px solid var(--edit-border); color: var(--text-color); border-radius:6px; padding:5px 10px; font-size:12.5px; cursor:pointer; }
+        .cfg-rt-btn:hover:not(:disabled) { border-color: var(--accent-color); color: var(--accent-color); }
+        .cfg-rt-btn:disabled { opacity:.35; cursor:default; }
+        .cfg-rt-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:6px; margin-top:10px; }
+        .cfg-rt-sec { position:relative; display:flex; align-items:center; gap:7px; padding:6px 8px; border-radius:7px; border:1px solid var(--edit-border); background: var(--edit-bg); color: var(--text-color); font-size:13px; text-align:left; cursor:pointer; min-width:0; }
+        .cfg-rt-sec .l { flex:none; width:22px; height:22px; border-radius:5px; display:grid; place-items:center; font-weight:bold; font-size:12.5px; background: rgba(255,255,255,.06); }
+        .cfg-rt-sec .n { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .cfg-rt-sec .r { flex:none; font-size:11px; opacity:.55; }
+        .cfg-rt-sec:hover { border-color: var(--accent-color); }
+        .cfg-rt-sec.on { border-color: var(--accent-color); background: rgba(var(--accent-rgb,167,139,219),.16); }
+        .cfg-rt-sec.on .l { background: var(--accent-color); color:#fff; }
+        .cfg-rt-sec.lock { opacity:.45; }
+        .cfg-rt-sec.lock .r { opacity:1; color: var(--hl-return, #e8a33d); }
+        .cfg-rt-sec:disabled { cursor:default; opacity:.3; }
+        .cfg-rt-sum { margin-top:10px; font-size:13px; display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; min-height:20px; }
+        .cfg-rt-sum b { color: var(--accent-color); }
+        .cfg-rt-sum .bad { color:#e06c6c; }
+        .cfg-rt-sum .bad b { color:#e06c6c; }
+        .cfg-rt-sum .muted { opacity:.6; }
         .sub-part-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
         .sub-part-item { display:flex; flex-direction:column; gap:4px; flex:0 0 auto; }
         .sub-part-item label { font-size:11px; color: var(--accent-color); margin-left:2px; }
@@ -2623,6 +2659,8 @@ window.UI_ACTIONS = {
 
             /* 船艇設定 Modal */
             .sub-modal-box { padding: 16px 12px; }
+            .cfg-rt-grid { grid-template-columns: 1fr 1fr; }
+            .cfg-rt-tools { margin-left:0; }
             .sub-part-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
             .sub-part-item select { width: 100%; }
 
@@ -3286,6 +3324,7 @@ window.SubPalette = (function () {
                     <ul class="u40">
                         <li>新增「再出發」：記住上次航線，回港後一鍵照原航線重新計時，並自動推算經驗與升級後的時間</li>
                         <li>新增「全部／群組再出發」：一次讓目前標籤內已回港的船一起出發</li>
+                        <li>船艇設定新增「目前航線」：可直接點選海域與地點設定航線（依點選順序，可一鍵排成最快順序），不必經過路線規劃</li>
                         <li>船卡顯示上次航線與下次回港時間；船艇設定新增選填的「本級經驗」</li>
                         <li>路線規劃：結果改為欄位對齊的列表，點欄位名稱排序、點一行展開掉落物</li>
                         <li>路線規劃：新增回港時段篩選，可選「只要」或「避開」的小時，支援拖曳複選</li>
@@ -3938,6 +3977,20 @@ window.SubPalette = (function () {
             <div class="sub-stat-item"><label>恩惠</label><div class="sub-stat-value" id="cfg-stat-favor">0</div></div>
         </div>
         <div class="sub-stat-updated" id="statUpdatedAt">等級低於 51 時，等級基礎值視為 0，僅計算配件加成</div>
+
+        <div class="sub-modal-section-title">目前航線<span class="cfg-rt-note">選填・「再出發」會照這條航線</span></div>
+        <div class="cfg-rt">
+            <div class="cfg-rt-bar">
+                <select id="cfg-rt-map" class="cfg-rt-map" aria-label="海域" data-on-change="a126"></select>
+                <div class="cfg-rt-chips" id="cfg-rt-chips"></div>
+                <div class="cfg-rt-tools">
+                    <button type="button" class="cfg-rt-btn" id="cfg-rt-fast" data-on-click="a124" title="依目前航速，把地點排成耗時最短的順序">⚡ 最快順序</button>
+                    <button type="button" class="cfg-rt-btn" id="cfg-rt-clear" data-on-click="a125">清除</button>
+                </div>
+            </div>
+            <div class="cfg-rt-grid" id="cfg-rt-grid"></div>
+            <div class="cfg-rt-sum" id="cfg-rt-sum"></div>
+        </div>
 
         <div class="sub-modal-actions">
             <button type="button" class="btn-top" data-on-click="a88">取消</button>
@@ -5704,7 +5757,9 @@ window.showConfirm = showConfirm;
             sel.innerHTML = buildPartOptions(key);
             sel.addEventListener('change', refreshComputedStats);
         });
-        document.getElementById('cfg-level').addEventListener('input', () => { refreshComputedStats(); refreshCfgExpHint(); });
+        document.getElementById('cfg-level').addEventListener('input', () => { refreshComputedStats(); refreshCfgExpHint(); cfgRtRender(); });
+        PART_KEYS.forEach(key => document.getElementById(`cfg-part-${key}`).addEventListener('change', cfgRtRender));
+        document.getElementById('cfg-rt-map').innerHTML = Object.keys(MAP_NAMES).map(k => `<option value="${k}">${escapeHtml(MAP_NAMES[k])}</option>`).join('');
         document.getElementById('subConfigModal').addEventListener('click', closeSubConfigModal);
     }
 
@@ -5725,7 +5780,89 @@ window.showConfirm = showConfirm;
         DTPicker.refreshDisplay('cfg-endtime');
         PART_KEYS.forEach(key => { document.getElementById(`cfg-part-${key}`).value = parts[key] || ""; });
         refreshComputedStats();
+        const lr = t.lastRoute;
+        cfgRt = lr && lr.secIds && lr.secIds.length
+            ? { mapId: lr.mapId || (SECTOR_MAP.get(lr.secIds[0]) || [])[1] || 1, secIds: [...lr.secIds] }
+            : { mapId: cfgRtDefaultMap(t), secIds: [] };
+        cfgRtRender();
         document.getElementById('subConfigModal').style.display = 'flex';
+    }
+
+    // ── 船艇設定：目前航線（手動指定，供「再出發」使用）──
+    let cfgRt = { mapId: 1, secIds: [] };
+    const CFG_RT_MAX = 5;
+    function cfgRtDefaultMap(t) {
+        // 沒有航線時：預設為這艘船等級能去的最後一個海域
+        const lv = subLevelNum(t) || 0;
+        let best = 1;
+        SUB_SECTORS.forEach(s => { if (s[5] <= lv && s[1] > best) best = s[1]; });
+        return best;
+    }
+    function cfgRtStats() {
+        const level = document.getElementById('cfg-level').value.trim();
+        const parts = createEmptyParts();
+        PART_KEYS.forEach(key => { parts[key] = document.getElementById(`cfg-part-${key}`).value; });
+        return { lv: parseInt(level, 10) || 0, stats: computeStats(level, parts) };
+    }
+    function cfgRtSetMap(mapId) {
+        if (mapId === cfgRt.mapId) return;
+        cfgRt = { mapId, secIds: [] };
+        cfgRtRender();
+    }
+    function cfgRtToggle(id) {
+        const i = cfgRt.secIds.indexOf(id);
+        if (i >= 0) cfgRt.secIds.splice(i, 1);
+        else if (cfgRt.secIds.length < CFG_RT_MAX) cfgRt.secIds.push(id);
+        cfgRtRender();
+    }
+    function cfgRtRemove(idx) { cfgRt.secIds.splice(idx, 1); cfgRtRender(); }
+    function cfgRtClear() { cfgRt.secIds = []; cfgRtRender(); }
+    function cfgRtFastest() {
+        const { stats } = cfgRtStats();
+        if (cfgRt.secIds.length < 2 || !stats.speed) return;
+        let best = null, bestT = Infinity;
+        subPerms(cfgRt.secIds).forEach(order => {
+            const c = subRouteCalc(order, stats.speed);
+            if (c && c.timeMins < bestT - 1e-9) { bestT = c.timeMins; best = order; }
+        });
+        if (best) { cfgRt.secIds = best; cfgRtRender(); }
+    }
+    function cfgRtRender() {
+        const sel = document.getElementById('cfg-rt-map');
+        if (!sel) return;
+        sel.value = String(cfgRt.mapId);
+        const { lv, stats } = cfgRtStats();
+        const full = cfgRt.secIds.length >= CFG_RT_MAX;
+        // 已選的地點
+        const chips = cfgRt.secIds.map((id, i) => {
+            const s = SECTOR_MAP.get(id) || [];
+            return (i ? '<span class="cfg-rt-arrow">→</span>' : '')
+                + `<button type="button" class="cfg-rt-chip" data-idx="${i}" data-on-click="a127" title="移除"><b>${escapeHtml(s[2] || '?')}</b>${escapeHtml(s[4] || '')}<span class="x">✕</span></button>`;
+        }).join('');
+        document.getElementById('cfg-rt-chips').innerHTML = chips || '<span class="cfg-rt-empty">點下方地點加入，最多 5 個（依點選順序航行）</span>';
+        // 這個海域的所有地點
+        document.getElementById('cfg-rt-grid').innerHTML = SUB_SECTORS.filter(s => s[1] === cfgRt.mapId).map(s => {
+            const on = cfgRt.secIds.includes(s[0]);
+            const lock = lv && s[5] > lv;
+            const cls = 'cfg-rt-sec' + (on ? ' on' : '') + (lock ? ' lock' : '');
+            const dis = !on && full ? ' disabled' : '';
+            const order = on ? cfgRt.secIds.indexOf(s[0]) + 1 : '';
+            return `<button type="button" class="${cls}" data-sec="${s[0]}" data-on-click="a123"${dis} title="${escapeHtml(s[4])}・需要 ${s[5]} 級"><span class="l">${on ? order : escapeHtml(s[2])}</span><span class="n">${on ? escapeHtml(s[2]) + ' ' : ''}${escapeHtml(s[4])}</span><span class="r">${lock ? '🔒' : ''}Lv${s[5]}</span></button>`;
+        }).join('');
+        document.getElementById('cfg-rt-fast').disabled = cfgRt.secIds.length < 2;
+        document.getElementById('cfg-rt-clear').disabled = !cfgRt.secIds.length;
+        // 摘要
+        const sum = document.getElementById('cfg-rt-sum');
+        if (!cfgRt.secIds.length) { sum.innerHTML = '<span class="muted">沒有設定航線：船卡不會顯示「再出發」</span>'; return; }
+        const calc = stats.speed ? subRouteCalc(cfgRt.secIds, stats.speed) : null;
+        if (!calc) { sum.innerHTML = `<span class="bad">${stats.speed ? '找不到這條航線的距離資料' : '請先填等級與配件，才能計算耗時'}</span>`; return; }
+        const parts = [
+            `<span>耗時 <b>${subFmtMins(calc.timeMins)}</b></span>`,
+            `<span class="${calc.range > stats.range ? 'bad' : ''}">航距 <b>${calc.range}</b> / ${stats.range}${calc.range > stats.range ? '（不足）' : ''}</span>`,
+            `<span>經驗 <b>${calc.exp.toLocaleString()}</b></span>`
+        ];
+        if (lv && calc.minRank > lv) parts.push(`<span class="bad">需要 <b>${calc.minRank}</b> 級</span>`);
+        sum.innerHTML = parts.join('');
     }
 
     function refreshCfgExpHint() {
@@ -5759,6 +5896,19 @@ window.showConfirm = showConfirm;
             t.expTrack = { level: newLvNum, exp: expVal, known: true };
         } else if (subExpTrack(t).known) {
             t.expTrack = { level: newLvNum, exp: 0, known: false };
+        }
+        // 目前航線（船艇設定裡手動指定）
+        const oldR = t.lastRoute;
+        const sameRoute = oldR && oldR.secIds && oldR.secIds.length === cfgRt.secIds.length && oldR.secIds.every((v, i) => v === cfgRt.secIds[i]);
+        if (!cfgRt.secIds.length) delete t.lastRoute;
+        else if (!sameRoute) {
+            const parts0 = createEmptyParts();
+            PART_KEYS.forEach(key => { parts0[key] = document.getElementById(`cfg-part-${key}`).value; });
+            const calc = subRouteCalc(cfgRt.secIds, computeStats(newLevel, parts0).speed);
+            const first = SECTOR_MAP.get(cfgRt.secIds[0]);
+            t.lastRoute = { mapId: first ? first[1] : cfgRt.mapId, secIds: [...cfgRt.secIds],
+                            exp: calc ? calc.exp : 0, timeMins: calc ? calc.timeMins : 0,
+                            departLevel: subLevelNum(t) || newLvNum, credited: false };
         }
         if (t.lastRoute && !t.lastRoute.credited) {
             const lvChanged = newLvNum !== subLevelNum(t);
@@ -8851,7 +9001,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         <li><div class="mh-step-t">船艇設定</div>
           <div class="mh-step-d">修改等級、四個部位的配件和回港時間。<b>本級經驗</b>是選填，照遊戲裡的數字填一次，之後的升級推算就會準確。</div></li>
         <li><div class="mh-step-t">回港後按「再出發」</div>
-          <div class="mh-step-d">用路線規劃出發過的船，卡片會顯示上次航線。按 <span class="mh-btn">再出發</span> 會自動加上這趟的經驗、判斷有沒有升級，再用新等級重新算時間。</div></li>
+          <div class="mh-step-d">用路線規劃出發過的船，卡片會顯示上次航線；也可以在 <span class="mh-btn">船艇設定</span> 的「目前航線」直接點選地點。按 <span class="mh-btn">再出發</span> 會自動加上這趟的經驗、判斷有沒有升級，再用新等級重新算時間。</div></li>
         <li><div class="mh-step-t">用標籤分組</div>
           <div class="mh-step-d">艦隊上方按 <span class="mh-btn">＋ 新增</span> 建立標籤（例如不同部隊），點標籤就只顯示那一組。卡片左下角可以換標籤。</div></li>
       </ol>
