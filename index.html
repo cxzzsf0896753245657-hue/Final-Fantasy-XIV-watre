@@ -120,6 +120,9 @@ window.UI_ACTIONS = {
     a113: function (event) { manualGo(7) },
     a114: function (event) { subGroupRedepart() },
     a128: function (event) { setRoomPerm(this.dataset.perm) },
+    a129: function (event) { setFleetLayout(this.dataset.layout) },
+    a130: function (event) { resetListColumns() },
+    a131: function (event) { dismissListColTip() },
     a123: function (event) { cfgRtToggle(+this.dataset.sec) },
     a124: function (event) { cfgRtFastest() },
     a125: function (event) { cfgRtClear() },
@@ -888,6 +891,218 @@ window.UI_ACTIONS = {
         #roomActionWrap.owns-room [data-on-click="a31"], #roomActionWrap .own-only, #roomActionWrap.owns-room .own-not { display: none; }
         #roomActionWrap.owns-room .own-only { display: inline; }
         #roomActionWrap.owns-room { margin-top: 10px; }
+        /* ══ 艦隊條列模式（同一份船卡，只換排版）══ */
+        #panelFleet { container-type: inline-size; container-name: fleet; }
+        .fleet-layout-toggle { display: inline-flex; border: 1px solid var(--edit-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+        .fleet-layout-toggle button { background: transparent; border: 0; color: var(--text-color); opacity: .6; padding: 6px 10px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .fleet-layout-toggle button + button { border-left: 1px solid var(--edit-border); }
+        .fleet-layout-toggle button[aria-pressed="true"] { background: rgba(var(--accent-rgb), .22); color: var(--accent-color); opacity: 1; font-weight: 700; }
+        .fleet-layout-toggle button:hover { opacity: 1; }
+        #timerListHead { display: none; }
+        #timerListHead.on { display: grid; border: 1px solid var(--edit-border); border-radius: 10px 10px 0 0; }
+        /* 欄位名稱：往下捲動時固定在分頁列下方 */
+        #timerListHead { position: sticky; top: var(--fleet-head-top, 42px); z-index: 40; }
+        #timerListHead.stuck { border-radius: 0; box-shadow: 0 4px 10px rgba(0,0,0,.28); }
+        #timerListHead.on + #timerList.list-mode { border-top: 0; }
+        #timerList.list-mode { display: flex !important; flex-direction: column; gap: 0 !important; border: 1px solid var(--edit-border); border-radius: 0 0 10px 10px; overflow: hidden; }
+        #timerList.list-mode:empty { border: 0; }
+        #timerListHead, #timerList.list-mode .timer-card {
+            align-items: center; column-gap: 10px; --col-ind: 15px;
+            grid-template-columns: var(--lc-full, minmax(140px,1fr) minmax(108px,.45fr) minmax(102px,.45fr) minmax(102px,.45fr) minmax(320px,1.5fr) minmax(124px,.4fr) 246px);
+            grid-template-areas: var(--la-full, "name count dep ret route group act");
+            padding: 7px 14px; box-sizing: border-box;
+        }
+        #timerList.list-mode .timer-card {
+            display: grid; position: relative; margin: 0; width: 100% !important; max-width: none !important; min-width: 0 !important; flex: none !important;
+            min-height: 0; border: 0; border-radius: 0; box-shadow: none; transform: none !important; background: transparent;
+            border-bottom: 1px solid var(--edit-border);
+        }
+        #timerList.list-mode .timer-card:last-child { border-bottom: 0; }
+        #timerList.list-mode .timer-card:nth-child(even) { background: color-mix(in srgb, var(--text-color) 2.5%, transparent); }
+        #timerList.list-mode .timer-card:hover { background: color-mix(in srgb, var(--text-color) 5%, transparent); }
+        /* 已回港：整列淡綠底（不用綠框） */
+        #timerList.list-mode .timer-card:has(.progress-bar-bg.finished) { background: color-mix(in srgb, var(--success-color) 20%, transparent); }
+        #timerList.list-mode .timer-card:has(.progress-bar-bg.finished):hover { background: color-mix(in srgb, var(--success-color) 26%, transparent); }
+        #timerList.list-mode .progress-bar-bg.finished { display: none; }
+        #timerListHead { font-size: 13.5px; font-weight: 700; letter-spacing: .5px; color: color-mix(in srgb, var(--text-color) 72%, transparent); padding-top: 10px; padding-bottom: 10px;
+            background-color: var(--bg-color); background-image: linear-gradient(color-mix(in srgb, var(--text-color) 4%, transparent), color-mix(in srgb, var(--text-color) 4%, transparent)); }
+        #timerListHead > [data-col] { justify-self: start; }
+        #timerListHead > [data-col=name] { grid-area: name; } #timerListHead > [data-col=count] { grid-area: count; }
+        #timerListHead > [data-col=dep] { grid-area: dep; } #timerListHead > [data-col=ret] { grid-area: ret; }
+        #timerListHead > [data-col=route] { grid-area: route; } #timerListHead > [data-col=group] { grid-area: group; }
+        #timerListHead > [data-col=act] { grid-area: act; justify-self: end; }
+        /* 拖曳欄位名稱調整順序：⠿ 常駐，滑過變成可拖曳的膠囊 */
+        #timerListHead > [data-col] { position: relative; cursor: grab; user-select: none; outline: none; white-space: nowrap;
+            padding: 4px 0 4px var(--col-ind); margin: -4px 0; border: 0; background: none;
+            transition: background-color .15s, border-color .15s, color .15s; }
+        #timerListHead > [data-col]::before { content: '⠿'; position: absolute; left: 0; top: 50%; transform: translateY(-52%); font-size: 14px; line-height: 1; opacity: .6; transition: opacity .15s; }
+        #timerListHead > [data-col]:hover, #timerListHead > [data-col]:focus-visible { color: var(--accent-color); }
+        #timerListHead > [data-col]:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
+        #timerListHead > [data-col]:hover::before, #timerListHead > [data-col]:focus-visible::before { opacity: 1; }
+        #timerListHead > [data-col]:active { cursor: grabbing; }
+        #timerListHead > [data-col].col-dragging { color: var(--accent-color); }
+        #timerListHead > [data-col].col-dragging::before { opacity: 1; }
+        .col-drag-band { position: fixed; z-index: 45; pointer-events: none; display: none; border-radius: 6px;
+            background: rgba(var(--accent-rgb), .14); }
+        .col-drag-band.flash { display: block; animation: colFlash 1.1s ease-out forwards; }
+        @keyframes colFlash { 0% { background: rgba(var(--accent-rgb), .32); opacity: 1; } 70% { opacity: .8; } 100% { background: rgba(var(--accent-rgb), 0); opacity: 0; } }
+        .col-drop-line { position: fixed; z-index: 46; pointer-events: none; display: none; width: 4px; margin-left: -2px; border-radius: 2px;
+            background: var(--accent-color); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22), 0 0 16px rgba(var(--accent-rgb), .8); }
+        .col-drop-tag { position: fixed; z-index: 47; pointer-events: none; display: none; transform: translate(-50%, calc(-100% - 8px));
+            background: var(--accent-color); color: #fff; font-size: 12.5px; font-weight: 700; padding: 5px 11px; border-radius: 999px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+        .col-drop-tag::after { content: ''; position: absolute; left: 50%; bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: var(--accent-color); }
+        .col-drag-ghost { position: fixed; top: -1000px; left: -1000px; z-index: -1; display: inline-flex; align-items: center; background: var(--accent-color); color: #fff; font-size: 13.5px; font-weight: 700; letter-spacing: .5px; padding: 6px 12px 6px 6px; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.4); white-space: nowrap; }
+        .col-drag-ghost .g { width: 18px; text-align: center; font-size: 14px; line-height: 1; }
+        .col-toast { position: fixed; left: 50%; bottom: 28px; z-index: 9000; transform: translate(-50%, 16px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+            display: flex; gap: 14px; align-items: center; background: var(--card-color); color: var(--text-color); border: 1px solid rgba(var(--accent-rgb), .45);
+            border-radius: 10px; padding: 9px 10px 9px 16px; font-size: 13px; box-shadow: 0 10px 28px rgba(0,0,0,.35); }
+        .col-toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+        .col-toast b { color: var(--accent-color); padding: 0; margin: 0; background: none; letter-spacing: 0; }
+        .col-toast button { background: rgba(var(--accent-rgb), .18); color: var(--accent-color); border: 0; border-radius: 6px; padding: 5px 11px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .col-toast button:hover { background: rgba(var(--accent-rgb), .3); }
+        #listColTip { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 7px 8px 7px 12px; border-radius: 8px; font-size: 12.5px;
+            background: rgba(var(--accent-rgb), .10); border: 1px solid rgba(var(--accent-rgb), .32); color: var(--text-color); }
+        #listColTip[hidden] { display: none; }
+        #listColTip b { color: var(--accent-color); }
+        #listColTip button { margin-left: auto; background: transparent; border: 0; color: var(--text-color); opacity: .6; cursor: pointer; font-size: 13px; padding: 2px 6px; }
+        #listColTip button:hover { opacity: 1; }
+        /* 「操作」不是最後一欄時靠左 */
+        html[data-act-full="mid"] #timerListHead > [data-col=act] { justify-self: start; }
+        html[data-act-full="mid"] #timerList.list-mode .card-action-btns { justify-self: start; }
+        .fleet-cols-reset { background: transparent; border: 1px solid var(--edit-border); color: var(--text-color); opacity: .75; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; flex-shrink: 0; }
+        .fleet-cols-reset:hover { opacity: 1; }
+        .fleet-cols-reset[hidden] { display: none; }
+        #timerList.list-mode .timer-header, #timerList.list-mode .timer-footer,
+        #timerList.list-mode .delete-btn-wrapper { display: contents !important; }
+        #timerList.list-mode .sub-route-line { display: flex !important; grid-area: route; align-items: center; justify-content: flex-start; gap: 12px; min-width: 0; margin: 0 0 0 var(--col-ind); padding: 0; border: 0; background: none; }
+        #timerList.list-mode .timer-name { grid-area: name; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        #timerList.list-mode .timer-countdown { grid-area: count; text-align: left; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        #timerList.list-mode .timer-footer > span { white-space: nowrap; font-size: 0; }
+        #timerList.list-mode .timer-footer > span:first-child { grid-area: dep; }
+        #timerList.list-mode .timer-footer > span:last-child { grid-area: ret; }
+        #timerList.list-mode .timer-footer > span .time-highlight { font-size: 12.5px; }
+        #timerList.list-mode .timer-footer > span:first-child .time-highlight { opacity: .8; }
+        #timerList.list-mode .sub-config-summary { display: none !important; }
+        #timerList.list-mode .route-line-info { min-width: 0; flex: 0 1 230px; display: flex; flex-direction: column; gap: 1px; }
+        #timerList.list-mode .route-line-txt, #timerList.list-mode .route-next { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+        #timerList.list-mode .route-next-dur { display: none; }
+        #timerList.list-mode .btn-redepart { flex: none; padding: 4px 10px; font-size: 12px; margin: 0; }
+        #timerList.list-mode .card-group-select { grid-area: group; font-size: 12px; padding: 3px 6px; height: auto; width: calc(100% - var(--col-ind)); margin: 0; }
+        /* 每欄資料和欄位名稱一樣往右縮排（⠿ 在欄位範圍內） */
+        #timerList.list-mode .timer-name, #timerList.list-mode .timer-countdown, #timerList.list-mode .timer-footer > span,
+        #timerList.list-mode .card-group-select, #timerList.list-mode .card-action-btns { margin-left: var(--col-ind); }
+        #timerList.list-mode .card-action-btns { grid-area: act; display: flex; gap: 4px; justify-self: end; margin: 0 0 0 var(--col-ind); }
+        #timerList.list-mode .card-action-btns .card-icon-btn { padding: 4px 8px; font-size: 12px; }
+        #timerList.list-mode .progress-bar-bg { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; margin: 0; border-radius: 0; background: transparent; }
+        #timerList.list-mode .progress-bar { height: 2px; border-radius: 0; }
+        #panelFleet.room-mode #timerList.list-mode .timer-card { box-shadow: inset 3px 0 0 var(--room-color); }
+        #panelFleet.room-readonly #timerList.list-mode .card-group-select,
+        #panelFleet.room-readonly #timerList.list-mode .card-action-btns { display: none !important; }
+        #panelFleet.room-readonly #timerListHead, #panelFleet.room-readonly #timerList.list-mode .timer-card {
+            grid-template-columns: var(--lc-ro-full); grid-template-areas: var(--la-ro-full); }
+        #panelFleet.room-readonly #timerListHead > [data-col=act], #panelFleet.room-readonly #timerListHead > [data-col=group] { display: none; }
+        /* ══ 條列：閱讀重點（狀態 → 回港 → 下一步），次要資訊退後 ══ */
+        #timerListHead, #timerList.list-mode .timer-card { padding-top: 10px; padding-bottom: 10px; }
+        #timerList.list-mode .timer-card { min-height: 60px; }
+        #timerList.list-mode .timer-name { font-size: 15px; font-weight: 700; }
+        #timerList.list-mode .timer-level { font-size: 12px; font-weight: 600; margin-left: 4px; opacity: .8; }
+        /* 剩餘：大字，下方一條細進度條 */
+        #timerList.list-mode .timer-countdown { font-family: inherit; font-size: 15.5px; font-weight: 800; letter-spacing: .3px; align-self: center; margin-top: -7px; }
+        #timerList.list-mode .progress-bar-bg { position: static; grid-area: count; align-self: center; margin: 22px 0 0 var(--col-ind); width: calc(100% - var(--col-ind) - 16px); height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--text-color) 12%, transparent); overflow: hidden; }
+        #timerList.list-mode .progress-bar { height: 3px; border-radius: 2px; }
+        /* 已回港：綠色標籤 */
+        #timerList.list-mode .timer-card:has(.progress-bar-bg.finished) .timer-countdown { font-size: 0; margin-top: 0; }
+        #timerList.list-mode .timer-card:has(.progress-bar-bg.finished) .timer-countdown::after {
+            content: '✓ 已回港'; display: inline-block; font-size: 12.5px; font-weight: 800; letter-spacing: .5px; line-height: 1.4;
+            color: #fff; background: var(--success-color); padding: 3px 11px; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+        /* 時間：回港最醒目，出航退後 */
+        #timerList.list-mode .timer-footer > span:first-child .time-highlight { font-size: 12.5px; font-weight: 600; opacity: .7; }
+        #timerList.list-mode .timer-footer > span:last-child .time-highlight { font-size: 14px; font-weight: 800; }
+        /* 航線：海域與路線清楚、下次回港時間醒目 */
+        #timerList.list-mode .route-line-txt .rl-k { display: none; }
+        #timerList.list-mode .route-line-txt { font-size: 12px; color: color-mix(in srgb, var(--text-color) 55%, transparent); }
+        #timerList.list-mode .route-line-txt .rl-v { color: color-mix(in srgb, var(--text-color) 88%, transparent); font-weight: 600; }
+        #timerList.list-mode .route-next { font-size: 12.5px; color: color-mix(in srgb, var(--text-color) 78%, transparent); }
+        #timerList.list-mode .route-next b { font-size: 13px; color: var(--hl-return); }
+        /* 次要操作：平常淡一點，滑到那一列才清楚 */
+        #timerList.list-mode .card-group-select { background: transparent; border-color: transparent; color: color-mix(in srgb, var(--text-color) 72%, transparent); transition: border-color .15s, background-color .15s; }
+        #timerList.list-mode .timer-card:hover .card-group-select, #timerList.list-mode .card-group-select:focus { border-color: var(--edit-border); background-color: var(--card-color); color: var(--text-color); }
+        #timerList.list-mode .card-action-btns { opacity: .55; transition: opacity .15s; }
+        #timerList.list-mode .timer-card:hover .card-action-btns, #timerList.list-mode .card-action-btns:focus-within { opacity: 1; }
+        /* 滑到哪一列：紫色底＋左側色條，一眼看出是哪艘船 */
+        #timerList.list-mode .timer-card { transition: background-color .12s ease, box-shadow .12s ease; }
+        #timerList.list-mode .timer-card:hover, #timerList.list-mode .timer-card:focus-within {
+            background-color: rgba(var(--accent-rgb), .22); background-image: none;
+            box-shadow: inset 5px 0 0 var(--accent-color); }
+        #timerList.list-mode .timer-card:has(.progress-bar-bg.finished):hover, #timerList.list-mode .timer-card:has(.progress-bar-bg.finished):focus-within {
+            background-color: color-mix(in srgb, var(--success-color) 22%, transparent);
+            background-image: linear-gradient(rgba(var(--accent-rgb), .30), rgba(var(--accent-rgb), .30));
+            box-shadow: inset 5px 0 0 var(--accent-color); }
+        #timerList.list-mode .timer-card:hover .timer-name { color: var(--accent-color); }
+        /* ══ 卡片／條列切換轉場 ══ */
+        html.fl-vt::view-transition-group(*) { animation-duration: .42s; animation-timing-function: cubic-bezier(.22,.8,.24,1); }
+        html.fl-vt::view-transition-old(*), html.fl-vt::view-transition-new(*) { animation-duration: .3s; }
+        html.fl-vt::view-transition-group(.fl-card) { overflow: clip; border-radius: 8px; }
+        html.fl-vt::view-transition-old(.fl-card), html.fl-vt::view-transition-new(.fl-card) { height: auto; width: auto; object-fit: none; object-position: left top; }
+        html.fl-vt::view-transition-old(.fl-card) { animation: flOut var(--fl-out, .14s) ease-out both; }
+        html.fl-vt::view-transition-new(.fl-card) { animation: flNew var(--fl-in, .26s) ease-out var(--fl-in-delay, .1s) both; }
+        @keyframes flOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes flNew { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes flIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        #timerList.fl-anim > .timer-card, #timerListHead.fl-anim { animation: flIn .32s ease-out both; }
+        @media (prefers-reduced-motion: reduce) { #timerList.fl-anim > .timer-card, #timerListHead.fl-anim { animation: none; } }
+        /* 中等寬度：拿掉標籤欄 */
+        @container fleet (max-width: 1229px) {
+            #timerListHead, #timerList.list-mode .timer-card {
+                grid-template-columns: var(--lc-mid, minmax(130px,1fr) minmax(104px,.45fr) minmax(100px,.45fr) minmax(100px,.45fr) minmax(320px,1.5fr) 236px);
+                grid-template-areas: var(--la-mid, "name count dep ret route act");
+            }
+            #timerListHead > [data-col=group], #timerList.list-mode .card-group-select { display: none; }
+            html[data-act-mid="last"] #timerListHead > [data-col=act] { justify-self: end; }
+            html[data-act-mid="last"] #timerList.list-mode .card-action-btns { justify-self: end; }
+            html[data-act-mid="mid"] #timerListHead > [data-col=act] { justify-self: start; }
+            html[data-act-mid="mid"] #timerList.list-mode .card-action-btns { justify-self: start; }
+            #panelFleet.room-readonly #timerListHead, #panelFleet.room-readonly #timerList.list-mode .timer-card {
+                grid-template-columns: var(--lc-ro-mid); grid-template-areas: var(--la-ro-mid); }
+        }
+        /* 窄畫面（手機）：兩行，點一下展開航線和操作 */
+        @container fleet (max-width: 1067px) {
+            #timerListHead.on { display: none; }
+            #timerList.list-mode .timer-footer > span:first-child { display: none; }
+            #timerList.list-mode { border-radius: 10px; }
+            .fleet-layout-toggle .flt-txt { display: none; }
+            .fleet-cols-reset, #listColTip { display: none !important; }
+            #timerList.list-mode .timer-name, #timerList.list-mode .timer-countdown, #timerList.list-mode .timer-footer > span,
+            #timerList.list-mode .card-action-btns { margin-left: 0; }
+            #timerList.list-mode .sub-route-line { display: contents !important; margin: 0; }
+            #timerList.list-mode .btn-redepart { grid-area: redep; }
+            #panelFleet.room-readonly #timerList.list-mode .timer-card { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "name count" "next redep" "route route" "act act"; }
+            #timerList.list-mode .timer-card {
+                grid-template-columns: minmax(0,1fr) auto;
+                grid-template-areas: "name count" "next redep" "route route" "act act";
+                row-gap: 0; padding: 9px 12px; cursor: pointer;
+            }
+            #timerList.list-mode .route-line-info { display: contents; }
+            #timerList.list-mode .route-next { grid-area: next; }
+            #timerList.list-mode .route-line-txt { grid-area: route; display: none; opacity: .75; }
+            #timerList.list-mode .timer-footer > span:last-child { grid-area: next; font-size: 12px; }
+            #timerList.list-mode .timer-footer > span:last-child .time-highlight { font-size: 12px; }
+            #timerList.list-mode .timer-card:has(.route-next) .timer-footer > span:last-child { display: none; }
+            #timerList.list-mode .btn-redepart { justify-self: end; padding: 0 12px; font-size: 12px; height: 26px; min-height: 0; margin-top: 4px; }
+            #timerList.list-mode .route-next, #timerList.list-mode .timer-footer > span:last-child { margin-top: 4px; align-self: center; }
+            #timerList.list-mode .timer-card.expanded .route-line-txt { margin-top: 6px; }
+            #timerList.list-mode .card-action-btns { display: none; justify-self: stretch; justify-content: flex-end; padding-top: 6px; }
+            #timerList.list-mode .timer-card.expanded .card-action-btns { display: flex; }
+            #timerList.list-mode .timer-card.expanded .route-line-txt { display: block; white-space: normal; }
+            #timerList.list-mode .timer-card.expanded { background: color-mix(in srgb, var(--text-color) 6%, transparent); }
+            #timerList.list-mode .timer-card.expanded:has(.progress-bar-bg.finished) { background: color-mix(in srgb, var(--success-color) 26%, transparent); }
+            /* 兩行版：進度條回到列底部 */
+            #timerList.list-mode .progress-bar-bg { position: absolute; grid-area: auto; left: 0; right: 0; bottom: 0; margin: 0; width: auto; height: 2px; border-radius: 0; background: transparent; }
+            #timerList.list-mode .progress-bar { height: 2px; border-radius: 0; }
+            #timerList.list-mode .timer-countdown { margin-top: 0; font-size: 15px; }
+            #timerList.list-mode .timer-card:has(.progress-bar-bg.finished) .timer-countdown::after { font-size: 12px; padding: 1px 9px; }
+            #timerList.list-mode .card-action-btns { opacity: 1; }
+        }
         .map-room-hint { margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5;
             background: rgba(var(--room-rgb, 70,180,160), .12); border: 1px solid rgba(var(--room-rgb, 70,180,160), .45); color: var(--text-color); }
         .map-room-hint b { color: rgb(var(--room-rgb, 70,180,160)); font-weight: 600; }
@@ -3192,7 +3407,7 @@ window.SubPalette = (function () {
             <button type="button" class="drawer-close" id="drawerClose" aria-label="關閉面板" title="關閉（Esc）">✕</button>
         </div>
         <div class="header-wrapper">
-            <h1>FF14 潛水艇計時器2.4.1 <span>阿緋@鳳凰</span></h1>
+            <h1>FF14 潛水艇計時器2.4.2 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button type="button" class="lp-icon-btn u1" data-on-click="a11" title="使用說明" aria-label="使用說明">📖</button>
@@ -3372,33 +3587,32 @@ window.SubPalette = (function () {
             <button type="button" class="collapsible-btn" data-on-click="a36" aria-expanded="false" aria-controls="content4"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div class="u38" style="color: var(--text-color);">
-                   <div class="u39" style="color: var(--accent-color);">📋 2026/11/08　v2.4.1</div>
+                   <div class="u39" style="color: var(--accent-color);">📋 2026/11/09　v2.4.2</div>
                     <ul class="u40">
-                        <li>雲端同步改版：每艘船各自記錄修改時間並合併，兩台同時修改、離線修改都不會再互相蓋掉；刪除會同步（包含刪光所有船）；上傳失敗會自動補傳</li>
-                        <li>雲端同步：第一次啟用或匯入 ID 時，若雲端和這台都有資料，會先詢問要合併、用雲端或用這台；匯入 ID 後自動重新整理並改用新 ID</li>
-                        <li>共同艦隊：房主的修改會即時更新到房間，成員在房間裡的修改也會寫回房主的船隊；建立房間後成員列表即時顯示</li>
-                        <li>共同艦隊：檢視別人的房間時，上方顯示「正在檢視○○的艦隊」提示列，船卡改用青綠色邊框；上方船數依目前畫面顯示；房主可設定成員「可以修改／只能看」</li>
-                        <li>共同艦隊：海圖也一起共用。檢視房間時，海圖顯示房間的標籤和已開放的海點，成員修改會同步給房主（房主設定「只能看」時無法修改）；路線規劃與配件規劃的船艇選單也會換成房間的船，搜尋時使用房間的海圖</li>
-                        <li>共同艦隊：修正建立自己的房間後，無法再加入別人房間的問題；「已加入的房間」不再重複列出自己的房間；房主離開房間時房間會解散，成員會自動離開並收到通知；被房主移除的成員也會自動離開</li>
-                        <li>截圖辨識改善：辨識前先轉灰階、反白並放大，船名與時間更準；括號殘字、「7/小時」這類雜訊能正確解析，時間沒讀完整的船不會被更新</li>
-                        <li>截圖辨識比對改善：同一張截圖裡每艘船只會對到一次，相似名字（如星海船／月海船）會用排除法、等級與回港時間判斷，分不出來就不更新；5 字以上英文名字不分大小寫；名字有空格（如 Rubber Duck）、含「探索」等字也能正確對上</li>
-                        <li>修正：截圖辨識更新等級後，「再出發」可能重複加上一趟的經驗</li>
-                        <li>船艇設定新增「目前航線」：可直接點選海域與地點設定航線（依點選順序，可一鍵排成最快順序），不必經過路線規劃</li>
+                        <li>艦隊新增「條列」顯示，可隨時和卡片切換，切換時有轉場動畫</li>
+                        <li>條列（電腦版）可拖曳欄位名稱調整欄位順序</li>
+                        <li>條列重點更清楚：已回港綠色標籤、剩餘時間進度條、回港時間醒目</li>
+                    </ul>
+                    <div class="u39" style="color: var(--accent-color);">📋 2026/11/08　v2.4.1</div>
+                    <ul class="u40">
+                        <li>雲端同步改版：多台裝置同時或離線修改都能正確合併</li>
+                        <li>第一次啟用同步或匯入 ID 時，可選擇合併、用雲端或用這台</li>
+                        <li>共同艦隊：房主和成員的修改即時互通，房主可設定「可以修改／只能看」</li>
+                        <li>共同艦隊：海圖和路線規劃會改用房間的資料</li>
+                        <li>共同艦隊：有自己的房間也能加入別人的房間；房主離開時房間解散</li>
+                        <li>截圖辨識更準確，名字相似的船不會再對錯</li>
+                        <li>船艇設定可以直接設定目前航線</li>
+                        <li>修正：截圖更新等級後，再出發可能重複計算經驗</li>
                     </ul>
                     <div class="u39" style="color: var(--accent-color);">📋 2026/11/07</div>
                     <ul class="u40">
-                        <li>新增「再出發」：記住上次航線，回港後一鍵照原航線重新計時，並自動推算經驗與升級後的時間</li>
-                        <li>新增「全部／群組再出發」：一次讓目前標籤內已回港的船一起出發</li>
-                        <li>船卡顯示上次航線與下次回港時間；船艇設定新增選填的「本級經驗」</li>
-                        <li>路線規劃：結果改為欄位對齊的列表，點欄位名稱排序、點一行展開掉落物</li>
-                        <li>路線規劃：新增回港時段篩選，可選「只要」或「避開」的小時，支援拖曳複選</li>
-                        <li>新增「主題」：32 種低飽和配色（深色 18、淺色 14），取代原本的深淺色切換</li>
-                        <li>艦隊：船卡一排可放 3～4 張；部隊標籤改為整齊格狀並顯示船數與已回港提示</li>
-                        <li>配件製作：點格子直接 +1、可用 − 減少，並修正同一配件會被加兩次的問題</li>
-                        <li>自訂連結重新設計，顯示網址、刪除前會先確認</li>
-                        <li>使用說明全面改寫；左側工具列改為圖示加文字</li>
-                        <li>資料校正：鯊魚改級船首數值、部分地點經驗與門檻，並補上各地點開放版本</li>
-                        <li>修正：標籤要點兩下才選取、截圖辨識沒讀到等級時會清空等級、窄畫面切回寬畫面版面錯亂、手機版船卡超出畫面、路線搜尋時畫面卡住</li>
+                        <li>新增「再出發」與「全部／群組再出發」</li>
+                        <li>船卡顯示上次航線與下次回港時間</li>
+                        <li>路線規劃：結果改為列表，新增回港時段篩選</li>
+                        <li>新增 32 種「主題」配色</li>
+                        <li>艦隊版面調整：船卡一排 3～4 張、部隊標籤格狀排列</li>
+                        <li>配件製作、自訂連結、使用說明重新設計</li>
+                        <li>資料校正與多項錯誤修正</li>
                     </ul>
                    <div class="u39" style="color: var(--accent-color);">📋 2026/11/02</div>
                     <ul class="u40">
@@ -3570,7 +3784,7 @@ window.SubPalette = (function () {
 
     <!-- ══ RIGHT PANEL ══ -->
     <div class="right-panel">
-        <div class="desk-brand" aria-hidden="true">FF14 潛水艇計時器 <span>2.4.1・阿緋@鳳凰</span></div>
+        <div class="desk-brand" aria-hidden="true">FF14 潛水艇計時器 <span>2.4.2・阿緋@鳳凰</span></div>
         <!-- 分頁切換列 -->
         <div class="rp-panel-tabs" id="rpPanelTabs" role="tablist" aria-label="主要功能">
             <button type="button" class="rp-panel-tab active" id="tabFleet" role="tab" aria-controls="panelFleet" aria-selected="true" data-on-click="a37">⚓ 潛水艇艦隊 <span class="u43" id="fleetCount" style="background: rgba(var(--accent-rgb),0.2); color: var(--accent-color); border: 1px solid #555; border-radius: 6px; display: inline-block; min-width: 36px;">0 艘</span></button>
@@ -3601,6 +3815,11 @@ window.SubPalette = (function () {
                     <button type="button" class="fleet-add-btn" data-on-click="a43">
                         <span class="fleet-add-icon">＋</span> 手動新增
                     </button>
+                    <div class="fleet-layout-toggle" role="group" aria-label="顯示方式">
+                        <button type="button" data-layout="card" data-on-click="a129" aria-pressed="true" title="卡片">▦<span class="flt-txt"> 卡片</span></button>
+                        <button type="button" data-layout="list" data-on-click="a129" aria-pressed="false" title="條列">☰<span class="flt-txt"> 條列</span></button>
+                    </div>
+                    <button type="button" class="fleet-cols-reset" data-on-click="a130" hidden title="恢復預設的欄位順序">↺ 重設欄位</button>
                     <div class="fleet-sort-wrap">
                         <span class="fleet-sort-icon">⇅</span>
                         <select id="sortSelect" data-on-change="a44">
@@ -3612,6 +3831,8 @@ window.SubPalette = (function () {
                     </div>
                 </div>
             </div>
+            <div id="listColTip" hidden>💡 按住欄位名稱前的 <b>⠿</b> 左右拖曳，可以調整欄位順序<button type="button" data-on-click="a131" aria-label="關閉提示" title="不再顯示">✕</button></div>
+            <div id="timerListHead" role="toolbar" aria-label="欄位順序（拖曳欄位名稱，或用 Alt + ← → 調整）"><span data-col="name">船名</span><span data-col="count">剩餘</span><span data-col="dep">出航</span><span data-col="ret">回港</span><span data-col="route">上次航線／下次回港</span><span data-col="group">標籤</span><span data-col="act">操作</span></div>
             <div class="timer-list" id="timerList"></div>
         </div>
 
@@ -4494,10 +4715,14 @@ window.showConfirm = showConfirm;
     // ── 更新內容通知（每位使用者、每個瀏覽器只顯示一次）──
     // 之後要再通知：改 id 與 items，所有人就會再看到一次
     const UPDATE_NOTICE = {
-        id: '2.4.1',
-        title: '🆕 2.4.1 更新',
-        date: '2026/11/08',
+        id: '2.4.2',
+        title: '🆕 2.4.2 更新',
+        date: '2026/11/09',
         pages: [
+            { tab: '條列顯示', icon: '☰', title: '新增條列顯示',
+              lead: '艦隊右上角可以切換「卡片」和「條列」。',
+              items: ['一個畫面看得到更多船，已回港的船一眼就看出來',
+                      '電腦版可以拖曳欄位名稱，調整欄位順序'] },
             { tab: '雲端同步', icon: '☁️', title: '同步更穩定，資料不會互相蓋掉',
               lead: '多台裝置一起用也不怕。',
               items: ['兩台裝置同時修改、離線修改，都會正確合併',
@@ -6285,6 +6510,281 @@ window.showConfirm = showConfirm;
         // 觸發搜尋
         runRoutePlanner();
     }
+
+    // ── 卡片／條列切換（只存在這台裝置，不同步）──
+    function applyFleetLayout() {
+        let m = 'card';
+        try { if (localStorage.getItem('sub_fleet_layout') === 'list') m = 'list'; } catch (e) {}
+        document.getElementById('timerList')?.classList.toggle('list-mode', m === 'list');
+        document.getElementById('timerListHead')?.classList.toggle('on', m === 'list');
+        document.querySelectorAll('.fleet-layout-toggle [data-layout]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === m)));
+        if (typeof applyListOrder === 'function') applyListOrder();
+    }
+    // 欄位名稱固定的位置＝上方分頁列的高度；固定住時加陰影
+    (function () {
+        const head = document.getElementById('timerListHead'), tabs = document.querySelector('#panelFleet .rp-panel-tabs, .rp-panel-tabs');
+        if (!head) return;
+        const setTop = () => {
+            const st = tabs ? getComputedStyle(tabs) : null;
+            const h = st && st.position === 'sticky' && tabs.offsetParent ? tabs.offsetHeight : 0;
+            document.documentElement.style.setProperty('--fleet-head-top', h + 'px');
+        };
+        setTop();
+        if (tabs && window.ResizeObserver) new ResizeObserver(setTop).observe(tabs);
+        window.addEventListener('resize', setTop);
+        const onScroll = () => {
+            if (!head.classList.contains('on')) return;
+            const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fleet-head-top')) || 0;
+            head.classList.toggle('stuck', head.getBoundingClientRect().top <= top + 0.5 && window.scrollY > 0);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+    })();
+    // ── 條列欄位順序（電腦版，可拖曳；只存在這台裝置）──
+    const LIST_COLS = {
+        name:  { full: 'minmax(140px,1fr)', mid: 'minmax(130px,1fr)', area: 'name' },
+        count: { full: 'minmax(108px,.45fr)', mid: 'minmax(104px,.45fr)', area: 'count' },
+        dep:   { full: 'minmax(102px,.45fr)', mid: 'minmax(100px,.45fr)', area: 'dep' },
+        ret:   { full: 'minmax(102px,.45fr)', mid: 'minmax(100px,.45fr)', area: 'ret' },
+        route: { full: 'minmax(320px,1.5fr)', mid: 'minmax(320px,1.5fr)', area: 'route' },
+        group: { full: 'minmax(124px,.4fr)', mid: null, area: 'group' },
+        act:   { full: '246px', mid: '236px', area: 'act' }
+    };
+    const LIST_DEFAULT = ['name', 'count', 'dep', 'ret', 'route', 'group', 'act'];
+    function getListOrder() {
+        try {
+            const a = JSON.parse(localStorage.getItem('sub_list_cols') || 'null');
+            if (Array.isArray(a) && a.length === LIST_DEFAULT.length && LIST_DEFAULT.every(k => a.includes(k))) return a;
+        } catch (e) {}
+        return LIST_DEFAULT.slice();
+    }
+    function applyListOrder() {
+        const o = getListOrder(), st = document.documentElement.style;
+        const mid = o.filter(k => LIST_COLS[k].mid);
+        st.setProperty('--lc-full', o.map(k => LIST_COLS[k].full).join(' '));
+        st.setProperty('--la-full', '"' + o.map(k => LIST_COLS[k].area).join(' ') + '"');
+        st.setProperty('--lc-mid', mid.map(k => LIST_COLS[k].mid).join(' '));
+        st.setProperty('--la-mid', '"' + mid.map(k => LIST_COLS[k].area).join(' ') + '"');
+        // 唯讀房間：沒有「操作」「標籤」「再出發」
+        const ro = o.filter(k => k !== 'act' && k !== 'group'), C = LIST_COLS;
+        st.setProperty('--lc-ro-full', ro.map(k => C[k].roFull || C[k].full).join(' '));
+        st.setProperty('--la-ro-full', '"' + ro.map(k => C[k].roArea || C[k].area).join(' ') + '"');
+        st.setProperty('--lc-ro-mid', ro.map(k => C[k].roMid || C[k].mid).join(' '));
+        st.setProperty('--la-ro-mid', '"' + ro.map(k => C[k].roArea || C[k].area).join(' ') + '"');
+        document.documentElement.dataset.actFull = o[o.length - 1] === 'act' ? 'last' : 'mid';
+        document.documentElement.dataset.actMid = mid[mid.length - 1] === 'act' ? 'last' : 'mid';
+        const head = document.getElementById('timerListHead');
+        if (head) o.forEach(k => { const e = head.querySelector(`[data-col="${k}"]`); if (e) head.appendChild(e); });
+        const custom = o.join() !== LIST_DEFAULT.join();
+        const btn = document.querySelector('.fleet-cols-reset');
+        const listOn = !!document.getElementById('timerList')?.classList.contains('list-mode');
+        if (btn) btn.hidden = !(custom && listOn);
+        const tip = document.getElementById('listColTip');
+        let tipSeen = false; try { tipSeen = localStorage.getItem('sub_list_cols_tip') === '1'; } catch (e) {}
+        if (tip) tip.hidden = !(listOn && !tipSeen);
+    }
+    function saveListOrder(o) {
+        try { localStorage.setItem('sub_list_cols', JSON.stringify(o)); } catch (e) {}
+        applyListOrder();
+    }
+    window.resetListColumns = function () {
+        const prev = getListOrder();
+        try { localStorage.removeItem('sub_list_cols'); } catch (e) {}
+        applyListOrder();
+        window._listColToast?.(null, prev);
+    };
+    window.dismissListColTip = function () {
+        try { localStorage.setItem('sub_list_cols_tip', '1'); } catch (e) {}
+        const tip = document.getElementById('listColTip'); if (tip) tip.hidden = true;
+    };
+    // 把 key 移到 target 的前面或後面
+    function moveListCol(key, target, after) {
+        if (key === target) return;
+        const o = getListOrder().filter(k => k !== key);
+        let i = o.indexOf(target); if (i < 0) return;
+        o.splice(after ? i + 1 : i, 0, key);
+        saveListOrder(o);
+    }
+    (function () {
+        const head = document.getElementById('timerListHead'), list = document.getElementById('timerList');
+        if (!head || !list) return;
+        const NAMES = { name: '船名', count: '剩餘', dep: '出航', ret: '回港', route: '上次航線', group: '標籤', act: '操作' };
+        const mk = cls => { const e = document.createElement('div'); e.className = cls; document.body.appendChild(e); return e; };
+        const band = mk('col-drag-band'), line = mk('col-drop-line'), tag = mk('col-drop-tag'), ghost = mk('col-drag-ghost'), toast = mk('col-toast');
+        toast.setAttribute('role', 'status');
+        let dragKey = null, drop = null, toastT = null;
+        head.querySelectorAll('[data-col]').forEach(el => {
+            el.draggable = true; el.tabIndex = 0;
+            el.title = '按住拖曳可調整欄位順序（也可以用 Alt + ← →）';
+        });
+        // 某欄（航線含再出發）在畫面上的左右位置
+        function colBox(key) {
+            const cs = getComputedStyle(head);
+            const tracks = cs.gridTemplateColumns.split(' ').map(parseFloat);
+            const areas = cs.gridTemplateAreas.replace(/"/g, ' ').trim().split(/\s+/);
+            const gap = parseFloat(cs.columnGap) || 0;
+            const want = key === 'route' ? ['route', 'redep'] : [key];
+            const idx = areas.map((a, i) => want.includes(a) ? i : -1).filter(i => i >= 0);
+            if (!idx.length || tracks.length !== areas.length) return null;
+            const r = head.getBoundingClientRect();
+            let x = r.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft);
+            for (let i = 0; i < idx[0]; i++) x += tracks[i] + gap;
+            let w = 0; for (let i = idx[0]; i <= idx[idx.length - 1]; i++) w += tracks[i] + (i > idx[0] ? gap : 0);
+            return { left: x, right: x + w, gap };
+        }
+        const visKeys = () => getListOrder().filter(k => { const e = head.querySelector(`[data-col="${k}"]`); return e && e.offsetParent; });
+        function vSpan() {
+            const h = head.getBoundingClientRect(), l = list.getBoundingClientRect();
+            return { top: h.top, bottom: Math.max(h.bottom, Math.min(l.bottom, innerHeight)) };
+        }
+        function place(el, box, pad) {
+            const v = vSpan();
+            el.style.left = (box.left - pad) + 'px'; el.style.width = (box.right - box.left + pad * 2) + 'px';
+            el.style.top = (v.top - 2) + 'px'; el.style.height = (v.bottom - v.top + 4) + 'px';
+        }
+        function hideDrop() { drop = null; line.style.display = tag.style.display = 'none'; }
+        function endDrag() {
+            dragKey = null; hideDrop();
+            if (!band.classList.contains('flash')) band.style.display = 'none';
+            head.classList.remove('col-drag-on');
+            head.querySelectorAll('.col-dragging').forEach(e => e.classList.remove('col-dragging'));
+        }
+        function flash(key) {
+            const b = colBox(key); if (!b) return;
+            band.classList.remove('flash'); band.style.display = '';
+            place(band, b, 5); void band.offsetWidth; band.classList.add('flash');
+            clearTimeout(band._t); band._t = setTimeout(() => { band.classList.remove('flash'); if (!dragKey) band.style.display = 'none'; }, 1150);
+        }
+        // 移動後的提示（可復原）
+        function showToast(key, prev) {
+            toast.innerHTML = (key ? `已把「<b>${NAMES[key]}</b>」移到新位置` : '已恢復預設欄位順序') + '<button type="button">復原</button>';
+            toast.querySelector('button').onclick = () => {
+                saveListOrder(prev); toast.classList.remove('on');
+                if (key) requestAnimationFrame(() => flash(key));
+            };
+            toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 5000);
+        }
+        window._listColToast = showToast;
+        function doMove(key, target, after) {
+            const prev = getListOrder();
+            moveListCol(key, target, after);
+            if (getListOrder().join() === prev.join()) return false;
+            requestAnimationFrame(() => flash(key));
+            showToast(key, prev);
+            window.dismissListColTip();
+            return true;
+        }
+        // 依滑鼠位置找要插入的位置；放下後順序不變就不顯示
+        function findDrop(clientX) {
+            const keys = visKeys(); let best = null;
+            for (const k of keys) {
+                const b = colBox(k); if (!b) continue;
+                const mid = (b.left + b.right) / 2;
+                if (clientX < b.right + b.gap / 2 || k === keys[keys.length - 1]) { best = { key: k, after: clientX >= mid, box: b }; break; }
+            }
+            if (!best || best.key === dragKey) return null;
+            const o = getListOrder().filter(k => k !== dragKey);
+            o.splice(o.indexOf(best.key) + (best.after ? 1 : 0), 0, dragKey);
+            const vis = o.filter(k => keys.includes(k));
+            if (vis.join() === keys.join()) return null;
+            return best;
+        }
+        function onOver(e) {
+            if (!dragKey) return;
+            e.preventDefault();
+            try { e.dataTransfer.dropEffect = 'move'; } catch (err) {}
+            const d = findDrop(e.clientX);
+            if (!d) { hideDrop(); return; }
+            drop = d;
+            const x = d.after ? d.box.right + d.box.gap / 2 : d.box.left - d.box.gap / 2, v = vSpan();
+            line.style.left = x + 'px'; line.style.top = (v.top - 2) + 'px'; line.style.height = (v.bottom - v.top + 4) + 'px'; line.style.display = 'block';
+            tag.textContent = `放到「${NAMES[d.key]}」${d.after ? '後面' : '前面'}`;
+            tag.style.left = x + 'px'; tag.style.top = v.top + 'px'; tag.style.display = 'block';
+        }
+        function onDrop(e) {
+            if (!dragKey) return;
+            e.preventDefault();
+            const d = drop || findDrop(e.clientX), k = dragKey;
+            endDrag();
+            if (d) doMove(k, d.key, d.after);
+        }
+        head.addEventListener('dragstart', e => {
+            const t = e.target.closest && e.target.closest('[data-col]'); if (!t) return;
+            dragKey = t.dataset.col;
+            t.classList.add('col-dragging'); head.classList.add('col-drag-on');
+            ghost.innerHTML = `<span class="g">⠿</span><span class="t">${NAMES[dragKey]}</span>`;
+            // 讓拖曳中的標籤一開始就疊在原本的欄位名稱上（文字和下面的資料對齊）
+            const tr = t.getBoundingClientRect(), ts = getComputedStyle(t), gt = ghost.querySelector('.t');
+            const textLeft = tr.left + parseFloat(ts.paddingLeft), textTop = tr.top + (tr.height - gt.offsetHeight) / 2;
+            const ox = Math.round(gt.offsetLeft + (e.clientX - textLeft)), oy = Math.round(gt.offsetTop + (e.clientY - textTop));
+            try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragKey); e.dataTransfer.setDragImage(ghost, ox, oy); } catch (err) {}
+            const b = colBox(dragKey);
+            if (b) { band.classList.remove('flash'); place(band, b, 5); band.style.display = 'block'; }
+        });
+        [head, list].forEach(el => { el.addEventListener('dragover', onOver); el.addEventListener('drop', onDrop); });
+        head.addEventListener('dragend', endDrag);
+        document.addEventListener('dragover', e => { if (dragKey && !head.contains(e.target) && !list.contains(e.target)) hideDrop(); });
+        window.addEventListener('scroll', () => { if (dragKey) { const b = colBox(dragKey); if (b) place(band, b, 5); } }, { passive: true });
+        // 鍵盤：Alt + ← → 移動目前欄位
+        head.addEventListener('keydown', e => {
+            if (!e.altKey || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+            const t = e.target.closest('[data-col]'); if (!t) return;
+            e.preventDefault();
+            const vis = visKeys(), i = vis.indexOf(t.dataset.col), j = e.key === 'ArrowLeft' ? i - 1 : i + 1;
+            if (j < 0 || j >= vis.length) return;
+            doMove(t.dataset.col, vis[j], e.key === 'ArrowRight');
+            head.querySelector(`[data-col="${t.dataset.col}"]`)?.focus();
+        });
+        applyListOrder();
+    })();
+    window.setFleetLayout = function (m) {
+        const want = m === 'list' ? 'list' : 'card', list = document.getElementById('timerList');
+        const cur = list && list.classList.contains('list-mode') ? 'list' : 'card';
+        const apply = () => {
+            try { localStorage.setItem('sub_fleet_layout', want); } catch (e) {}
+            document.querySelectorAll('#timerList .timer-card.expanded').forEach(c => c.classList.remove('expanded'));
+            applyFleetLayout();
+        };
+        let reduce = false; try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+        if (!list || cur === want || reduce) return apply();
+        if (document.startViewTransition) {
+            // 畫面上看得到的船：從卡片位置變形到條列位置（或反過來）
+            const vh = innerHeight, picked = [];
+            for (const c of list.querySelectorAll('.timer-card')) {
+                if (picked.length >= 48) break;
+                if (!c.offsetParent) continue;
+                const r = c.getBoundingClientRect();
+                if (r.bottom < -40 || r.top > vh + 40) continue;
+                picked.push(c);
+            }
+            picked.forEach((c, i) => { c.style.viewTransitionName = 'flc' + i; c.style.viewTransitionClass = 'fl-card'; });
+            document.documentElement.classList.add('fl-vt');
+            const done = () => {
+                picked.forEach(c => { c.style.viewTransitionName = ''; c.style.viewTransitionClass = ''; });
+                document.documentElement.classList.remove('fl-vt');
+            };
+            let t = null;
+            try { t = document.startViewTransition(apply); } catch (e) { apply(); }
+            if (t && t.finished) t.finished.then(done, done); else done();
+            return;
+        }
+        // 不支援的瀏覽器：淡入
+        apply();
+        [list, document.getElementById('timerListHead')].forEach(el => {
+            if (!el) return;
+            el.classList.remove('fl-anim'); void el.offsetWidth; el.classList.add('fl-anim');
+            setTimeout(() => el.classList.remove('fl-anim'), 450);
+        });
+    };
+    applyFleetLayout();
+    // 條列（窄畫面）：點一下整列展開／收合
+    document.getElementById('timerList')?.addEventListener('click', e => {
+        const list = e.currentTarget;
+        if (!list.classList.contains('list-mode')) return;
+        if (e.target.closest('button, select, a, input, label')) return;
+        const card = e.target.closest('.timer-card');
+        if (!card || getComputedStyle(card).gridTemplateAreas.indexOf('act act') < 0) return;
+        card.classList.toggle('expanded');
+    });
 
     function updateFleetCount() {
         const el = document.getElementById("fleetCount");
@@ -8832,7 +9332,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             const eta = base + Math.round(plan.calc.timeMins * 60) * 1000;
             nextTxt = `<span class="route-next">${returned ? '現在出發' : '回港後出發'} → <b>${subFmtEta(eta)}</b> 回港<span class="route-next-dur">（${subFmtMins(plan.calc.timeMins)}）</span></span>`;
         }
-        el.innerHTML = `<div class="route-line-info"><span class="route-line-txt">上次航線：${escapeHtml(MAP_NAMES[r.mapId] || '')} ${subRouteLetters(r)}${lvTxt}</span>${nextTxt}</div>`
+        el.innerHTML = `<div class="route-line-info"><span class="route-line-txt"><span class="rl-k">上次航線：</span><span class="rl-v">${escapeHtml(MAP_NAMES[r.mapId] || '')} ${subRouteLetters(r)}</span>${lvTxt}</span>${nextTxt}</div>`
             + `<button type="button" class="card-icon-btn btn-redepart${returned ? ' ready' : ''}" onclick="subRedepart('${t.id}')">再出發</button>`;
         el.style.display = 'flex';
         subRefreshGroupRedepart();
