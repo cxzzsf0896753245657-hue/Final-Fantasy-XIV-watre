@@ -123,6 +123,7 @@ window.UI_ACTIONS = {
     a129: function (event) { setFleetLayout(this.dataset.layout) },
     a130: function (event) { resetListColumns() },
     a131: function (event) { dismissListColTip() },
+    a132: function (event) { craftSetGroupMode(this.dataset.group) },
     a123: function (event) { cfgRtToggle(+this.dataset.sec) },
     a124: function (event) { cfgRtFastest() },
     a125: function (event) { cfgRtClear() },
@@ -2420,6 +2421,8 @@ window.UI_ACTIONS = {
             user-select: none;
         }
         .craft-inv-cat-row:first-child td { border-top: none; }
+        .craft-group-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 0 8px; }
+        .craft-group-label { font-size: 13px; opacity: .7; }
         body.light-mode .craft-inv-cat-row td {
             background: rgba(var(--accent-rgb),0.10);
             border-top-color: rgba(var(--accent-rgb),0.20);
@@ -3587,7 +3590,14 @@ window.SubPalette = (function () {
             <button type="button" class="collapsible-btn" data-on-click="a36" aria-expanded="false" aria-controls="content4"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div class="u38" style="color: var(--text-color);">
-                   <div class="u39" style="color: var(--accent-color);">📋 2026/11/09　v2.4.2</div>
+                   <div class="u39" style="color: var(--accent-color);">📋 2026/11/11</div>
+                    <ul class="u40">
+                        <li>「甲鱉級」更名為「甲鱟級」，原本的製作清單會自動沿用</li>
+                        <li>配件製作：改級的成品、半成品欄補上原級部位所需的素材，數量和基礎素材一致</li>
+                        <li>配件製作：成品、半成品可切換用「素材類別」或「製作職業」分類</li>
+                        <li>配件製作：依遊戲配方全面校正，修正甲鱟級船首、腔棘魚級船首、鬚鯨級船首、鯊魚級艦橋、鯊魚改級船首／船尾，以及玻璃板、翼膠、皇金錠的素材數量；新增星極油配方</li>
+                    </ul>
+                    <div class="u39" style="color: var(--accent-color);">📋 2026/11/09　v2.4.2</div>
                     <ul class="u40">
                         <li>艦隊新增「條列」顯示，可隨時和卡片切換，切換時有轉場動畫</li>
                         <li>條列（電腦版）可拖曳欄位名稱調整欄位順序</li>
@@ -7787,8 +7797,22 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         } catch(e) {}
     }
 
+    // 舊名稱「甲鱉級」的存檔自動改成「甲鱟級」（開啟網頁、雲端同步後都會檢查）
+    function craftMigrateNames() {
+        try {
+            let renamed = false;
+            [CRAFT_STORAGE_PARTS, CRAFT_STORAGE_OWNED].forEach(k => {
+                const v = localStorage.getItem(k);
+                if (v && v.includes('\u7532\u9c49')) { localStorage.setItem(k, v.split('\u7532\u9c49').join('甲鱟')); renamed = true; }
+            });
+            if (renamed) setTimeout(() => window.SubSync?.changed(), 0);
+        } catch (e) {}
+    }
+    craftMigrateNames();
+
     function craftLoadFromStorage() {
         try {
+            craftMigrateNames();
             const parts = localStorage.getItem(CRAFT_STORAGE_PARTS);
             if (parts) craftSelectedParts = JSON.parse(parts);
         } catch(e) { craftSelectedParts = []; }
@@ -8046,7 +8070,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             midTotals.set(name, (midTotals.get(name) || 0) + qty);
             // 若該素材每次製作產出 > 1（yield 欄位），則實際需要製作的次數為 ceil(qty / yield)
             const matYield = mat.yield || 1;
-            const craftTimes = Math.ceil(qty / matYield);
+            const craftTimes = Math.sign(qty) * Math.ceil(Math.abs(qty) / matYield);
             Object.entries(mat.recipe).forEach(([ing, ingQty]) => {
                 craftExpand(ing, ingQty * craftTimes, leafTotals, midTotals);
             });
@@ -8064,6 +8088,27 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         }
         // 沒有更進一步配方，視為基礎素材（原礦、水晶、怪物掉落、採集品等）
         leafTotals.set(name, (leafTotals.get(name) || 0) + qty);
+    }
+
+    // 彙總清單的全部需求：need＝每種素材／半成品／骨架總共需要的數量；
+    // handIn＝直接交給工房的數量（含骨架所需原級部位的配方）
+    function craftTotals(selected) {
+        const need = new Map(), handIn = new Map();
+        const add = (m, n, q) => m.set(n, (m.get(n) || 0) + q);
+        const recipeOf = n => CRAFT_PARTS[n]
+            ? Object.assign({}, CRAFT_PARTS[n].recipe || {}, CRAFT_PARTS[n].frame ? { [CRAFT_PARTS[n].frame]: CRAFT_PARTS[n].frameQty || 1 } : {})
+            : (CRAFT_MATS[n] && CRAFT_MATS[n].recipe) || null;
+        const order = [], seen = new Set();
+        const visit = n => { if (seen.has(n)) return; seen.add(n); const r = recipeOf(n); if (r) Object.keys(r).forEach(visit); order.push(n); };
+        selected.forEach(x => { if (CRAFT_PARTS[x.name]) { visit(x.name); add(need, x.name, x.qty); } });
+        order.reverse().forEach(n => {
+            const q = need.get(n) || 0, r = recipeOf(n);
+            if (!q || !r) return;
+            const isPart = !!CRAFT_PARTS[n];
+            const times = isPart ? q : Math.ceil(q / (CRAFT_MATS[n].yield || 1));
+            Object.entries(r).forEach(([ing, x]) => { add(need, ing, x * times); if (isPart) add(handIn, ing, x * times); });
+        });
+        return { need, handIn };
     }
 
     // ── 當前庫存數量（以素材名稱為 key，跨渲染保留） ──
@@ -8115,7 +8160,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                 // 中間素材（成品/半成品）完成時，連動其配方所需的下層素材
                 const mat = CRAFT_MATS[name];
                 if (mat && mat.recipe) {
-                    craftApplyMatDelta(mat.recipe, delta, mat.yield);
+                    const y = mat.yield || 1;
+                    craftApplyMatDelta(mat.recipe, Math.ceil(newVal / y) - Math.ceil(oldVal / y), 1);
                 }
             }
         }
@@ -8263,6 +8309,25 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         </tr>`;
     }
 
+    // 配件製作：成品／半成品欄的分類方式（cat＝素材類別、job＝製作職業），只存在本機
+    const CRAFT_JOB_ORDER = ['木工師', '鍛造師', '甲冑師', '金工師', '皮革師', '裁縫師', '鍊金術師', '烹調師'];
+    let craftGroupMode = (function () { try { return localStorage.getItem('sub_craft_group') === 'job' ? 'job' : 'cat'; } catch (e) { return 'cat'; } })();
+    function craftGroupOf(name) {
+        const meta = craftLookupMeta(name);
+        if (craftGroupMode === 'job') return meta.job || meta.category || '其他';
+        return meta.category || '其他';
+    }
+    function craftGroupRank(g) {
+        if (craftGroupMode !== 'job') return 0;
+        const i = CRAFT_JOB_ORDER.indexOf(g);
+        return i < 0 ? 99 : i;
+    }
+    function craftSetGroupMode(mode) {
+        craftGroupMode = mode === 'job' ? 'job' : 'cat';
+        try { localStorage.setItem('sub_craft_group', craftGroupMode); } catch (e) {}
+        craftRenderResult();
+    }
+
     function craftRenderResult() {
         const box = document.getElementById('craftResult');
         if (!box) return;
@@ -8272,27 +8337,15 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             return;
         }
 
-        const leafTotals = new Map();  // 基礎素材（採集/購買）
-        const midTotals  = new Map();  // 中間半成品（過渡品）
-
-        craftSelectedParts.forEach(({ name, qty }) => {
-            const p = CRAFT_PARTS[name];
-            if (!p) return;
-            Object.entries(p.recipe || {}).forEach(([ing, ingQty]) => {
-                craftExpand(ing, ingQty * qty, leafTotals, midTotals);
-            });
-            if (p.frame) craftExpand(p.frame, (p.frameQty || 1) * qty, leafTotals, midTotals);
-        });
-
-        // ── 直接素材（配件的直接配方成分，含過渡品與基礎品混合）──
-        const directMatTotals = new Map();
-        craftSelectedParts.forEach(({ name, qty }) => {
-            const p = CRAFT_PARTS[name];
-            if (!p) return;
-            Object.entries(p.recipe || {}).forEach(([ing, ingQty]) => {
-                directMatTotals.set(ing, (directMatTotals.get(ing) || 0) + ingQty * qty);
-            });
-            if (p.frame) directMatTotals.set(p.frame, (directMatTotals.get(p.frame) || 0) + (p.frameQty || 1) * qty);
+        // 全部需求（含改級骨架所需原級部位的素材），成品／半成品／基礎素材三欄用同一份結果
+        const { need: allNeed, handIn } = craftTotals(craftSelectedParts);
+        const leafTotals = new Map();        // 基礎素材（採集/購買）
+        const finishedMatTotals = new Map(); // 成品（level=2）
+        const semiMatTotals = new Map();     // 半成品（level=1）與骨架
+        allNeed.forEach((qty, name) => {
+            const mat = CRAFT_MATS[name];
+            if (mat && mat.recipe) (mat.level === 2 ? finishedMatTotals : semiMatTotals).set(name, qty);
+            else if (!CRAFT_PARTS[name]) leafTotals.set(name, qty);
         });
 
         // ── 欄 1：計算隊列（已選配件）── 配件是最終製作目標，需追蹤庫存 ──
@@ -8315,81 +8368,42 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             return gearRow;
         }).join('');
 
-        // ── 欄 2：成品（直接素材中 level=2，已二次加工的成品，如鉚釘、板材、連接板）──
-        // ── 欄 3：半成品（直接素材中 level=1，初階加工的中間品，如錠、塊、怪物素材）──
-        // 注意：directMatTotals 包含配件直接用到的所有材料，依 CRAFT_MATS.level 分流
-        const finishedMatTotals = new Map(); // 成品（level=2）
-        const semiMatTotals     = new Map(); // 半成品（level=1）總需求量（直接+間接展開），用於缺少欄
-        const directSemiNeeded  = new Map(); // 半成品直接需求量（只來自配件配方直接用到的），用於目標欄顯示
-
-        directMatTotals.forEach((qty, name) => {
-            const mat = CRAFT_MATS[name];
-            if (mat && mat.recipe) {
-                if (mat.level === 2) {
-                    finishedMatTotals.set(name, qty);
-                } else {
-                    semiMatTotals.set(name, qty);
-                    // 記錄直接需求量（目標欄用）
-                    directSemiNeeded.set(name, qty);
-                }
-            } else {
-                // 無配方的直接素材視為基礎素材，已由 leafTotals 涵蓋，不重複列出
-            }
-        });
-
-        // ── 將 col2 成品（level=2）的 level=1 原料也納入 col3 半成品（過度半成品，目標顯示 -）──
-        const transitionalSemi = new Set(); // 過度半成品：從 col2 展開，不顯示目標
-        finishedMatTotals.forEach((qty, name) => {
-            const mat = CRAFT_MATS[name];
-            if (!mat || !mat.recipe) return;
-            Object.entries(mat.recipe).forEach(([ing, ingQty]) => {
-                const ingMat = CRAFT_MATS[ing];
-                if (ingMat && ingMat.recipe && ingMat.level === 1) {
-                    semiMatTotals.set(ing, (semiMatTotals.get(ing) || 0) + ingQty * qty);
-                    // 若不是直接素材（不在 directMatTotals），標記為過度半成品
-                    if (!directMatTotals.has(ing)) transitionalSemi.add(ing);
-                }
-            });
-        });
+        // ── 欄 2：成品（level=2，如鉚釘、板材）；欄 3：半成品（level=1，如錠、塊）與骨架 ──
+        // 「目標」＝直接交給工房的數量；只是用來做其他素材的顯示 -；「缺少」以總需求計算
 
         function craftCatRow(cat) {
             return `<tr class="craft-inv-cat-row" data-cat="${cat.replace(/"/g,'&quot;')}"><td colspan="5"><span class="craft-cat-arrow">－</span><span class="craft-cat-label">${cat}</span><span class="craft-cat-count"></span></td></tr>`;
         }
 
+        const groupSort = (a, b) => {
+            const ga = craftGroupOf(a[0]), gb = craftGroupOf(b[0]);
+            return craftGroupRank(ga) - craftGroupRank(gb) || ga.localeCompare(gb) || a[0].localeCompare(b[0]);
+        };
         function makeSortedColRows(mapEntries, noTarget = false) {
-            const sorted = [...mapEntries].sort((a, b) => {
-                const ca = craftLookupMeta(a[0]).category || '';
-                const cb = craftLookupMeta(b[0]).category || '';
-                return ca.localeCompare(cb) || a[0].localeCompare(b[0]);
-            });
+            const sorted = [...mapEntries].sort(groupSort);
             let lastCat = null;
             return sorted.map(([name, qty]) => {
-                const cat = craftLookupMeta(name).category || '其他';
+                const cat = craftGroupOf(name);
                 let catRow = '';
                 if (cat !== lastCat) {
                     catRow = craftCatRow(cat);
                     lastCat = cat;
                 }
-                return catRow + craftMakeInvRow(name, qty, noTarget);
+                return catRow + craftMakeInvRow(name, qty, noTarget || !handIn.has(name), null, false, false, handIn.get(name));
             }).join('');
         }
 
         // 成品素材（level=2）顯示目標數量
         const col2Rows = makeSortedColRows(finishedMatTotals, false);
         // 半成品（col3）：直接 level=1 顯示目標；過度半成品（transitionalSemi）顯示 -
-        const col3Sorted = [...semiMatTotals].sort((a, b) => {
-            const ca = craftLookupMeta(a[0]).category || '';
-            const cb = craftLookupMeta(b[0]).category || '';
-            return ca.localeCompare(cb) || a[0].localeCompare(b[0]);
-        });
+        const col3Sorted = [...semiMatTotals].sort(groupSort);
         let lastCat3 = null;
         const col3Rows = col3Sorted.map(([name, qty]) => {
-            const cat = craftLookupMeta(name).category || '其他';
+            const cat = craftGroupOf(name);
             let catRow = '';
             if (cat !== lastCat3) { catRow = craftCatRow(cat); lastCat3 = cat; }
-            const isTransit = transitionalSemi.has(name);
-            // displayTarget：若有直接需求就顯示直接需求量，過度半成品則為 null（顯示 -）
-            const displayTarget = isTransit ? null : (directSemiNeeded.get(name) ?? qty);
+            const isTransit = !handIn.has(name);
+            const displayTarget = isTransit ? null : handIn.get(name);
             return catRow + craftMakeInvRow(name, qty, isTransit, null, false, false, displayTarget);
         }).join('');
 
@@ -8425,6 +8439,13 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         </tr></thead>`;
 
         box.innerHTML = `
+            <div class="craft-group-bar">
+                <span class="craft-group-label">素材分類</span>
+                <div class="fleet-layout-toggle craft-group-toggle" role="group" aria-label="素材分類方式">
+                    <button type="button" data-group="cat" data-on-click="a132" aria-pressed="${craftGroupMode === 'cat'}">素材類別</button>
+                    <button type="button" data-group="job" data-on-click="a132" aria-pressed="${craftGroupMode === 'job'}">製作職業</button>
+                </div>
+            </div>
             <div class="craft-mat-cols-wrap">
             <div class="craft-mob-tabs" style="display:none;">
                 <button class="craft-mob-tab active" onclick="craftMobTab(this,0)">配件</button>
