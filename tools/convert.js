@@ -3,7 +3,7 @@
  * 回傳 { files: {檔名: 內容}, warnings: [...], summary: {...}, version } */
 (function (root) {
   const FILES = {
-    'sectors.js': ['海域、地點、航行距離、等級、部件', ['MAP_NAMES', 'SUB_HOMES', 'SUB_SECTORS', 'SUB_PATCH', 'SUB_TANK', 'SUB_DIST', 'SUB_RANKS', 'SUB_CAP', 'PARTS']],
+    'sectors.js': ['海域、地點、航行距離、等級、部件', ['MAP_NAMES', 'SUB_HOMES', 'SUB_SECTORS', 'SUB_PATCH', 'SUB_TANK', 'SUB_DIST', 'SUB_RANKS', 'SUB_CAP', 'PARTS', 'SUB_UNLOCK']],
     'loot.js': ['掉落物：層級、機率、數量', ['SUB_LOOT', 'SUB_LOOT_TIER', 'GP_TIER_PROC', 'GP_TIER_PROC_D', 'GP_ITEM_PROB', 'SECTOR_LOOT']],
     'items.js': ['物品名稱、高優先物品、常見材料', ['ITEM_DB', 'ITEM_DB_EN', 'PRIORITY_LOOT_GROUPS', 'COMMON_LOOT']],
     'presets.js': ['常用配件預設', ['GP_PRESETS', 'GP_PRESET_HINTS']],
@@ -42,7 +42,7 @@
     }
 
     // ── 地點 ──
-    const SUB_SECTORS = [], SUB_PATCH = {}, SUB_TANK = {}, GP_TIER_PROC = {}, GP_TIER_PROC_D = {}, slThr = {};
+    const SUB_SECTORS = [], SUB_PATCH = {}, SUB_TANK = {}, SUB_UNLOCK = {}, unlockRaw = {}, GP_TIER_PROC = {}, GP_TIER_PROC_D = {}, slThr = {};
     const seenId = new Set();
     for (const r of table('地點', ['地點ID', '海域ID', '字母', '中文名', '英文名', '解鎖等級', '經驗值', '偵查時間(分鐘×70)', '偵查航距消耗',
       '恩惠門檻', 'T2探索門檻', 'T3探索門檻', '收集門檻(普通)', '收集門檻(優秀)'])) {
@@ -57,6 +57,7 @@
         num(r['收集門檻(普通)']), num(r['收集門檻(優秀)'])]);
       if (!blank(r['開放版本'])) SUB_PATCH[id] = String(r['開放版本']).trim();
       if (num(r['青磷水消耗']) !== null) SUB_TANK[id] = num(r['青磷水消耗']);
+      if (!blank(r['解鎖來源ID'])) unlockRaw[id] = { row: r._row, v: String(r['解鎖來源ID']) };
       const x = num(r['座標X']), y = num(r['座標Y']), z = num(r['座標Z']);
       if (x !== null && y !== null && z !== null) coords[id] = [x, y, z];
       const tp = ['T1 Proc%', 'T2 Proc%', 'T3 Proc%'].map(k => num(r[k])), td = ['T1 D%', 'T2 D%', 'T3 D%'].map(k => num(r[k]));
@@ -69,6 +70,13 @@
     SUB_SECTORS.sort((a, b) => a[0] - b[0]);
     const secById = new Map(SUB_SECTORS.map(s => [s[0], s]));
     const secByKey = new Map(SUB_SECTORS.map(s => [`${s[1]}_${s[2]}`, s]));
+    // 解鎖來源：去過哪個地點（之一）才會發現這個地點；自動導航「開圖」用
+    for (const [id, { row, v }] of Object.entries(unlockRaw)) {
+      const ids = v.split(/[,，、\s]+/).map(num).filter(x => x !== null);
+      const okIds = ids.filter(x => secById.has(x));
+      if (okIds.length !== ids.length) warn(`地點 第${row}列：「解鎖來源ID」有不存在的地點ID（${v}）`);
+      if (okIds.length) SUB_UNLOCK[id] = okIds;
+    }
 
     // ── 路線距離：有座標就自動計算（直線距離 × 39.9／× 0.035 取整），否則用「路線距離」分頁 ──
     const sheetDist = {};
@@ -198,7 +206,7 @@
     }
     for (const r of table('基礎素材', ['名稱', '分類'])) if (str(r['名稱'])) CRAFT_BASE[str(r['名稱'])] = str(r['分類']);
 
-    const data = { MAP_NAMES, SUB_HOMES, SUB_SECTORS, SUB_PATCH, SUB_TANK, SUB_DIST, SUB_RANKS, SUB_CAP, PARTS,
+    const data = { MAP_NAMES, SUB_HOMES, SUB_SECTORS, SUB_PATCH, SUB_TANK, SUB_DIST, SUB_RANKS, SUB_CAP, PARTS, SUB_UNLOCK,
       SUB_LOOT, SUB_LOOT_TIER, GP_TIER_PROC, GP_TIER_PROC_D, GP_ITEM_PROB, SECTOR_LOOT,
       ITEM_DB, ITEM_DB_EN, PRIORITY_LOOT_GROUPS, COMMON_LOOT, GP_PRESETS, GP_PRESET_HINTS, CRAFT_PARTS, CRAFT_MATS, CRAFT_BASE };
 
