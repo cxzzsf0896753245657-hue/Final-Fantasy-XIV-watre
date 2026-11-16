@@ -112,6 +112,9 @@ window.UI_ACTIONS = {
     a153: function (event) { gpMySubmit() },
     a154: function (event) { gpMyCloseForm() },
     a155: function (event) { if (event.key === 'Enter') { event.preventDefault(); gpMySubmit(); } else if (event.key === 'Escape') gpMyCloseForm(); },
+    a156: function (event) { cfgRdSetMode(this.dataset.rd) },
+    a157: function (event) { cfgRdRender() },
+    a158: function (event) { cfgAn[this.dataset.opt] = this.checked; cfgAnRender(); },
     a128: function (event) { setRoomPerm(this.dataset.perm) },
     a129: function (event) { setFleetLayout(this.dataset.layout) },
     a130: function (event) { resetListColumns() },
@@ -1546,6 +1549,11 @@ window.UI_ACTIONS = {
         .cfg-an-goals { flex-basis: 100%; align-self: flex-start; max-width: max-content; }
         .cfg-an-goals button { padding: 6px 12px; }
         .cfg-an-goal-desc { flex-basis: 100%; font-size: 12px; opacity: .75; }
+        .cfg-an-opts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+        .cfg-an-opts label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+        .cfg-an-opts label[hidden] { display: none; }
+        .cfg-an-opts input { width: 16px; height: 16px; accent-color: var(--accent-color); }
+        .cfg-an-opts small { font-weight: 400; font-size: 12px; opacity: .65; }
         .cfg-an-gold { display: flex; flex-direction: column; gap: 8px; }
         .cfg-an-gold-route { font-size: 13px; }
         .cfg-an-gold-chk { display: flex; flex-direction: column; gap: 10px; }
@@ -2649,6 +2657,16 @@ window.UI_ACTIONS = {
             #panelRoute .rp-parts-grid .part-sel-trigger, #panelGear .rp-parts-grid .part-sel-trigger { min-width: 0; width: 100%; box-sizing: border-box; }
         }
 
+        /* ── 船艇設定：再出發方式 ── */
+        .cfg-rd { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+        .cfg-rd.off { opacity: .5; pointer-events: none; }
+        .cfg-rd-modes button { padding: 6px 14px; }
+        .cfg-rd-time { display: flex; flex-wrap: wrap; gap: 10px; }
+        .cfg-rd-time[hidden] { display: none; }
+        .cfg-rd-time label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; }
+        .cfg-rd-time input { width: 64px; height: 36px; box-sizing: border-box; padding: 0 8px; border-radius: 8px; border: 1px solid var(--edit-border); background: var(--edit-bg); color: var(--text-color); font-size: 14px; text-align: center; }
+        .cfg-rd-desc { flex-basis: 100%; font-size: 12.5px; opacity: .7; line-height: 1.5; }
+
         /* ── 我的配置 ── */
         .gp-my-acts { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-end; }
         .gp-my-btn { height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--edit-border); background: transparent; color: var(--text-color); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
@@ -3526,7 +3544,7 @@ window.icHtml = function (t) {
             <button type="button" class="drawer-close" id="drawerClose" aria-label="關閉面板" title="關閉（Esc）"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></button>
         </div>
         <div class="header-wrapper">
-            <h1><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器2.4.3 <span>阿緋@鳳凰</span></h1>
+            <h1><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器2.4.4 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button type="button" class="lp-icon-btn u1" data-on-click="a11" title="使用說明" aria-label="使用說明"><svg class="ic ic-book-open" aria-hidden="true"><use href="#i-book-open"/></svg></button>
@@ -3706,18 +3724,20 @@ window.icHtml = function (t) {
             <button type="button" class="collapsible-btn" data-on-click="a36" aria-expanded="false" aria-controls="content4"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div class="u38" style="color: var(--text-color);">
+                   <div class="u39" style="color: var(--accent-color);"><svg class="ic ic-calendar-days" aria-hidden="true"><use href="#i-calendar-days"/></svg> 2026/11/16　v2.4.4</div>
+                    <ul class="u40">
+                        <li>船艇設定新增「再出發方式」：上一次航線，或固定的剩餘時間；群組再出發也會照各船的設定</li>
+                        <li>開圖：預設只走撞得出新地點的點，可勾選「順路撞點」「順路衝經驗」</li>
+                        <li>開圖：守回港時段撞不到要開的點時，改走撞得到的路線並提醒</li>
+                        <li>修正：船艇設定裡自動導航預覽的航線和船卡不同</li>
+                    </ul>
                    <div class="u39" style="color: var(--accent-color);"><svg class="ic ic-calendar-days" aria-hidden="true"><use href="#i-calendar-days"/></svg> 2026/11/15　v2.4.3</div>
                     <ul class="u40">
                         <li>新增「自動導航」：選練等、挖寶、開圖或撈金，按「再出發」就自動排好下一趟</li>
                         <li>撈金：檢查 OJ／ROJZ／MROJZ 跑不跑得動、每站拿不拿得到沉船系列，不夠時建議升級或換配件</li>
                         <li>配件規劃：可以把配件存成「我的配置」，自己取名、寫備註，會雲端同步</li>
-                        <li>船艇設定的目前航線只顯示地點代號，畫面更簡潔</li>
-                        <li>船卡的自動導航只顯示需要注意的提醒，不再重複航線</li>
-                        <li>物品選單的海圖分段標題更明顯，並顯示該海圖的物品數</li>
-                        <li>修正：船艇設定裡自動導航預覽的航線和船卡不同（設定裡沒算到回港後升級）</li>
-                        <li>開圖：守回港時段會撞不到要開的點時，改走撞得到的路線，並提醒回港時間</li>
-                        <li>物品清單依海圖排序，三個分頁的分類統一</li>
-                        <li>介面：全新圖示、寬螢幕的規劃頁改兩欄、配件製作文字放大</li>
+                        <li>物品清單依海圖排序、海圖標題更明顯，三個分頁的分類統一</li>
+                        <li>介面：全新圖示、寬螢幕的規劃頁改兩欄、配件製作文字放大、船卡只顯示需要注意的提醒</li>
                         <li>操作：刪除船可以復原、成功訊息不用再按確定、填錯會直接標出欄位</li>
                         <li>修正：改暱稱後房間裡的名字沒更新、「螢光管吊燈」名稱</li>
                     </ul>
@@ -3929,7 +3949,7 @@ window.icHtml = function (t) {
 
     <!-- ══ RIGHT PANEL ══ -->
     <div class="right-panel">
-        <div class="desk-brand" aria-hidden="true"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器 <span>2.4.3・阿緋@鳳凰</span></div>
+        <div class="desk-brand" aria-hidden="true"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器 <span>2.4.4・阿緋@鳳凰</span></div>
         <!-- 分頁切換列 -->
         <div class="rp-panel-tabs" id="rpPanelTabs" role="tablist" aria-label="主要功能">
             <button type="button" class="rp-panel-tab active" id="tabFleet" role="tab" aria-controls="panelFleet" aria-selected="true" data-on-click="a37"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> 潛水艇艦隊 <span class="u43" id="fleetCount" style="background: rgba(var(--accent-rgb),0.2); color: var(--accent-color); border: 1px solid #555; border-radius: 6px; display: inline-block; min-width: 36px;">0 艘</span></button>
@@ -4446,6 +4466,20 @@ window.icHtml = function (t) {
             <div class="cfg-rt-sum" id="cfg-rt-sum"></div>
         </div>
 
+        <div class="sub-modal-section-title">再出發方式<span class="cfg-rt-note" id="cfg-rd-note">沒開自動導航時使用</span></div>
+        <div class="cfg-rd" id="cfg-rd">
+            <div class="fleet-layout-toggle cfg-rd-modes" role="radiogroup" aria-label="再出發方式">
+                <button type="button" data-rd="route" data-on-click="a156">上一次航線</button>
+                <button type="button" data-rd="time" data-on-click="a156">剩餘時間</button>
+            </div>
+            <div class="cfg-rd-time" id="cfg-rd-time">
+                <label><input type="number" id="cfg-rd-d" min="0" max="30" inputmode="numeric" data-on-input="a157"> 天</label>
+                <label><input type="number" id="cfg-rd-h" min="0" max="23" inputmode="numeric" data-on-input="a157"> 小時</label>
+                <label><input type="number" id="cfg-rd-m" min="0" max="59" inputmode="numeric" data-on-input="a157"> 分鐘</label>
+            </div>
+            <div class="cfg-rd-desc" id="cfg-rd-desc"></div>
+        </div>
+
         <div class="sub-modal-section-title">自動導航<span class="cfg-rt-note">開啟後，「再出發」會依目標自動規劃下一趟</span></div>
         <div class="cfg-an" id="cfg-an">
             <label class="cfg-an-switch"><input type="checkbox" id="cfg-an-on" data-on-change="a137"><span class="cfg-an-knob" aria-hidden="true"></span><span class="cfg-an-switch-txt">開啟自動導航</span></label>
@@ -4484,6 +4518,10 @@ window.icHtml = function (t) {
                         <button type="button" data-goal="next" data-on-click="a144">優先開下一張圖</button>
                     </div>
                     <div class="cfg-an-goal-desc" id="cfg-an-goal-desc"></div>
+                    <div class="cfg-an-opts">
+                        <label id="cfg-an-opt-open"><input type="checkbox" id="cfg-an-also-open" data-opt="alsoOpen" data-on-change="a158"> 順路撞點<small>同一張海圖其他沒開的點也一起撞</small></label>
+                        <label><input type="checkbox" id="cfg-an-also-exp" data-opt="alsoExp" data-on-change="a158"> 順路衝經驗<small>航距還夠時，加入經驗高的點</small></label>
+                    </div>
                     <label for="cfg-an-map" id="cfg-an-map-lbl">要開的海圖</label>
                     <select id="cfg-an-map" class="cfg-rt-map" data-on-change="a136"></select>
                     <div class="cfg-an-chart-st" id="cfg-an-chart-st"></div>
@@ -4746,7 +4784,8 @@ function subAutoRoute(rank,stats,allowed,o){
     let prio=[];
     if(o.mode!=='exp'){prio=avail.filter(s=>prioVal(s)>0).sort((a,b)=>prioVal(b)-prioVal(a)||b[6]-a[6]);if(!prio.length)return;}
     prio=prio.slice(0,25);
-    const rest=avail.filter(s=>!prio.includes(s)).sort((a,b)=>b[6]-a[6]).slice(0,Math.max(0,25-prio.length));
+    /* 開圖只走「撞得出新地點」的點；其他模式用經驗高的點補滿 */
+    const rest=o.mode==='chart'&&!o.fill?[]:avail.filter(s=>!prio.includes(s)).sort((a,b)=>b[6]-a[6]).slice(0,Math.max(0,25-prio.length));
     const cand=[...prio,...rest],N=cand.length+1,ids=[homeId,...cand.map(s=>s[0])];
     const DIST=new Float64Array(N*N),RNG=new Float64Array(N*N);
     for(let i=0;i<N;i++)for(let j=0;j<N;j++){const e=(SUB_DIST[ids[i]]||{})[ids[j]];DIST[i*N+j]=e?e[0]:Infinity;RNG[i*N+j]=e?e[1]:0;}
@@ -5062,30 +5101,24 @@ window.showConfirm = showConfirm;
     // ── 更新內容通知（每位使用者、每個瀏覽器只顯示一次）──
     // 之後要再通知：改 id 與 items，所有人就會再看到一次
     const UPDATE_NOTICE = {
-        id: '2.4.3',
-        title: '🆕 2.4.3 更新',
-        date: '2026/11/15',
+        id: '2.4.4',
+        title: '🆕 2.4.4 更新',
+        date: '2026/11/16',
         pages: [
-            { tab: '自動導航', icon: 'compass', title: '下一趟航線，自動幫你排',
-              lead: '在船卡打開「自動導航」，選目標，回港後按「再出發」就好。',
-              items: ['練等：跑經驗最多的航線',
-                      '挖寶：去拿得到目標物品的地點',
-                      '開圖：去撞還沒開的點',
-                      '撈金：固定跑 OJ／ROJZ／MROJZ'] },
-            { tab: '撈金', icon: 'coins', title: '跑不跑得動，差多少一眼看出',
-              lead: '船艇設定 → 自動導航 → 撈金',
-              items: ['等級、航距不夠，直接告訴你差多少',
-                      '每一站拿不拿得到沉船、上等沉船',
-                      '推薦升級或換配件，一鍵套用'] },
-            { tab: '我的配置', icon: 'settings', title: '自己的配件組合可以存起來',
-              lead: '配件規劃 →「＋ 存成我的配置」',
-              items: ['自己取名字、寫備註',
-                      '換裝置也看得到（雲端同步）'] },
-            { tab: '其他', icon: 'sparkles', title: '更好看、更好用',
+            { tab: '再出發方式', icon: 'refresh-cw', title: '再出發可以用固定時間',
+              lead: '船艇設定 →「再出發方式」',
+              items: ['上一次航線：照航線重算時間（預設）',
+                      '剩餘時間：填天、時、分，按「再出發」就從現在開始倒數',
+                      '群組再出發會照每艘船各自的設定',
+                      '有開自動導航時，以自動導航為準'] },
+            { tab: '開圖', icon: 'map', title: '開圖只撞開得了的點',
+              lead: '船艇設定 → 自動導航 → 開圖',
+              items: ['預設只走撞得出新地點的點，航程短、能多撞幾次',
+                      '想順便多撞或衝經驗：勾「順路撞點」「順路衝經驗」',
+                      '守回港時段撞不到時，會改走撞得到的路線並提醒'] },
+            { tab: '修正', icon: 'sparkles', title: '設定裡和船卡的航線一致了',
               lead: '完整內容請看左側「日記」。',
-              items: ['全新圖示；寬螢幕的規劃頁改成兩欄，不用一直捲',
-                      '刪除船後可以按「復原」',
-                      '配件製作的文字變大'] }
+              items: ['船艇設定裡的自動導航預覽，改用和船卡相同的「回港後等級」規劃'] }
         ]
     };
     let _unPage = 0;
@@ -6557,6 +6590,7 @@ window.showConfirm = showConfirm;
             : { mapId: cfgRtDefaultMap(t), secIds: [] };
         cfgRtRender();
         cfgAnOpen(t);
+        cfgRdOpen(t);
         document.getElementById('subConfigModal').style.display = 'flex';
     }
 
@@ -6659,6 +6693,7 @@ window.showConfirm = showConfirm;
         if (!newEndTimeStr) { fieldError('cfg-endtime', '回港時間不能是空的'); return; }
         const newEndTime = new Date(newEndTimeStr).getTime();
         if (isNaN(newEndTime)) { showAlert('回港時間格式錯誤'); return; }
+        if (!cfgAn.on && cfgRd.mode === 'time' && cfgRdMins() <= 0) { fieldError('cfg-rd-d', '請填剩餘時間（天、小時、分鐘至少填一個）'); return; }
         const expRaw = document.getElementById('cfg-exp').value.replace(/[^\d]/g, '');
         const newLvNum = parseInt(newLevel, 10) || 0;
         if (expRaw) {
@@ -6702,7 +6737,7 @@ window.showConfirm = showConfirm;
         const parts = createEmptyParts();
         PART_KEYS.forEach(key => { parts[key] = document.getElementById(`cfg-part-${key}`).value; });
         t.parts = parts;
-        cfgAnSave(t);
+        cfgAnSave(t); cfgRdSave(t);
         delete t.stats;
         delete t.statsUpdatedAt;
         saveActiveTimers();
@@ -9677,10 +9712,10 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         return { lv, stats };
     }
     // 開圖：找出「下一步能開的地點」與要去撞的來源地點
-    function autoChartPlan(group, lv, mapId, goal) {
+    function autoChartPlan(group, lv, mapId, goal, opts) {
         const ns = autoNodeState(group);
         if (ns.empty) return { why: 'nomap' };
-        if (goal === 'next') return autoChartNextMap(ns, lv, mapId);
+        if (goal === 'next') return autoChartNextMap(ns, lv, mapId, opts);
         const isOn = id => { const s = SECTOR_MAP.get(id); return s && ns.on(s[1], s[2]); };
         const forMap = m => {
             const next = new Map();   // 下一個能開的地點 → 來源（已開）
@@ -9717,7 +9752,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         return firstBlocked ? { ...firstBlocked, auto: true, why: 'rank' } : { why: 'alldone' };
     }
     // 開圖・優先開下一張圖：只往「下一張海圖第一個地點」那條解鎖路線撞（同海域其他沒開的點當作順便）
-    function autoChartNextMap(ns, lv, mapId) {
+    function autoChartNextMap(ns, lv, mapId, opts) {
         const isOn = id => { const s = SECTOR_MAP.get(id); return s && ns.on(s[1], s[2]); };
         const firstOf = m => SUB_SECTORS.filter(s => s[1] === m).sort((a, b) => a[0] - b[0])[0];
         const maps = Object.keys(MAP_NAMES).map(Number).filter(m => m > 1 && firstOf(m));
@@ -9747,7 +9782,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         }));
         const steps = Math.min(...[...depth.values()], 99);
         if (!Object.keys(weights).length) return { m: D, next, weights, blocked, steps, dest: true, auto: !mapId, why: 'rank' };
-        // 順便：同海域其他能開的點也加一點分數（路線經驗相同時優先多撞）
+        if (!(opts && opts.alsoOpen)) return { m: D, next, weights, blocked, steps, dest: true, auto: !mapId };
+        // 順路撞點（有勾才做）：同海域其他能開的點也加一點分數
         const fm = new Set([...next.keys()].map(id => (SECTOR_MAP.get(id) || [])[1]));
         SUB_SECTORS.filter(s => fm.has(s[1]) && !ns.on(s[1], s[2])).forEach(s => {
             const onSrc = (SUB_UNLOCK[s[0]] || []).filter(isOn);
@@ -9797,7 +9833,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const ns = autoNodeState(group);
         const depart = Math.max(Date.now(), t.endTime || 0);
         const hrs = rpHours.inc.size || rpHours.exc.size;
-        const key = JSON.stringify([an.mode, an.mode === 'loot' ? an.items || [] : 0, an.mode === 'chart' ? [an.mapId || 0, an.goal || 'all'] : an.mode === 'gold' ? an.route || 'OJ' : 0, lv, t.parts || {}, group, ns.json,
+        const key = JSON.stringify([an.mode, an.mode === 'loot' ? an.items || [] : 0, an.mode === 'chart' ? [an.mapId || 0, an.goal || 'all', !!an.alsoOpen, !!an.alsoExp] : an.mode === 'gold' ? an.route || 'OJ' : 0, lv, t.parts || {}, group, ns.json,
             [...rpHours.inc], [...rpHours.exc], hrs ? Math.floor(depart / 600000) : 0, window.SUB_DATA_VERSION || '']);
         return { lv, stats, group, ns, depart, key };
     }
@@ -9821,7 +9857,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const o = { mode: an.mode, depart, inc: [...rpHours.inc], exc: [...rpHours.exc] };
         let chart = null;
         if (an.mode === 'chart') {
-            chart = autoChartPlan(inp.group, lv, an.mapId || 0, an.goal);
+            chart = autoChartPlan(inp.group, lv, an.mapId || 0, an.goal, { alsoOpen: !!an.alsoOpen });
+            o.fill = !!an.alsoExp;
             if (chart.why) return Promise.resolve({ key: inp.key, res: { best: null, why: chart.why, chart } });
             o.weights = chart.weights;
         }
@@ -9968,18 +10005,50 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
     let _cfgAnTimer = null, _cfgAnSeq = 0;
     function cfgAnOpen(t) {
         const a = t.autoNav || {};
-        cfgAn = { on: !!a.on, mode: AUTO_NAV_MODES[a.mode] ? a.mode : 'exp', items: [...(a.items || [])], mapId: a.mapId || 0, goal: a.goal === 'next' ? 'next' : 'all', route: GOLD_ROUTES[a.route] ? a.route : 'OJ' };
+        cfgAn = { on: !!a.on, mode: AUTO_NAV_MODES[a.mode] ? a.mode : 'exp', items: [...(a.items || [])], mapId: a.mapId || 0, goal: a.goal === 'next' ? 'next' : 'all', route: GOLD_ROUTES[a.route] ? a.route : 'OJ', alsoOpen: !!a.alsoOpen, alsoExp: !!a.alsoExp };
         document.getElementById('cfg-an-cat').value = cfgAnCat;
         cfgAnSetCat(cfgAnCat, true);
         cfgAnRender();
     }
     function cfgAnSave(t) {
-        const a = { on: cfgAn.on, mode: cfgAn.mode, items: [...cfgAn.items], mapId: cfgAn.mapId, goal: cfgAn.goal, route: cfgAn.route };
+        const a = { on: cfgAn.on, mode: cfgAn.mode, items: [...cfgAn.items], mapId: cfgAn.mapId, goal: cfgAn.goal, route: cfgAn.route, alsoOpen: !!cfgAn.alsoOpen, alsoExp: !!cfgAn.alsoExp };
         if (!a.on && !t.autoNav) return;
         t.autoNav = a;
         AUTO_NAV_CACHE.delete(t.id);
     }
-    function cfgAnToggle(on) { cfgAn.on = !!on; cfgAnRender(); }
+    function cfgAnToggle(on) { cfgAn.on = !!on; cfgAnRender(); cfgRdRender(); }
+    // 再出發方式（上一次航線／剩餘時間）
+    let cfgRd = { mode: 'route' };
+    function cfgRdOpen(t) {
+        const rd = t.redep || {}, m = Math.max(0, Math.round(rd.mins || 0));
+        cfgRd = { mode: rd.mode === 'time' ? 'time' : 'route' };
+        document.getElementById('cfg-rd-d').value = Math.floor(m / 1440) || '';
+        document.getElementById('cfg-rd-h').value = Math.floor(m % 1440 / 60) || '';
+        document.getElementById('cfg-rd-m').value = (m % 60) || '';
+        cfgRdRender();
+    }
+    function cfgRdMins() {
+        const v = id => Math.max(0, parseInt(document.getElementById(id).value, 10) || 0);
+        return v('cfg-rd-d') * 1440 + v('cfg-rd-h') * 60 + v('cfg-rd-m');
+    }
+    function cfgRdSetMode(m) { cfgRd.mode = m === 'time' ? 'time' : 'route'; cfgRdRender(); if (cfgRd.mode === 'time') document.getElementById('cfg-rd-d').focus(); }
+    function cfgRdRender() {
+        const wrap = document.getElementById('cfg-rd'); if (!wrap) return;
+        const off = !!cfgAn.on;
+        wrap.classList.toggle('off', off);
+        document.getElementById('cfg-rd-note').textContent = off ? '已開啟自動導航，再出發會依自動導航' : '沒開自動導航時使用';
+        wrap.querySelectorAll('[data-rd]').forEach(b => { const on = b.dataset.rd === cfgRd.mode; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(on)); b.setAttribute('aria-pressed', String(on)); });
+        document.getElementById('cfg-rd-time').hidden = cfgRd.mode !== 'time';
+        const mins = cfgRdMins();
+        document.getElementById('cfg-rd-desc').textContent = cfgRd.mode === 'route'
+            ? '照「目前航線」重新計算航行時間。'
+            : (mins > 0 ? `按「再出發」後，從當下開始倒數 ${subFmtMins(mins)}，約 ${subFmtEta(Date.now() + mins * 60000)} 回港。不會重新計算航線。` : '填入天數、小時、分鐘；按「再出發」後會從當下開始倒數這段時間。');
+    }
+    function cfgRdSave(t) {
+        const mins = cfgRdMins();
+        if (cfgRd.mode === 'time') t.redep = { mode: 'time', mins };
+        else if (t.redep) t.redep = { mode: 'route', mins: t.redep.mins || mins || 0 };
+    }
     function cfgAnSetMode(m) { if (AUTO_NAV_MODES[m]) { cfgAn.mode = m; cfgAnRender(); } }
     function cfgAnSetMap(id) { cfgAn.mapId = id || 0; cfgAnRender(); }
     function cfgAnSetGoal(g) { cfgAn.goal = g === 'next' ? 'next' : 'all'; cfgAn.mapId = 0; cfgAnRender(); }
@@ -10027,7 +10096,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const same = level === String(t.level || '');
         return { ...t, id: '__cfg_preview__', level, parts,
                  expTrack: same ? t.expTrack : { level: parseInt(level, 10) || 0, exp: 0, known: false }, lastRoute: same ? t.lastRoute : null,
-                 autoNav: { on: true, mode: cfgAn.mode, items: [...cfgAn.items], mapId: cfgAn.mapId, goal: cfgAn.goal, route: cfgAn.route } };
+                 autoNav: { on: true, mode: cfgAn.mode, items: [...cfgAn.items], mapId: cfgAn.mapId, goal: cfgAn.goal, route: cfgAn.route, alsoOpen: !!cfgAn.alsoOpen, alsoExp: !!cfgAn.alsoExp } };
     }
     function cfgAnRender() {
         const wrap = document.getElementById('cfg-an');
@@ -10043,9 +10112,12 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const nextGoal = cfgAn.goal === 'next';
         document.querySelectorAll('.cfg-an-goals [data-goal]').forEach(b => { const on = b.dataset.goal === cfgAn.goal; b.setAttribute('aria-pressed', String(on)); b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(on)); });
         document.getElementById('cfg-an-goal-desc').textContent = nextGoal
-            ? '沿著解鎖路線往下一張海圖撞，先把新海圖開出來；路上同海域其他沒開的點會順便撞。'
+            ? '沿著解鎖路線往下一張海圖撞，先把新海圖開出來。'
             : '撞出這張海圖所有還沒開的點；沒指定時依海圖順序，由前往後開。';
         document.getElementById('cfg-an-map-lbl').textContent = nextGoal ? '要開到的海圖' : '要開的海圖';
+        document.getElementById('cfg-an-opt-open').hidden = !nextGoal;   // 未開的點都撞＝本來就會撞所有沒開的點
+        document.getElementById('cfg-an-also-open').checked = !!cfgAn.alsoOpen;
+        document.getElementById('cfg-an-also-exp').checked = !!cfgAn.alsoExp;
         const mapSel = document.getElementById('cfg-an-map');
         mapSel.innerHTML = (nextGoal ? '<option value="0">下一張還沒開的海圖</option>' : '<option value="0">依海圖順序（由前往後開）</option>')
             + Object.keys(MAP_NAMES).filter(k => !nextGoal || +k > 1).map(k => `<option value="${k}">${escapeHtml(MAP_NAMES[k])}</option>`).join('');
@@ -10133,7 +10205,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         }
         if (cfgAn.mode === 'chart') {
             const el = document.getElementById('cfg-an-chart-st');
-            const cp = lv ? autoChartPlan(group, lv, cfgAn.mapId || 0, cfgAn.goal) : { why: 'nolevel' };
+            const cp = lv ? autoChartPlan(group, lv, cfgAn.mapId || 0, cfgAn.goal, { alsoOpen: !!cfgAn.alsoOpen }) : { why: 'nolevel' };
             if (cp.why && cp.why !== 'rank') { el.className = 'cfg-an-chart-st bad'; el.innerHTML = icHtml('⚠️ ' + autoNavWhyText({ why: cp.why }, cfgAn)); }
             else {
                 const nx = [...cp.next].slice(0, 6).map(([id, srcs]) => `${secShort(id)}（從 ${srcs.map(s => (SECTOR_MAP.get(s) || [])[2]).join('/')}）`);
@@ -10236,7 +10308,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         if (!el || !t) return;
         const r = t.lastRoute, an = autoNavOf(t);
         const hasLast = !!(r && r.secIds && r.secIds.length);
-        if (!hasLast && !an) { el.style.display = 'none'; el.innerHTML = ''; updateAnLine(t, null); return; }
+        const tmFix = subRedepTimed(t);
+        if (!hasLast && !an && !tmFix) { el.style.display = 'none'; el.innerHTML = ''; updateAnLine(t, null); return; }
         if (an) autoNavEnsure(t);   // 設定或海圖變了才會重算；算完會再更新這一列
         const p = subPendingResult(t), cur = subLevelNum(t);
         const lvTxt = !cur ? '' : (p.level > cur ? ` · 回港後約 ${p.level} 級` : ` · 回港後仍是 ${cur} 級`);
@@ -10257,6 +10330,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             ? `<span class="route-line-txt route-line-auto"><span class="rl-k"><svg class="ic ic-compass" aria-hidden="true"><use href="#i-compass"/></svg> 下次航線：</span><span class="rl-v">${escapeHtml(MAP_NAMES[autoR.mapId] || '')} ${subRouteLetters(autoR)}</span>${lvTxt}</span>`
             : (an && plan.pending)
             ? `<span class="route-line-txt route-line-auto"><span class="rl-k"><svg class="ic ic-compass" aria-hidden="true"><use href="#i-compass"/></svg> 下次航線：</span>規劃中…${lvTxt}</span>`
+            : tmFix
+            ? `<span class="route-line-txt"><span class="rl-k">再出發：</span><span class="rl-v">固定 ${subFmtMins(tmFix)}</span>${hasLast ? lvTxt : ''}</span>`
             : hasLast
             ? `<span class="route-line-txt"><span class="rl-k">上次航線：</span><span class="rl-v">${escapeHtml(MAP_NAMES[r.mapId] || '')} ${subRouteLetters(r)}</span>${lvTxt}</span>`
             : (lvTxt ? `<span class="route-line-txt">${lvTxt.replace(' · ', '')}</span>` : '');
@@ -10271,8 +10346,19 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         try { autoNavPrune(); } catch (e) {}
     }, 60000);
     // 計算再出發的結果（不寫入）；失敗時回傳 { err }
+    // 再出發方式：'route'＝照上一次航線（預設）；'time'＝固定的剩餘時間。只有沒開自動導航時才會用到
+    function subRedepTimed(t) {
+        const rd = t && t.redep;
+        return (rd && rd.mode === 'time' && rd.mins > 0 && !autoNavOf(t)) ? rd.mins : 0;
+    }
     function subPlanRedepart(t) {
         let r = t && t.lastRoute, auto = null;
+        const tm = subRedepTimed(t);
+        if (tm) {
+            const oldLv0 = subLevelNum(t);
+            const p0 = (r && oldLv0) ? subPendingResult(t) : { level: oldLv0, exp: subExpTrack(t).exp, known: subExpTrack(t).known, gained: 0 };
+            return { timed: true, r: (r && r.secIds && r.secIds.length) ? r : null, oldLv: oldLv0, p: p0, calc: { timeMins: tm, exp: r ? (r.exp || 0) : 0 }, auto: null };
+        }
         const an = t && autoNavOf(t);
         if (an) {
             const c = autoNavCached(t);
@@ -10294,6 +10380,13 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
     function subCommitRedepart(t, plan, start) {
         const { r, p, calc } = plan;
         const totalSeconds = Math.round(calc.timeMins * 60);
+        if (plan.timed) {   // 固定時間：只重新計時；有上一次航線才累計那趟的經驗
+            if (p.level) { t.level = String(p.level); t.expTrack = { level: p.level, exp: p.exp, known: p.known }; }
+            if (r) t.lastRoute = { ...r, departLevel: p.level, credited: false };
+            t.startTime = start; t.endTime = start + totalSeconds * 1000; t.totalSeconds = totalSeconds;
+            delete t.stats; delete t.statsUpdatedAt;
+            return;
+        }
         t.level = String(p.level);
         t.expTrack = { level: p.level, exp: p.exp, known: p.known };
         t.lastRoute = { ...r, exp: calc.exp, timeMins: calc.timeMins, departLevel: p.level, credited: false };
@@ -10316,12 +10409,20 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
 
     async function subRedepart(id) {
         const t = getActiveTimers().find(x => x.id === id);
-        if (!t || !(t.lastRoute || autoNavOf(t))) return;
+        if (!t || !(t.lastRoute || autoNavOf(t) || subRedepTimed(t))) return;
         if (autoNavOf(t)) { try { await autoNavEnsure(t); } catch (e) {} }
         const plan = subPlanRedepart(t);
         if (plan.err) { showAlert('⚠️ ' + plan.err); return; }
         const { r, oldLv, p, calc } = plan;
         const now = Date.now();
+        if (plan.timed) {
+            const ls = [`${t.name}：固定時間 ${subFmtMins(calc.timeMins)}`];
+            if (p.level > oldLv) ls.push(`等級 ${oldLv} → ${p.level}${p.known ? '' : '（推算）'}`);
+            ls.push(`回港 ${subFmtEta(now + Math.round(calc.timeMins * 60) * 1000)}`);
+            if (now < t.endTime) ls.push('⚠️ 計時還沒結束，確定船已經回港並領取結果了嗎？');
+            showConfirm(ls.join('\n'), '再出發', 'primary').then(() => { subCommitRedepart(t, plan, Date.now()); subRebuildCards([t]); }).catch(() => {});
+            return;
+        }
         const diff = r.timeMins ? Math.round(calc.timeMins) - Math.round(r.timeMins) : 0;
         const diffTxt = diff ? `（比上次${diff < 0 ? '少' : '多'} ${Math.abs(diff)} 分）` : '（和上次相同）';
         const lines = [
@@ -10343,7 +10444,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
     function subGroupCandidates() {
         const now = Date.now();
         return getActiveTimers().filter(t =>
-            ((t.lastRoute && t.lastRoute.secIds && t.lastRoute.secIds.length) || autoNavOf(t)) &&
+            ((t.lastRoute && t.lastRoute.secIds && t.lastRoute.secIds.length) || autoNavOf(t) || subRedepTimed(t)) &&
             now >= t.endTime &&
             (activeGroup === GROUP_ALL || (t.group || DEFAULT_GROUP) === activeGroup));
     }
@@ -10356,7 +10457,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         btn.classList.toggle('is-empty', n === 0);
         const lbl = activeGroup === GROUP_ALL ? '全部再出發' : '群組再出發';
         btn.innerHTML = `<span class="fleet-add-icon"><svg class="ic ic-refresh-cw" aria-hidden="true"><use href="#i-refresh-cw"/></svg></span> ${lbl}<span class="grp-rd-count">${n}</span>`;
-        btn.title = activeGroup === GROUP_ALL ? '所有已回港、有上次航線的船一起再出發' : `「${activeGroup}」裡已回港、有上次航線的船一起再出發`;
+        btn.title = activeGroup === GROUP_ALL ? '所有已回港、可以再出發的船一起出發' : `「${activeGroup}」裡已回港、可以再出發的船一起出發`;
     }
     async function subGroupRedepart() {
         const list = subGroupCandidates();
@@ -10366,14 +10467,15 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         list.forEach(t => { const plan = subPlanRedepart(t); (plan.err ? bad : ok).push({ t, plan }); });
         const now = Date.now();
         const lines = [];
-        const anyAuto = ok.some(({ plan }) => plan.auto && !plan.auto.fallback);
-        const how = anyAuto ? '依自動導航或上次航線' : '照上次航線';
+        const anyAuto = ok.some(({ plan }) => plan.auto && !plan.auto.fallback), anyTimed = ok.some(({ plan }) => plan.timed);
+        const how = (anyAuto && anyTimed) || (anyTimed && ok.some(({ plan }) => !plan.timed)) ? '依各自的設定' : anyTimed ? '照設定的剩餘時間' : anyAuto ? '依自動導航或上次航線' : '照上次航線';
         lines.push(activeGroup === GROUP_ALL ? `以下 ${ok.length} 艘船會${how}再出發：` : `「${activeGroup}」以下 ${ok.length} 艘船會${how}再出發：`);
         ok.forEach(({ t, plan }) => {
             const { r, oldLv, p, calc } = plan;
-            const lv = p.level > oldLv ? `${oldLv}→${p.level}級${p.known ? '' : '*'}` : `${p.level}級`;
+            const lv = p.level > oldLv ? `${oldLv}→${p.level}級${p.known ? '' : '*'}` : (p.level ? `${p.level}級` : '');
             const tag = plan.auto && !plan.auto.fallback ? `🧭${AUTO_NAV_MODES[plan.auto.mode].label} ` : '';
-            lines.push(`・${t.name}　${tag}${MAP_NAMES[r.mapId] || ''} ${subRouteLetters(r)}　${lv}　回港 ${subFmtEta(now + Math.round(calc.timeMins * 60) * 1000)}`);
+            const where = plan.timed ? `固定 ${subFmtMins(calc.timeMins)}` : `${MAP_NAMES[r.mapId] || ''} ${subRouteLetters(r)}`;
+            lines.push(`・${t.name}　${tag}${where}　${lv ? lv + '　' : ''}回港 ${subFmtEta(now + Math.round(calc.timeMins * 60) * 1000)}`);
         });
         if (bad.length) {
             lines.push('', `以下 ${bad.length} 艘無法再出發，會跳過：`);
