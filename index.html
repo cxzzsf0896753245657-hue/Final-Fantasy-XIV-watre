@@ -3715,6 +3715,7 @@ window.icHtml = function (t) {
                         <li>船卡的自動導航只顯示需要注意的提醒，不再重複航線</li>
                         <li>物品選單的海圖分段標題更明顯，並顯示該海圖的物品數</li>
                         <li>修正：船艇設定裡自動導航預覽的航線和船卡不同（設定裡沒算到回港後升級）</li>
+                        <li>開圖：守回港時段會撞不到要開的點時，改走撞得到的路線，並提醒回港時間</li>
                         <li>物品清單依海圖排序，三個分頁的分類統一</li>
                         <li>介面：全新圖示、寬螢幕的規劃頁改兩欄、配件製作文字放大</li>
                         <li>操作：刪除船可以復原、成功訊息不用再按確定、填錯會直接標出欄位</li>
@@ -9826,7 +9827,22 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         }
         if (an.mode === 'loot') o.targets = (an.items || []).slice();
         const allowed = ns.empty ? null : SUB_SECTORS.filter(s => ns.on(s[1], s[2])).map(s => s[1] + '|' + s[2]);
-        return SubRouteWorker.runAuto([lv, { spd: stats.speed, rng: stats.range, explore: stats.explore }, allowed, o])
+        const shipArg = { spd: stats.speed, rng: stats.range, explore: stats.explore };
+        // 開圖：回港時段只是偏好。守時段會撞不到要開的點時，改走撞得到的路線，並提醒回港時間
+        if (an.mode === 'chart' && (o.inc.length || o.exc.length)) {
+            return Promise.all([SubRouteWorker.runAuto([lv, shipArg, allowed, o]), SubRouteWorker.runAuto([lv, shipArg, allowed, { ...o, inc: [], exc: [] }])])
+                .then(([a, b]) => {
+                    const sc = r => (r && r.best && r.best.score) ? r.best.score[0] : 0;
+                    let res = a;
+                    if (b.best && sc(b) > sc(a)) {
+                        res = b;
+                        res.hourOff = new Date(depart + b.best.timeMins * 60000).getHours();
+                        res.hourMiss = a.best ? 'less' : 'none';
+                    }
+                    res.chart = chart; return { key: inp.key, res };
+                });
+        }
+        return SubRouteWorker.runAuto([lv, shipArg, allowed, o])
             .then(res => {
                 if (!res.best && an.mode === 'loot' && o.targets.length && res.why === 'none') res.why = 'noitem';
                 res.chart = chart; return { key: inp.key, res };
@@ -9891,7 +9907,9 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         if (an.mode === 'chart' && res.chart) {
             const vis = new Set(b.secIds);
             const hit = [...res.chart.next].filter(([, srcs]) => srcs.some(s => vis.has(s))).map(([id]) => res.chart.dest ? secShort(id) : (SECTOR_MAP.get(id) || [])[2]);
+            if (res.hourOff != null) out.push(pill(`${warnIc} 回港時段外`, `守回港時段的話撞不到要開的點，這趟改走撞得到的路線，回港約 ${res.hourOff} 點`, 'warn'));
             if (hit.length) out.push(pill(`可開 ${escapeHtml(hit.join('、'))}`, `這趟有機會開出：${hit.join('、')}`));
+            else out.push(pill(`${warnIc} 這趟撞不到新地點`, '要開的點目前去不了（等級、航距或回港時段不符），這趟只會順便撞同海域的其他點', 'warn'));
             if (res.chart.dest && res.chart.steps < 99) out.push(pill(`距${escapeHtml(MAP_NAMES[res.chart.m] || '')}還差 ${res.chart.steps} 點`));
         }
         return out.length ? `<span class="route-auto">${out.join('')}</span>` : '';
@@ -10150,11 +10168,11 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                 if (an.mode === 'chart' && res.chart) {
                     const vis = new Set(b.secIds);
                     const hit = [...res.chart.next].filter(([, srcs]) => srcs.some(s => vis.has(s))).map(([id]) => secShort(id));
-                    extra = `・有機會開出 ${hit.join('、')}`;
+                    extra = hit.length ? `・有機會開出 ${hit.join('、')}` : '・⚠️ 這趟撞不到要開的點';
                 }
                 const pLv = autoNavShip(tmp).lv, nowLv = parseInt(tmp.level, 10) || 0;
                 pv.innerHTML = (pLv && pLv !== nowLv ? `<span style="opacity:.75">以回港後約 ${pLv} 級規劃</span><br>` : '') + `下次航線：<b>${escapeHtml(MAP_NAMES[b.mapId] || '')} ${b.secIds.map(id => escapeHtml(secLabel(id).split(' ').slice(1).join(' '))).join(' → ')}</b><br>`
-                    + `經驗 ${b.exp.toLocaleString()}・耗時 ${subFmtMins(b.timeMins)}・約 ${subFmtEta(eta + Math.round(b.timeMins * 60) * 1000)} 回港${icHtml(extra)}`;
+                    + `經驗 ${b.exp.toLocaleString()}・耗時 ${subFmtMins(b.timeMins)}・約 ${subFmtEta(eta + Math.round(b.timeMins * 60) * 1000)} 回港${icHtml(extra).replace(/\n/g, '<br>')}`;
             }).catch(() => { if (seq === _cfgAnSeq) pv.innerHTML = '<span class="bad"><svg class="ic ic-triangle-alert" aria-hidden="true"><use href="#i-triangle-alert"/></svg> 規劃時發生錯誤</span>'; });
         }, 250);
     }
