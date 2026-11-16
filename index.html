@@ -2,6 +2,161 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <script>
+/* 測試環境（GitHub Pages 的 /FF14-test/）：和正式環境同一個網域，瀏覽器資料原本是共用的。
+ * 這裡把測試環境的本機資料全部加上前綴「__test__:」，和正式環境分開；雲端同步 ID 也會是另一個。 */
+(function () {
+    const isTest = /\/ff14-test(\/|$)/i.test(location.pathname) || /[?&]testenv=1\b/.test(location.search);
+    window.__TEST_ENV__ = isTest;
+    if (!isTest) return;
+    const P = '__test__:', S = Storage.prototype, real = window.localStorage;
+    const g = S.getItem, s = S.setItem, r = S.removeItem;
+    S.getItem = function (k) { return g.call(this, this === real ? P + k : k); };
+    S.setItem = function (k, v) { return s.call(this, this === real ? P + k : k, v); };
+    S.removeItem = function (k) { return r.call(this, this === real ? P + k : k); };
+    // 把正式環境的船隊與設定複製一份過來（不含雲端同步、房間、裝置 ID）
+    const SKIP = /^(sub_user_uuid|sub_cloud_enabled|sub_sync_state|sub_sync_import|sub_owned_room_id|sub_room_ids)$/;
+    window.__copyProdData = function () {
+        const keys = [];
+        for (let i = 0; i < real.length; i++) { const k = real.key(i); if (k && !k.startsWith(P) && !SKIP.test(k) && !k.startsWith('firebase')) keys.push(k); }
+        keys.forEach(k => s.call(real, P + k, g.call(real, k)));
+        return keys.length;
+    };
+
+    // 測試資料：13 個群組、各種設定的船（只在測試環境）
+    window.__makeTestData = function () {
+        const now = Date.now(), H = 3600e3, M = 60e3;
+        let seed = 20261117; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+        const pick = a => a[Math.floor(rnd() * a.length)];
+        const grades = PART_GRADES.map(g => g.value).filter(Boolean);
+        const letters = m => SUB_SECTORS.filter(s => s[1] === m).sort((a, b) => a[0] - b[0]).map(s => s[2]);
+        const openUpTo = (maxMap, partialCount) => {   // 前幾張海圖全開，最後一張只開一部分
+            const o = {};
+            for (let m = 1; m <= maxMap; m++) { const L = letters(m); o[m] = m < maxMap ? L : L.slice(0, partialCount == null ? L.length : partialCount); }
+            return o;
+        };
+        const routeFor = (lv, parts, nodes, mapPref) => {
+            const st = computeStats(lv, parts); if (!st || !st.speed) return null;
+            const maps = Object.keys(nodes).map(Number).filter(m => nodes[m].length).sort((a, b) => b - a);
+            if (mapPref && maps.includes(mapPref)) maps.unshift(mapPref);
+            const want = 1 + Math.floor(rnd() * 4);
+            for (const m of maps) {   // 從最後一張海圖往前找，等級與航距都夠的路線
+                const cand = SUB_SECTORS.filter(s => s[1] === m && s[5] <= lv && nodes[m].includes(s[2])).sort((a, b) => a[7] - b[7]);
+                for (let k = Math.min(want, cand.length); k >= 1; k--) {
+                    for (let off = 0; off + k <= cand.length && off < 6; off++) {
+                        const ids = cand.slice(off, off + k).map(s => s[0]), c = subRouteCalc(ids, st.speed);
+                        if (c && c.range <= st.range) return { mapId: m, secIds: ids, exp: c.exp, timeMins: Math.round(c.timeMins) };
+                    }
+                }
+            }
+            return null;
+        };
+        const lootItems = (nodes, n) => {
+            const ids = SUB_SECTORS.filter(s => (nodes[s[1]] || []).includes(s[2])).map(s => s[0]);
+            const pool = [...new Set(ids.flatMap(id => [2, 3].flatMap(t => ((SUB_LOOT_TIER[id] || {})[t] || []))))];
+            const out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+            return out;
+        };
+        const P = (h, s, b, br) => ({ hull: h, stern: s, bow: b, bridge: br });
+        const fullMaps = openUpTo(7);
+        const G = [
+            { g: '新手練等', nodes: openUpTo(1, 8), lv: [3, 8, 12, 15], parts: () => P('1', '1', '1', '1'), an: { mode: 'exp' } },
+            { g: '中期練等', nodes: openUpTo(2, 10), lv: [42, 48, 55, 60], parts: () => P('2', '2', '1', '2'), an: { mode: 'exp' }, mixAn: true },
+            { g: '撈金 OJ', nodes: fullMaps, lv: [120, 122, 125, 128], parts: () => P('5改', '5改', '5改', '5改'), an: { mode: 'gold', route: 'OJ' } },
+            { g: '撈金 ROJZ／MROJZ', nodes: fullMaps, lv: [90, 105, 118, 130], parts: () => P('5改', '1', '5改', '5改'), an: { mode: 'gold' }, gold: ['ROJZ', 'MROJZ', 'ROJZ', 'MROJZ'] },
+            { g: '挖寶', nodes: openUpTo(4, 12), lv: [70, 80, 92, 101], parts: () => P(pick(grades), pick(grades), pick(grades), pick(grades)), an: { mode: 'loot' } },
+            { g: '開圖・未開都撞', nodes: openUpTo(3, 6), lv: [62, 66, 70, 75], parts: () => P('3', '3', '3', '3'), an: { mode: 'chart', goal: 'all' } },
+            { g: '開圖・下一張', nodes: openUpTo(5, 4), lv: [95, 100, 108, 112], parts: () => P('4', '4', '4', '4'), an: { mode: 'chart', goal: 'next' }, chartOpts: [[false, false], [true, false], [false, true], [true, true]] },
+            { g: '固定時間', nodes: openUpTo(3), lv: [50, 66, 80, 0], parts: () => P('3', '2', '3', '3'), redep: [90, 720, 1440 + 120, 2880] },
+            { g: '手動航線', nodes: openUpTo(6, 8), lv: [85, 99, 110, 125], parts: () => P(pick(grades), pick(grades), pick(grades), pick(grades)) },
+            { g: '全部已回港', nodes: openUpTo(4), lv: [60, 75, 88, 99], parts: () => P('4', '3', '4', '4'), returned: true },
+            { g: '長途航行中', nodes: openUpTo(7, 5), lv: [110, 115, 120, 125], parts: () => P('5', '5', '5', '5'), sailing: true },
+            { g: '混合設定', nodes: openUpTo(4, 9), lv: [30, 72, 104, 126], mixed: true, parts: () => P(pick(grades), pick(grades), pick(grades), pick(grades)) },
+            { g: '未設定資料', nodes: {}, lv: [0, 0, 0, 0], parts: () => P('', '', '', '') },
+            { g: '空群組', nodes: {}, lv: [] }
+        ];
+        const ships = [], mapNodes = {}, groups = [];
+        let n = 0;
+        G.forEach(def => {
+            groups.push(def.g);
+            if (Object.keys(def.nodes).length) mapNodes[def.g] = def.nodes;
+            def.lv.forEach((lv, i) => {
+                n++;
+                const parts = lv ? def.parts() : P('', '', '', '');
+                const r = lv ? routeFor(lv, parts, def.nodes) : null;
+                const mins = r ? r.timeMins : 600 + Math.floor(rnd() * 1800);
+                // 回港時間：已回港 / 快回港 / 航行中 混合
+                let endOff;
+                if (def.returned) endOff = -(5 + Math.floor(rnd() * 600)) * M;
+                else if (def.sailing) endOff = (mins * 0.5 + rnd() * mins * 0.4) * M;
+                else endOff = [-(30 * M), 3 * M, 5 * H, 20 * H][i % 4];
+                endOff = Math.min(endOff, mins * M - M);
+                const endTime = now + endOff, totalSeconds = Math.round(mins * 60);
+                const t = { id: 'test_' + n + '_' + Math.random().toString(36).slice(2, 6), name: def.g.replace(/ /g, '') + ' ' + (i + 1) + '號', level: lv ? String(lv) : '', startTime: endTime - totalSeconds * 1000, endTime, totalSeconds, parts, group: def.g };
+                if (r) t.lastRoute = { ...r, departLevel: lv, credited: false };
+                const base = { on: true, items: [], mapId: 0, goal: 'all', route: 'OJ', alsoOpen: false, alsoExp: false };
+                if (def.an && !(def.mixAn && i % 2)) {
+                    t.autoNav = { ...base, ...def.an };
+                    if (def.gold) t.autoNav.route = def.gold[i];
+                    if (def.an.mode === 'loot') t.autoNav.items = lootItems(def.nodes, 1 + (i % 3));
+                    if (def.chartOpts) { t.autoNav.alsoOpen = def.chartOpts[i][0]; t.autoNav.alsoExp = def.chartOpts[i][1]; }
+                }
+                if (def.redep) { t.redep = { mode: 'time', mins: def.redep[i] }; if (i === 3) delete t.lastRoute; }
+                if (def.mixed) {
+                    if (i === 0) t.autoNav = { ...base, mode: 'exp' };
+                    if (i === 1) t.redep = { mode: 'time', mins: 600 };
+                    if (i === 2) t.autoNav = { ...base, mode: 'chart', goal: 'next', alsoOpen: true };
+                    if (i === 3) { t.autoNav = { ...base, mode: 'gold', route: 'MROJZ' }; t.redep = { mode: 'time', mins: 300 }; }
+                }
+                ships.push(t);
+            });
+        });
+        // 未分類也放兩艘
+        [[40, true], [88, false]].forEach(([lv, ret], i) => {
+            const parts = P('2', '2', '2', '2'), r = routeFor(lv, parts, fullMaps, 1), mins = r ? r.timeMins : 900;
+            const endTime = now + (ret ? -H : 8 * H), totalSeconds = Math.round(mins * 60);
+            ships.push({ id: 'test_u' + i, name: '未分類 ' + (i + 1) + '號', level: String(lv), startTime: endTime - totalSeconds * 1000, endTime, totalSeconds, parts, group: DEFAULT_GROUP, ...(r ? { lastRoute: { ...r, departLevel: lv, credited: false } } : {}) });
+        });
+        const presets = [
+            { id: 'tp1', name: '我的練等', note: '中期練等用', parts: P('2', '2', '1', '2') },
+            { id: 'tp2', name: '撈金 3124', note: '', parts: P('3', '1', '2', '4') },
+            { id: 'tp3', name: '只設船體', note: '測試部分配件', parts: P('5改', '', '', '') }
+        ];
+        localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(ships));
+        localStorage.setItem('sub_groups', JSON.stringify(groups));
+        localStorage.setItem('sub_map_nodes', JSON.stringify(mapNodes));
+        localStorage.setItem('sub_gp_presets', JSON.stringify(presets));
+        localStorage.setItem('sub_active_group', '全部');
+        localStorage.setItem('sub_rp_hours', JSON.stringify({ inc: [], exc: [] }));
+        return { ships: ships.length, groups: groups.length };
+    };
+    document.addEventListener('DOMContentLoaded', () => {
+        const b = document.createElement('div');
+        b.id = 'testEnvBadge';
+        b.innerHTML = '<b>測試環境</b><span>資料和正式環境分開</span><button type="button" data-t="gen">建立測試資料</button><button type="button" data-t="copy">複製正式船隊</button>';
+        b.querySelector('[data-t=gen]').addEventListener('click', async () => {
+            const ok = await showConfirm('建立一組測試資料？\n13 個群組、約 50 艘船，包含練等、挖寶、開圖、撈金、固定時間、已回港、航行中、未設定資料等情況。\n測試環境目前的船隊、群組、海圖、我的配置會被覆蓋。', '建立', 'primary').then(() => true, () => false);
+            if (!ok) return;
+            window.__makeTestData(); location.reload();
+        });
+        b.querySelector('[data-t=copy]').addEventListener('click', async () => {
+            const ok = typeof showConfirm === 'function'
+                ? await showConfirm('把正式環境這台裝置上的船隊、群組、海圖等設定複製到測試環境？\n測試環境目前的資料會被覆蓋。\n（不會複製雲端同步與房間，正式環境的資料不受影響）', '複製', 'primary').then(() => true, () => false)
+                : confirm('把正式環境的資料複製到測試環境？');
+            if (!ok) return;
+            window.__copyProdData(); location.reload();
+        });
+        document.body.appendChild(b);
+    });
+})();
+    </script>
+    <style>
+        #testEnvBadge { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 99990; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: #c2410c; color: #fff; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+        #testEnvBadge span { opacity: .85; }
+        #testEnvBadge button { border: 0; border-radius: 999px; padding: 5px 12px; background: rgba(255,255,255,.2); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+        #testEnvBadge button:hover { background: rgba(255,255,255,.32); }
+        @media (max-width: 640px) { #testEnvBadge { bottom: 70px; } #testEnvBadge span { display: none; } }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
 /* 頁面上按鈕／欄位的事件處理（原本寫在 HTML 標籤的 onclick 等屬性，改為集中在這裡）。
@@ -3730,6 +3885,7 @@ window.icHtml = function (t) {
                         <li>開圖：預設只走撞得出新地點的點，可勾選「順路撞點」「順路衝經驗」</li>
                         <li>開圖：守回港時段撞不到要開的點時，改走撞得到的路線並提醒</li>
                         <li>修正：船艇設定裡自動導航預覽的航線和船卡不同</li>
+                        <li>修正：很久沒開的裝置打開後，已刪除的船跑回來、別台的修改被蓋回舊資料</li>
                     </ul>
                    <div class="u39" style="color: var(--accent-color);"><svg class="ic ic-calendar-days" aria-hidden="true"><use href="#i-calendar-days"/></svg> 2026/11/15　v2.4.3</div>
                     <ul class="u40">
@@ -11572,6 +11728,12 @@ window.toggleUploadZone = function(btn) {
     const hash = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + str.length; };
     const toArr = v => Array.isArray(v) ? v.filter(Boolean) : (v && typeof v === 'object' ? Object.values(v) : []);
     let st = null;
+    // 這次開啟（或從背景回來）後還沒跟雲端對過資料＝資料可能是舊的。
+    // 這段期間偵測到的修改（多半是開啟時程式自動更新，例如回港加經驗）不蓋上「現在」的時間，
+    // 避免舊資料贏過別台裝置較新的修改或刪除。
+    // 電腦睡眠、分頁被瀏覽器凍結後醒來：計時器會停住，用心跳間隔偵測，醒來後也要先對資料
+    let pulled = false, hiddenAt = 0, beat = Date.now();
+    const isStale = () => !pulled || Date.now() - beat > 30000 || (document.hidden && hiddenAt && Date.now() - hiddenAt > 60000);
     function load() {
         if (st) return st;
         try { st = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { st = null; }
@@ -11591,11 +11753,12 @@ window.toggleUploadZone = function(btn) {
             Object.keys(META).forEach(k => { const v = metaRaw(k); st.msnap[k] = v == null ? null : hash(v); st.metaT[k] = 0; });
             st.init = true; save(); return;
         }
-        Object.keys(cur).forEach(id => { if (st.snap[id] !== cur[id]) { st.snap[id] = cur[id]; st.shipT[id] = now; delete st.tomb[id]; st.dirty[id] = 1; } });
+        const stale = isStale();
+        Object.keys(cur).forEach(id => { if (st.snap[id] !== cur[id]) { const known = id in st.snap; st.snap[id] = cur[id]; st.shipT[id] = (stale && known) ? (st.shipT[id] || 0) : now; delete st.tomb[id]; st.dirty[id] = 1; } });
         Object.keys(st.snap).forEach(id => { if (!(id in cur)) { delete st.snap[id]; delete st.shipT[id]; st.tomb[id] = now; st.dirty[id] = 1; } });
         Object.keys(META).forEach(k => { const v = metaRaw(k), h = v == null ? null : hash(v);
             if (!(k in st.msnap)) { st.msnap[k] = h; st.metaT[k] = 0; if (h != null) st.mdirty[k] = 1; return; }   // 新加入的同步項目：只建立基準
-            if (h !== st.msnap[k]) { st.msnap[k] = h; st.metaT[k] = now; st.mdirty[k] = 1; } });
+            if (h !== st.msnap[k]) { st.msnap[k] = h; st.metaT[k] = stale ? (st.metaT[k] || 0) : now; st.mdirty[k] = 1; } });
         Object.keys(st.tomb).forEach(id => { if (now - st.tomb[id] > TOMB_KEEP) delete st.tomb[id]; });
         save();
     }
@@ -11662,8 +11825,10 @@ window.toggleUploadZone = function(btn) {
                 return;
             }
             if (!L) { if (prefer === 'local') { if (!R.x) { st.tomb[id] = Date.now(); st.dirty[id] = 1; } } else if (applyEntry(arr, id, R) && !R.x) changed = true; return; }
-            const useR = prefer === 'remote' ? true : prefer === 'local' ? false : R.t >= L.t;
-            if (useR) { if (applyEntry(arr, id, R)) changed = true; } else st.dirty[id] = 1;
+            // 時間相同：雲端從上次同步後沒變過 → 本機有改就以本機為準（並蓋上現在的時間再上傳）
+            const useR = prefer === 'remote' ? true : prefer === 'local' ? false : (R.t > L.t || (R.t === L.t && !st.dirty[id]));
+            if (useR) { if (applyEntry(arr, id, R)) changed = true; }
+            else { if (!L.x && L.t <= R.t) st.shipT[id] = Date.now(); st.dirty[id] = 1; }
         });
         if (changed) { savedTimers = arr; localStorage.setItem('ffxiv_submarine_timers', JSON.stringify(arr)); }
         let mchanged = false;
@@ -11671,11 +11836,11 @@ window.toggleUploadZone = function(btn) {
             const L = localMeta(k), R = rmeta[k];
             if (!R) { if (prefer !== 'remote' && L.d !== 'null') st.mdirty[k] = 1; return; }
             if (L.d === R.d) { st.metaT[k] = Math.max(L.t, R.t); delete st.mdirty[k]; return; }
-            const useR = prefer === 'remote' ? true : prefer === 'local' ? false : R.t >= L.t;
+            const useR = prefer === 'remote' ? true : prefer === 'local' ? false : (R.t > L.t || (R.t === L.t && !st.mdirty[k]));
             if (useR) {
                 if (R.d === 'null') localStorage.removeItem(META[k]); else localStorage.setItem(META[k], R.d);
                 st.msnap[k] = R.d === 'null' ? null : hash(R.d); st.metaT[k] = R.t; delete st.mdirty[k]; mchanged = true;
-            } else st.mdirty[k] = 1;
+            } else { if (L.t <= R.t) st.metaT[k] = Date.now(); st.mdirty[k] = 1; }
         });
         save();
         if (changed || mchanged) refreshUI();
@@ -11716,7 +11881,7 @@ window.toggleUploadZone = function(btn) {
     let pushing = false, again = false, retryT = null, online = false;
     async function push() {
         const CS = window.CloudSync;
-        if (!CS || !CS.isEnabled() || !online) return;
+        if (!CS || !CS.isEnabled() || !online || isStale()) return;   // 還沒跟雲端對過資料前不上傳
         if (pushing) { again = true; return; }
         pushing = true;
         const ids = Object.keys(st.dirty), mk = Object.keys(st.mdirty), patch = {};
@@ -11740,7 +11905,21 @@ window.toggleUploadZone = function(btn) {
         pushing = false;
         if (again) { again = false; push(); }
     }
-    window.addEventListener('online', () => { if (online) push(); else if (localStorage.getItem('sub_cloud_enabled') === '1') enable(); });
+    // 連線恢復、或從背景回來超過 1 分鐘：先抓雲端最新資料合併，再上傳
+    async function resync() {
+        const CS = window.CloudSync;
+        if (!CS || !CS.isEnabled() || !online || enabling) return;
+        pulled = false;
+        try { const raw = await CS.getUser(); load(); scan(); if (raw) merge(decodeShips(raw), decodeMeta(raw), 'newer'); }
+        catch (e) { clearTimeout(retryT); retryT = setTimeout(resync, 15000); return; }
+        pulled = true; push();
+    }
+    window.addEventListener('online', () => { if (online) resync(); else if (localStorage.getItem('sub_cloud_enabled') === '1') enable(); });
+    setInterval(() => { const gap = Date.now() - beat; beat = Date.now(); if (gap > 30000 && !document.hidden) resync(); }, 5000);
+    document.addEventListener('visibilitychange', () => {
+        const away = hiddenAt && Date.now() - hiddenAt > 60000; hiddenAt = 0;
+        if (away) resync();
+    });
 
     // ── 啟用同步 ──
     function askChoice(lCount, rCount) {
@@ -11796,17 +11975,17 @@ window.toggleUploadZone = function(btn) {
                 localStorage.setItem('sub_cloud_enabled', '1');
                 localStorage.removeItem('sub_sync_import');
                 CS.enable(); online = true;
-                merge(remote, rmeta, prefer);
+                merge(remote, rmeta, prefer); pulled = true;
                 if (choice === 'merge') dedupe(localOnly, remoteOnly);
             } else {
                 localStorage.setItem('sub_cloud_enabled', '1');
                 CS.enable(); online = true;
-                merge(remote, rmeta, 'newer');
+                merge(remote, rmeta, 'newer'); pulled = true;
             }
             st.base = uuid; save();
             if (st.legacy) markAll();
             await push();
-            CS.listenUser(r => { if (!r) return; const lg = isLegacy(r); if (lg) st.legacy = true; merge(decodeShips(r), decodeMeta(r), 'newer'); if (lg) markAll(); push(); });
+            CS.listenUser(r => { if (!r) return; const lg = isLegacy(r); if (lg) st.legacy = true; merge(decodeShips(r), decodeMeta(r), 'newer'); if (!document.hidden) pulled = true; if (lg) markAll(); push(); });
             // 房主：重新連線後把房間和自己的船隊對齊一次
             const own = window._ownedRoomId;
             if (own && window._fbGet) window._fbGet(own).then(r => { if (r) ownerRoomSync(own, r); }).catch(() => {});
