@@ -3714,6 +3714,7 @@ window.icHtml = function (t) {
                         <li>船艇設定的目前航線只顯示地點代號，畫面更簡潔</li>
                         <li>船卡的自動導航只顯示需要注意的提醒，不再重複航線</li>
                         <li>物品選單的海圖分段標題更明顯，並顯示該海圖的物品數</li>
+                        <li>修正：船艇設定裡自動導航預覽的航線和船卡不同（設定裡沒算到回港後升級）</li>
                         <li>物品清單依海圖排序，三個分頁的分類統一</li>
                         <li>介面：全新圖示、寬螢幕的規劃頁改兩欄、配件製作文字放大</li>
                         <li>操作：刪除船可以復原、成功訊息不用再按確定、填錯會直接標出欄位</li>
@@ -10004,7 +10005,10 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const parts = createEmptyParts();
         PART_KEYS.forEach(key => { parts[key] = document.getElementById(`cfg-part-${key}`).value; });
         const level = document.getElementById('cfg-level').value.trim();
-        return { ...t, id: '__cfg_preview__', level, parts, expTrack: { level: parseInt(level, 10) || 0, exp: 0, known: false }, lastRoute: null,
+        // 等級沒改：沿用船上的經驗紀錄與上一趟航線，跟船卡一樣以「回港後的等級」規劃；改了等級才以新等級重算
+        const same = level === String(t.level || '');
+        return { ...t, id: '__cfg_preview__', level, parts,
+                 expTrack: same ? t.expTrack : { level: parseInt(level, 10) || 0, exp: 0, known: false }, lastRoute: same ? t.lastRoute : null,
                  autoNav: { on: true, mode: cfgAn.mode, items: [...cfgAn.items], mapId: cfgAn.mapId, goal: cfgAn.goal, route: cfgAn.route } };
     }
     function cfgAnRender() {
@@ -10148,7 +10152,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                     const hit = [...res.chart.next].filter(([, srcs]) => srcs.some(s => vis.has(s))).map(([id]) => secShort(id));
                     extra = `・有機會開出 ${hit.join('、')}`;
                 }
-                pv.innerHTML = `下次航線：<b>${escapeHtml(MAP_NAMES[b.mapId] || '')} ${b.secIds.map(id => escapeHtml(secLabel(id).split(' ').slice(1).join(' '))).join(' → ')}</b><br>`
+                const pLv = autoNavShip(tmp).lv, nowLv = parseInt(tmp.level, 10) || 0;
+                pv.innerHTML = (pLv && pLv !== nowLv ? `<span style="opacity:.75">以回港後約 ${pLv} 級規劃</span><br>` : '') + `下次航線：<b>${escapeHtml(MAP_NAMES[b.mapId] || '')} ${b.secIds.map(id => escapeHtml(secLabel(id).split(' ').slice(1).join(' '))).join(' → ')}</b><br>`
                     + `經驗 ${b.exp.toLocaleString()}・耗時 ${subFmtMins(b.timeMins)}・約 ${subFmtEta(eta + Math.round(b.timeMins * 60) * 1000)} 回港${icHtml(extra)}`;
             }).catch(() => { if (seq === _cfgAnSeq) pv.innerHTML = '<span class="bad"><svg class="ic ic-triangle-alert" aria-hidden="true"><use href="#i-triangle-alert"/></svg> 規劃時發生錯誤</span>'; });
         }, 250);
