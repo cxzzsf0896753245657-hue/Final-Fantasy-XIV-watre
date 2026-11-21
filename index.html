@@ -788,7 +788,7 @@ window.UI_ACTIONS = {
         .lp-switch { flex-shrink: 0; width: 40px; height: 22px; border-radius: 999px; border: 0; padding: 0; cursor: pointer; background: rgba(255,255,255,0.18); position: relative; transition: background .15s; }
         body.light-mode .lp-switch { background: rgba(0,0,0,0.18); }
         .lp-switch span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
-        .lp-switch[aria-checked="true"] { background: #4caf50; }
+        .lp-switch[aria-checked="true"], body.light-mode .lp-switch[aria-checked="true"] { background: #4caf50; }
         .lp-switch[aria-checked="true"] span { transform: translateX(18px); }
         .lp-sound-head { order: -1; border-bottom: 0; padding-bottom: 2px; margin-bottom: 0; }
         #soundOpts.off { opacity: .35; pointer-events: none; }
@@ -891,6 +891,8 @@ window.UI_ACTIONS = {
         .sync-choice-cancel { margin-top: 12px; background: none; border: 0; color: var(--text-color); opacity: .6; cursor: pointer; font-size: 12.5px; padding: 4px; }
         .sync-choice-cancel:hover { opacity: 1; }
         body.light-mode .cloud-status-badge { background: rgba(0,0,0,0.07); color: #999; }
+        body.light-mode .cloud-status-badge.connected { background: rgba(76,175,80,0.15); color: #2e7d32; }
+        body.light-mode .cloud-status-badge.error { background: rgba(255,83,112,0.12); color: #c62828; }
 
         /* ── 房間列表小卡 ── */
         .room-card {
@@ -1460,6 +1462,7 @@ window.UI_ACTIONS = {
         body.light-mode .sm-pr { color: #a06a00; }
         .sm-pr small { font-size: 10.5px; font-weight: 500; color: #888; margin-left: 4px; }
         .sm-pr.na, .sm-pr.ld { color: #777; font-weight: 500; font-size: 11.5px; }
+        body.light-mode .sm-pr.na, body.light-mode .sm-pr.ld { color: #888; }
         .sm-pts { margin-left: auto; flex: none; display: inline-flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 46%; }
         .sm-help { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 3px; border-radius: 50%; font-style: normal; font-size: 9.5px; font-weight: 800; line-height: 1; vertical-align: 1px; cursor: help; color: #9aa0aa; border: 1px solid rgba(154,160,170,.55); }
         .sm-help:hover, .sm-help:focus-visible { color: rgb(var(--accent-rgb)); border-color: rgb(var(--accent-rgb)); outline: none; }
@@ -1499,7 +1502,7 @@ window.UI_ACTIONS = {
         .map-group-tab.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
         body.light-mode .map-group-tab { border-color: rgba(0,0,0,0.12); color: #666; }
         body.light-mode .map-group-tab:hover { border-color: rgba(var(--accent-rgb),0.4); color: var(--accent-color); }
-        body.light-mode .map-group-tab.active { background: var(--accent-color); color: #fff; }
+        body.light-mode .map-group-tab.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
         /* ── 折疊箭頭 ── */
         .map-collapse-arrow {
             font-size: 9px;
@@ -1977,6 +1980,7 @@ window.UI_ACTIONS = {
         body.light-mode .cfg-an-preview .bad { color: #b26a00; }
         .cfg-an-hours { font-size: 12px; opacity: .7; }
         body.light-mode .route-next { color: #333; }
+        body.light-mode .route-next.warn { color: #a05a00; }
         body.light-mode .route-line-txt { color: #666; }
         .card-icon-btn.btn-redepart { height: 30px; padding: 0 14px; flex-shrink: 0; background: transparent; color: var(--accent-color); box-shadow: inset 0 0 0 1px var(--accent-color); }
         .card-icon-btn.btn-redepart:hover { background: rgba(var(--accent-rgb),0.15); }
