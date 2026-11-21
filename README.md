@@ -5,10 +5,12 @@ index.html               網站本體（程式與版面）
 data/                    網站數據（由數據總表轉出）
   sectors.js             海域、地點、航行距離、等級、部件
   loot.js                掉落物：層級、機率、數量
-  items.js               物品名稱、高優先物品
+  items.js               物品名稱、分類（遊戲分類／掉落分類）、交易、高優先物品
   presets.js             常用配件預設
   craft.js               配件製作配方
   version.js             數據版本號（讓玩家的瀏覽器知道要重新下載數據）
+  maps/1.jpg ~ 7.jpg      海圖設定分頁的海圖底圖（來源：XIVAPI）
+  maps/guide-1~7.jpg      左側「海圖」工具的參考圖
 tools/
   excel-to-data.html     數據總表（xlsx）→ data 檔案的轉換工具，用瀏覽器打開即可
   convert.js             轉換工具的程式

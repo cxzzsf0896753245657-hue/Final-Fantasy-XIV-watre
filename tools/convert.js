@@ -3,9 +3,9 @@
  * 回傳 { files: {檔名: 內容}, warnings: [...], summary: {...}, version } */
 (function (root) {
   const FILES = {
-    'sectors.js': ['海域、地點、航行距離、等級、部件', ['MAP_NAMES', 'SUB_HOMES', 'SUB_SECTORS', 'SUB_PATCH', 'SUB_TANK', 'SUB_DIST', 'SUB_RANKS', 'SUB_CAP', 'PARTS', 'SUB_UNLOCK']],
+    'sectors.js': ['海域、地點、航行距離、等級、部件', ['MAP_NAMES', 'SUB_HOMES', 'SUB_SECTORS', 'SUB_PATCH', 'SUB_TANK', 'SUB_DIST', 'SUB_RANKS', 'SUB_CAP', 'PARTS', 'SUB_UNLOCK', 'SUB_MAP_XY']],
     'loot.js': ['掉落物：層級、機率、數量', ['SUB_LOOT', 'SUB_LOOT_TIER', 'GP_TIER_PROC', 'GP_TIER_PROC_D', 'GP_ITEM_PROB', 'SECTOR_LOOT']],
-    'items.js': ['物品名稱、高優先物品、常見材料', ['ITEM_DB', 'ITEM_DB_EN', 'PRIORITY_LOOT_GROUPS', 'COMMON_LOOT']],
+    'items.js': ['物品名稱、分類、交易、高優先物品、常見材料', ['ITEM_DB', 'ITEM_DB_EN', 'ITEM_TYPE', 'ITEM_LOOT_CAT', 'ITEM_TRADE', 'PRIORITY_LOOT_GROUPS', 'COMMON_LOOT']],
     'presets.js': ['常用配件預設', ['GP_PRESETS', 'GP_PRESET_HINTS']],
     'craft.js': ['配件製作配方', ['CRAFT_PARTS', 'CRAFT_MATS', 'CRAFT_BASE']],
   };
@@ -32,13 +32,15 @@
     }
 
     // ── 海域 ──
-    const MAP_NAMES = {}, SUB_HOMES = {}, coords = {};
+    const MAP_NAMES = {}, SUB_HOMES = {}, coords = {}, SUB_MAP_XY = {};
     for (const r of table('海域', ['海域ID', '名稱', '起點節點ID'])) {
       const m = num(r['海域ID']), h = num(r['起點節點ID']);
       if (m === null || h === null) { warn(`海域 第${r._row}列：海域ID 或起點節點ID 空白，已略過`); continue; }
       MAP_NAMES[m] = str(r['名稱']); SUB_HOMES[m] = h;
       const x = num(r['起點X']), y = num(r['起點Y']), z = num(r['起點Z']);
       if (x !== null && y !== null && z !== null) coords[h] = [x, y, z];
+      const mx = num(r['起點海圖X']), my = num(r['起點海圖Y']);
+      if (mx !== null && my !== null) SUB_MAP_XY[h] = [mx, my];
     }
 
     // ── 地點 ──
@@ -60,6 +62,8 @@
       if (!blank(r['解鎖來源ID'])) unlockRaw[id] = { row: r._row, v: String(r['解鎖來源ID']) };
       const x = num(r['座標X']), y = num(r['座標Y']), z = num(r['座標Z']);
       if (x !== null && y !== null && z !== null) coords[id] = [x, y, z];
+      const mx = num(r['海圖X']), my = num(r['海圖Y']);
+      if (mx !== null && my !== null) SUB_MAP_XY[id] = [mx, my];
       const tp = ['T1 Proc%', 'T2 Proc%', 'T3 Proc%'].map(k => num(r[k])), td = ['T1 D%', 'T2 D%', 'T3 D%'].map(k => num(r[k]));
       if (tp.some(v => v !== null)) GP_TIER_PROC[id] = tp;
       if (td.some(v => v !== null)) GP_TIER_PROC_D[id] = td;
@@ -135,11 +139,17 @@
     }
 
     // ── 物品 ──
-    const ITEM_DB = {}, ITEM_DB_EN = {}, PRIORITY_LOOT_GROUPS = {}, common = [];
+    const ITEM_DB = {}, ITEM_DB_EN = {}, ITEM_TYPE = {}, ITEM_LOOT_CAT = {}, ITEM_TRADE = {}, PRIORITY_LOOT_GROUPS = {}, common = [];
+    const LOOT_CAT = { '稀有': 'rare', '工坊': 'workshop', '其他': 'other' }, TRADE = { '不可上市場': 'trade', '不可交易': 'no' };
     for (const r of table('物品', ['物品ID', '中文名', '英文名'])) {
       const id = num(r['物品ID']); if (id === null) continue;
       if (str(r['中文名'])) ITEM_DB[id] = str(r['中文名']);
       if (str(r['英文名'])) ITEM_DB_EN[id] = str(r['英文名']);
+      if (str(r['遊戲分類'])) ITEM_TYPE[id] = str(r['遊戲分類']);
+      const lc = str(r['掉落分類']);
+      if (lc) { if (LOOT_CAT[lc]) ITEM_LOOT_CAT[id] = LOOT_CAT[lc]; else warn(`物品 第${r._row}列：掉落分類「${lc}」只能是 稀有／工坊／其他`); }
+      const tr = str(r['交易']);
+      if (tr) { if (TRADE[tr]) ITEM_TRADE[id] = TRADE[tr]; else warn(`物品 第${r._row}列：交易「${tr}」只能是空白、不可上市場、不可交易`); }
       const g = str(r['高優先分類']); if (g) (PRIORITY_LOOT_GROUPS[g] = PRIORITY_LOOT_GROUPS[g] || []).push(id);
       const c = num(r['常見材料順序']); if (c !== null && ITEM_DB[id]) common.push([c, ITEM_DB[id]]);
     }
@@ -206,9 +216,9 @@
     }
     for (const r of table('基礎素材', ['名稱', '分類'])) if (str(r['名稱'])) CRAFT_BASE[str(r['名稱'])] = str(r['分類']);
 
-    const data = { MAP_NAMES, SUB_HOMES, SUB_SECTORS, SUB_PATCH, SUB_TANK, SUB_DIST, SUB_RANKS, SUB_CAP, PARTS, SUB_UNLOCK,
+    const data = { MAP_NAMES, SUB_HOMES, SUB_SECTORS, SUB_PATCH, SUB_TANK, SUB_DIST, SUB_RANKS, SUB_CAP, PARTS, SUB_UNLOCK, SUB_MAP_XY,
       SUB_LOOT, SUB_LOOT_TIER, GP_TIER_PROC, GP_TIER_PROC_D, GP_ITEM_PROB, SECTOR_LOOT,
-      ITEM_DB, ITEM_DB_EN, PRIORITY_LOOT_GROUPS, COMMON_LOOT, GP_PRESETS, GP_PRESET_HINTS, CRAFT_PARTS, CRAFT_MATS, CRAFT_BASE };
+      ITEM_DB, ITEM_DB_EN, ITEM_TYPE, ITEM_LOOT_CAT, ITEM_TRADE, PRIORITY_LOOT_GROUPS, COMMON_LOOT, GP_PRESETS, GP_PRESET_HINTS, CRAFT_PARTS, CRAFT_MATS, CRAFT_BASE };
 
     const now = new Date(); const pad = n => String(n).padStart(2, '0');
     const version = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}`;

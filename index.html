@@ -151,7 +151,7 @@
 })();
     </script>
     <style>
-        #testEnvBadge { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 99990; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: #c2410c; color: #fff; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+        #testEnvBadge { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 9000; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: #c2410c; color: #fff; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
         #testEnvBadge span { opacity: .85; }
         #testEnvBadge button { border: 0; border-radius: 999px; padding: 5px 12px; background: rgba(255,255,255,.2); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer; }
         #testEnvBadge button:hover { background: rgba(255,255,255,.32); }
@@ -161,7 +161,42 @@
     <script>
 /* 頁面上按鈕／欄位的事件處理（原本寫在 HTML 標籤的 onclick 等屬性，改為集中在這裡）。
  * 標籤上的 data-on-click="a12" 代表點擊時執行 UI_ACTIONS.a12；this 為該元素、event 為事件，與原本寫法相同。 */
+// HTML 屬性用的跳脫（data-* 裡放名稱）
+function escAttr(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 window.UI_ACTIONS = {
+    a164: function (event) { changeCardGroup(this.dataset.tid, this.value) },
+    a165: function (event) { sendCardToRoutePlanner(this.dataset.tid) },
+    a166: function (event) { openSubConfigModal(this.dataset.tid) },
+    a167: function (event) { deleteTimer(this.dataset.tid) },
+    a168: function (event) { DTPicker.pickDay(+this.dataset.y, +this.dataset.m, +this.dataset.d) },
+    a169: function (event) { DTPicker.pickHour(+this.dataset.h) },
+    a170: function (event) { DTPicker.pickMinute(+this.dataset.mn) },
+    a171: function (event) { onLinkHandlePointerDown(event, this.dataset.lid) },
+    a172: function (event) { event.stopPropagation(); setAllMapNodes(+this.dataset.map, this.dataset.all === '1') },
+    a173: function (event) { gpToggleSectorChk(+this.dataset.secid, this.checked) },
+    a174: function (event) { gpRemoveItem(+this.dataset.iid) },
+    a175: function (event) { gpSendToRoutePlanner() },
+    a176: function (event) { gpAddItemById(+this.dataset.iid, this.dataset.name); document.getElementById('gpItemSearch').value = ''; document.getElementById('gpSuggestBox').style.display = 'none'; },
+    a177: function (event) { craftSelectCell2(+this.dataset.cls, +this.dataset.sort) },
+    a179: function (event) { craftSetPartQty(this.dataset.name, this.value) },
+    a180: function (event) { event.stopPropagation() },
+    a181: function (event) { craftSpinnerStep(this.dataset.name, +this.dataset.step) },
+    a182: function (event) { craftCopyName(this.dataset.name, this) },
+    a183: function (event) { craftToggleDone(this.dataset.name, this.checked, +this.dataset.needed); event.stopPropagation(); },
+    a184: function (event) { craftSaveOwned(this.dataset.name, this.value) },
+    a185: function (event) { craftMobTab(this, +this.dataset.tab) },
+    a186: function (event) { rpRemoveMap(this.dataset.mode, +this.dataset.id) },
+    a187: function (event) { SectorPicker.toggle(this, +this.dataset.id) },
+    a188: function (event) { rpRemoveSector(this.dataset.mode, +this.dataset.id) },
+    a189: function (event) { rpAddItemById(+this.dataset.iid, this.dataset.name); document.getElementById('rpItemSearch').value = ''; document.getElementById('rpSuggestBox').style.display = 'none'; },
+    a190: function (event) { rpRemoveItem(+this.dataset.iid) },
+    a191: function (event) { subRedepart(this.dataset.tid) },
+    a192: function (event) { rpSortBy(this.dataset.mode) },
+    a193: function (event) { rpToggleRow(this) },
+    a194: function (event) { event.stopPropagation(); applyRouteToCard(+this.dataset.mins, this.dataset.secs, +this.dataset.exp); },
+    a195: function (event) { cloudLeaveRoomById(event, this.dataset.rid) },
+    a196: function (event) { kickRoomMember(this.dataset.rid, this.dataset.uid) },
+    a197: function (event) { switchFleetView(this.dataset.rid); switchRpTab('fleet'); },
     a1: function (event) { document.getElementById('customAlertOverlay').classList.remove('visible') },
     a2: function (event) { closeUpdateNotice() },
     a4: function (event) { requestNotificationPermission() },
@@ -174,6 +209,10 @@ window.UI_ACTIONS = {
     a12: function (event) { changeAlarm(this.value) },
     a13: function (event) { testVolume(this.value) },
     a14: function (event) { testAlarm() },
+    a160: function (event) { toggleSound() },
+    a161: function (event) { smSetAll(this.dataset.all === '1') },
+    a162: function (event) { switchRpTab('seamap') },
+    a163: function (event) { switchMobileTab('seamap') },
     a15: function (event) { toggleUploadZone(this) },
     a16: function (event) { document.getElementById('fileInput').click() },
     a17: function (event) { toggleCollapse('content1', this) },
@@ -313,7 +352,7 @@ window.UI_ACTIONS = {
             if (e.cancelBubble || el === stopAt) return;
         }
     }
-    ['click', 'change', 'input', 'mouseover', 'keydown', 'mousedown'].forEach(t => document.addEventListener(t, e => run(t, e)));
+    ['click', 'change', 'input', 'mouseover', 'keydown', 'mousedown', 'pointerdown'].forEach(t => document.addEventListener(t, e => run(t, e)));
     ['focus', 'blur'].forEach(t => document.addEventListener(t, e => {
         const el = e.target; if (!el || el.nodeType !== 1) return;
         const id = el.getAttribute('data-on-' + t); if (id && UI_ACTIONS[id]) UI_ACTIONS[id].call(el, e);
@@ -385,7 +424,6 @@ window.UI_ACTIONS = {
         :where(.u41) { font-weight: bold !important; margin: 12px 0 6px !important; }
         :where(.u42) { padding: 1px 4px !important; }
         :where(.u43) { font-size: 12px !important; padding: 1px 7px !important; margin-left: 4px !important; vertical-align: middle !important; text-align: center !important; }
-        :where(.u44) { font-size: 10px !important; margin-left: 3px !important; }
         :where(.u45) { padding: 0 4px 18px !important; }
         :where(.u46) { margin-top: 10px !important; }
         :where(.u47) { margin-bottom: 6px !important; }
@@ -396,7 +434,6 @@ window.UI_ACTIONS = {
         :where(.u52) { margin-left: auto !important; gap: 8px !important; flex-wrap: wrap !important; align-items: center !important; }
         :where(.u53) { margin-top: 20px !important; }
         :where(.u54) { margin-top: 14px !important; align-items: flex-end !important; gap: 12px !important; }
-        :where(.u55) { font-size: 11.5px !important; align-self: center !important; padding-bottom: 4px !important; }
         :where(.u56) { margin-top: 6px !important; padding: 7px 12px !important; border-left: 3px solid var(--accent-color) !important; font-size: 12px !important; line-height: 1.6 !important; }
         :where(.u57) { margin-top: 8px !important; }
         :where(.u58) { margin-top: 4px !important; }
@@ -433,13 +470,12 @@ window.UI_ACTIONS = {
         .ic-circle-x { color: #e06a6a; }
         body.light-mode .ic-triangle-alert { color: #c27a12; }
         body.light-mode .ic-lightbulb { color: #b8860b; }
-        .an-warn .ic-triangle-alert, .bad .ic-triangle-alert, .warn .ic-triangle-alert { color: inherit; }
+        .bad .ic-triangle-alert, .warn .ic-triangle-alert { color: inherit; }
         .toast-ico svg.ic, #customAlertIcon svg.ic { color: inherit; width: .9em; height: .9em; vertical-align: -0.1em; stroke-width: 3; }
         button svg.ic + *, a svg.ic { pointer-events: none; }
         svg.ic { pointer-events: none; }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- 網站數據：版本更新時只要換掉 data 資料夾裡的檔案（包含 version.js），這裡不用改 -->
     <script>
         /* version.js 每次都重新讀取（不使用快取），裡面的版本號決定要不要重新下載下面 5 個數據檔 */
@@ -451,13 +487,13 @@ window.UI_ACTIONS = {
             document.write('<script src="data/' + f + '.js?v=' + encodeURIComponent(window.SUB_DATA_VERSION) + '"><\/script>'));
     </script>
     <script>
-        /* 數據檔沒有載入成功時（例如直接雙擊開檔、或檔案路徑錯誤），顯示提示而不是一片空白 */
+        /* 數據檔沒有載入成功時（例如 data 資料夾沒有一起放上去、或檔案路徑錯誤），顯示提示而不是一片空白 */
         if (!window.SUB_DATA || !window.SUB_DATA.SUB_SECTORS || !window.SUB_DATA.ITEM_DB || !window.SUB_DATA.CRAFT_PARTS) {
             document.addEventListener('DOMContentLoaded', () => {
                 const b = document.createElement('div');
                 b.setAttribute('role', 'alert');
                 b.style.cssText = 'position:fixed;inset:0 0 auto 0;z-index:100000;background:#c0392b;color:#fff;padding:12px 16px;font-size:14px;';
-                b.textContent = '數據檔載入失敗：請確認 data 資料夾和 index.html 放在一起，並透過網站伺服器開啟（不能直接雙擊開檔）。';
+                b.textContent = '數據檔載入失敗：請確認 data 資料夾和 index.html 放在一起。';
                 document.body.prepend(b);
             });
         }
@@ -556,6 +592,7 @@ window.UI_ACTIONS = {
             border-color: rgba(249,115,22,0.6);
             background: rgba(249,115,22,0.08);
         }
+
 
         /* ── 使用說明抽屜（步驟優先、重點突出）── */
         #manualDrawer {
@@ -719,7 +756,6 @@ window.UI_ACTIONS = {
         .header-wrapper { display: flex; flex-direction: column; align-items: flex-start; width: 100%; margin-bottom: 14px; gap: 0; }
         h1 { color: var(--text-color); font-size: 18px; font-weight: 800; margin: 0 0 12px 0; letter-spacing: 0.2px; line-height: 1.3; }
         h1 span { font-size: 12px; color: #888; font-weight: 400; margin-left: 6px; }
-        .top-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-start; width: 100%; }
         .btn-top { cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-color); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 8px; font-size: 13px; transition: background 0.15s; }
         .btn-top:hover { background: rgba(255,255,255,0.1); }
 
@@ -743,6 +779,19 @@ window.UI_ACTIONS = {
         .lp-icon-btn:hover { background: rgba(255,255,255,0.1); }
         body.light-mode .lp-icon-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
 
+        /* 推播開關列 */
+        .lp-push-row { order: -2; flex-basis: 100%; display: flex; align-items: center; gap: 10px; padding: 2px 0 8px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        body.light-mode .lp-push-row { border-bottom-color: rgba(0,0,0,0.07); }
+        .lp-push-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .lp-push-txt b { font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+        .lp-push-txt span { font-size: 11px; color: #888; }
+        .lp-switch { flex-shrink: 0; width: 40px; height: 22px; border-radius: 999px; border: 0; padding: 0; cursor: pointer; background: rgba(255,255,255,0.18); position: relative; transition: background .15s; }
+        body.light-mode .lp-switch { background: rgba(0,0,0,0.18); }
+        .lp-switch span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+        .lp-switch[aria-checked="true"] { background: #4caf50; }
+        .lp-switch[aria-checked="true"] span { transform: translateX(18px); }
+        .lp-sound-head { order: -1; border-bottom: 0; padding-bottom: 2px; margin-bottom: 0; }
+        #soundOpts.off { opacity: .35; pointer-events: none; }
         /* 音效控制組：移除多餘框線，直接在 lp-controls 內平排 */
         .lp-sound-group {
             display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
@@ -750,6 +799,9 @@ window.UI_ACTIONS = {
         .lp-sound-label { font-size: 10.5px; color: #888; white-space: nowrap; flex-shrink: 0; }
         #alarmSelect { background: transparent; color: var(--text-color); border: none; font-size: 12px; cursor: pointer; outline: none; flex: 1; min-width: 0; }
         body.light-mode #alarmSelect { color: #333; }
+        #alarmSelect option { background: #26252c; color: #f2f2f2; }
+        #alarmSelect option:checked { background: var(--accent-color); color: #fff; }
+        body.light-mode #alarmSelect option { background: #fff; color: #222; }
         #volumeSlider { width: 55px; cursor: pointer; flex-shrink: 0; }
         .lp-test-btn {
             background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #888;
@@ -907,16 +959,6 @@ window.UI_ACTIONS = {
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; }
         .modal img { max-width: 90%; max-height: 90%; border: 2px solid #fff; }
-
-        /* Right panel: sticky so timers scroll independently */
-        .right-panel-title {
-            color: var(--accent-color);
-            font-size: 16px;
-            font-weight: bold;
-            margin: 0 0 12px 0;
-            text-align: center;
-            letter-spacing: 1px;
-        }
 
         /* 船艇小卡：依可用寬度自動排列（約 1280px 寬 3 張、1920px 寬 4 張） */
         .timer-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 15px; align-items: start; }
@@ -1092,6 +1134,12 @@ window.UI_ACTIONS = {
         #timerListHead > [data-col=dep] { grid-area: dep; } #timerListHead > [data-col=ret] { grid-area: ret; }
         #timerListHead > [data-col=route] { grid-area: route; } #timerListHead > [data-col=group] { grid-area: group; }
         #timerListHead > [data-col=an] { grid-area: an; }
+        /* 條列：配件代碼（例如 1121、4改2改5改4改） */
+        .list-parts-in { display: none; }
+        #timerList.list-mode .list-parts-in { display: inline-block; white-space: nowrap; font-size: 12px; font-weight: 500; color: #888; margin-left: 6px; }
+        /* 船名太長時，配件代碼換到下一行，不要被截斷 */
+        #timerList.list-mode .timer-card .timer-name { white-space: normal; overflow: visible; line-height: 1.35; }
+        #timerList.list-mode .timer-name > span:first-child { white-space: nowrap; }
         #timerListHead > [data-col=act] { grid-area: act; justify-self: end; }
         /* 拖曳欄位名稱調整順序：⠿ 常駐，滑過變成可拖曳的膠囊 */
         #timerListHead > [data-col] { position: relative; cursor: grab; user-select: none; outline: none; white-space: nowrap;
@@ -1287,6 +1335,166 @@ window.UI_ACTIONS = {
             transition: all .15s;
             user-select: none;
         }
+        /* 頁尾：資料來源（小字） */
+        .site-credits { margin: 36px 0 18px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.07); font-size: 11px; line-height: 1.7; color: #777; }
+        body.light-mode .site-credits { border-top-color: rgba(0,0,0,0.08); color: #888; }
+        .site-credits b { font-weight: 700; margin-right: 6px; color: #8a8a8a; }
+        .site-credits a { color: inherit; text-decoration: underline; text-decoration-color: rgba(128,128,128,.5); text-underline-offset: 2px; }
+        .site-credits a:hover { color: var(--accent-color); }
+        @media (max-width: 640px) { .site-credits { margin: 24px 12px 90px; } }
+        /* ══ 海圖設定分頁 ══ */
+        #panelSeamap .sm-groups { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 14px; align-items: center; }
+        #panelSeamap .map-group-tab { background: transparent; font-family: inherit; font-size: 13px; padding: 5px 13px; color: #b5b5b5; }
+        body.light-mode #panelSeamap .map-group-tab { color: #555; border-color: rgba(0,0,0,0.15); }
+        #panelSeamap .map-group-tab:hover { border-color: rgba(var(--accent-rgb),0.5); color: var(--accent-color); }
+        #panelSeamap .map-group-tab.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        #panelSeamap .sm-groups-lbl { font-size: 12.5px; color: #888; margin-right: 4px; }
+        .sm-grid { display: grid; grid-template-columns: minmax(0, var(--sm-left, 52%)) 16px minmax(0, 1fr); gap: 0; align-items: start; }
+        /* 左右欄中間的拖曳把手：拖曳、方向鍵調整寬度，雙擊恢復預設 */
+        .sm-split { align-self: stretch; cursor: col-resize; position: relative; touch-action: none; outline: none; }
+        .sm-split::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; border-radius: 2px; background: transparent; transition: background .15s; }
+        .sm-split::after { content: '⋮'; position: absolute; top: 120px; left: 50%; transform: translateX(-50%); width: 12px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #999; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+        body.light-mode .sm-split::after { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
+        .sm-split:hover::before, .sm-split:focus-visible::before, .sm-split.drag::before { background: var(--accent-color); }
+        .sm-split:hover::after, .sm-split:focus-visible::after, .sm-split.drag::after { color: #fff; background: var(--accent-color); border-color: var(--accent-color); }
+        body.sm-resizing { cursor: col-resize; user-select: none; }
+        .sm-card { background: var(--card-color); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; }
+        body.light-mode .sm-card { border-color: rgba(0,0,0,0.08); }
+        .sm-card + .sm-card { margin-top: 16px; }
+        .sm-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .sm-card-head h3 { margin: 0; font-size: 15px; font-weight: 800; flex: 1; min-width: 0; }
+        .sm-card-head .sm-sub { font-size: 12px; color: #888; font-weight: 500; margin-left: 6px; }
+        .sm-mini-btn { font-size: 12px; padding: 4px 10px; border-radius: 7px; cursor: pointer; background: transparent; color: var(--text-color); border: 1px solid rgba(255,255,255,0.15); }
+        .sm-mini-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        body.light-mode .sm-mini-btn { border-color: rgba(0,0,0,0.15); }
+        /* 大地圖：高度跟著視窗，地圖＋下方海點一個畫面看得完 */
+        .sm-mapbox { position: relative; margin: 0 auto; aspect-ratio: 685 / 705; width: min(100%, max(320px, calc((100vh - 385px) * 685 / 705))); border-radius: 10px; overflow: hidden; background: #141418; }
+        .sm-mapbox img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; visibility: hidden; }
+        .sm-mapbox img.on { visibility: visible; }
+        .sm-pin { position: absolute; transform: translate(-50%, -50%); min-width: 45px; height: 45px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 3px solid rgba(255,255,255,.85); background: rgba(22,26,34,.8); color: #d9dee7; font: 800 18px/1 inherit; font-family: inherit; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.6); transition: transform .12s, background .12s; }
+        .sm-pin.on { background: var(--accent-color); color: #fff; border-color: #fff; }
+        .sm-pin:hover, .sm-pin.hl { transform: translate(-50%, -50%) scale(1.15); border-color: #ffd36b; z-index: 2; }
+        .sm-links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .sm-links line { stroke: rgba(255,255,255,.75); stroke-width: 2; stroke-dasharray: 5 4; stroke-linecap: round; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.9)); }
+        .sm-links line.on { stroke: var(--accent-color); stroke-dasharray: none; stroke-width: 2.5; }
+        .sm-home { position: absolute; width: 22px; height: 22px; transform: translate(-50%, -50%) rotate(45deg); background: #e9b949; border: 2px solid #fff; border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+        .sm-nodes-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 8px; font-size: 12px; color: #888; }
+        .sm-nodes-head b { font-size: 14px; color: var(--text-color); }
+        .sm-legend { display: inline-flex; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+        .sm-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+        .sm-hint { font-size: 12.5px; color: #e0a84a; background: rgba(224,168,74,0.1); border: 1px solid rgba(224,168,74,0.3); border-radius: 8px; padding: 7px 10px; margin-bottom: 10px; }
+        .sm-nodes { display: flex; flex-wrap: wrap; gap: 5px; }
+        .sm-node { min-width: 34px; height: 30px; padding: 0 6px; border-radius: 7px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: #9aa3b2; font: inherit; font-size: 13px; font-weight: 800; }
+        body.light-mode .sm-node { border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.02); color: #777; }
+        .sm-node.on { border-color: var(--accent-color); background: var(--accent-color); color: #fff; }
+        .sm-node:hover, .sm-node.hl { border-color: #ffd36b; }
+        /* 可撈到的物品：一列一項，✓＝已開的海點撈得到 */
+        .sm-ship { display: inline-flex; align-items: center; gap: 8px; margin-left: 14px; font-size: 12px; color: #999; flex-wrap: wrap; }
+        .sm-ship select { background: var(--card-color); color: var(--text-color); border: 1px solid rgba(255,255,255,0.15); border-radius: 7px; padding: 4px 6px; font: inherit; font-size: 12.5px; max-width: 100%; }
+        body.light-mode .sm-ship select { border-color: rgba(0,0,0,0.15); }
+        .sm-ship select option, .sm-ship select optgroup { background: #26252c; color: #f2f2f2; } body.light-mode .sm-ship select option, body.light-mode .sm-ship select optgroup { background: #fff; color: #222; }
+        .sm-row.ex .sm-st { background: #e0a84a; color: #1b1206; font-size: 10px; }
+        .sm-row.ex .sm-nm { color: #d9b26b; font-weight: 600; }
+        .sm-pts i.ex { background: rgba(224,168,74,.85); color: #1b1206; }
+        .sm-stat { flex: none; font-size: 11px; font-weight: 700; white-space: nowrap; padding: 1px 7px; border-radius: 6px; }
+        /* 名稱不截斷：放不下時標籤換到下一行 */
+        .sm-row { flex-wrap: wrap; row-gap: 3px; }
+        .sm-row .sm-nm { flex-shrink: 0; max-width: calc(100% - 60px); }
+        .sm-br { display: none; }
+        .sm-namec { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+        .sm-thead { display: none; }
+        .sm-prob-k { font-style: normal; }
+        /* 電腦版：和艦隊條列一樣，每一欄對齊 */
+        @media (min-width: 641px) {
+            #smLoot .sm-row, #smLoot .sm-thead { display: grid; row-gap: 0; grid-template-columns: 18px minmax(82px, 1fr) 70px 100px 66px minmax(56px, 100px) 76px; column-gap: 12px; align-items: center; }
+            #smLoot .sm-row { flex-wrap: nowrap; }
+            #smLoot .sm-row .sm-nm { white-space: normal; max-width: none; flex-shrink: 1; line-height: 1.35; }
+            #smLoot .sm-right { display: contents; }
+            .sm-row .sm-tr, .sm-row .sm-stat { justify-self: start; }
+            .sm-row .sm-pts { margin: 0; justify-content: flex-start; max-width: none; }
+            .sm-row .sm-pr { margin: 0; min-width: 0; }
+            .sm-prob-k { display: none; }
+            .sm-prob { font-variant-numeric: tabular-nums; }
+            .sm-thead { position: sticky; top: 0; z-index: 2; background: var(--card-color); font-size: 11.5px; font-weight: 700; color: #888; padding: 4px 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+            body.light-mode .sm-thead { border-bottom-color: rgba(0,0,0,0.12); }
+            .sm-thead span:last-child { text-align: right; }
+            .sm-thead span { white-space: nowrap; }
+        }
+        .sm-right { margin-left: auto; display: inline-flex; align-items: center; flex: none; }
+        .sm-right .sm-pts { margin-left: 0; }
+        .sm-prob { flex: none; font-size: 11px; color: #9aa0aa; white-space: nowrap; }
+        body.light-mode .sm-prob { color: #777; }
+        .sm-stat.ok { color: #7fc99a; } .sm-stat.ex { color: #e0b15a; background: rgba(224,168,74,.12); }
+        .sm-stat.lv { color: #ef8a8a; background: rgba(239,83,80,.10); } .sm-stat.off { color: #8a8f99; }
+        body.light-mode .sm-stat.ok { color: #2e7d32; } body.light-mode .sm-stat.ex { color: #a06a00; } body.light-mode .sm-stat.lv { color: #c62828; } body.light-mode .sm-stat.off { color: #888; }
+        .sm-only { margin-left: auto; font-size: 12px; color: #999; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+        .sm-only input { accent-color: var(--accent-color); margin: 0; }
+        #smLootSub b { color: var(--success-color, #4caf50); font-size: 13px; }
+        .sm-loot { gap: 0 !important; }
+        .sm-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13.5px; }
+        body.light-mode .sm-row { border-bottom-color: rgba(0,0,0,0.06); }
+        .sm-st { flex: none; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
+        .sm-row.ok .sm-st { background: #388e3c; color: #fff; }
+        .sm-row.no .sm-st { border: 1.5px solid rgba(160,160,170,.45); }
+        .sm-nm { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .sm-row.no .sm-nm { color: #8a8f99; font-weight: 500; }
+        .sm-row.ok.cat-rare .sm-nm { color: #d7b8f5; }
+        body.light-mode .sm-row.ok.cat-rare .sm-nm { color: #7a3fb5; }
+        .sm-copy { flex: none; width: 22px; height: 22px; padding: 0; margin-left: -4px; border: 0; border-radius: 5px; background: transparent; color: #8a8f99; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; position: relative; }
+        .sm-copy .ic { width: 13px; height: 13px; }
+        .sm-copy:hover { color: var(--accent-color); background: rgba(var(--accent-rgb), .14); }
+        .sm-copy.ok { color: #fff; background: var(--success-color, #4caf50); }
+        .sm-copy.ok::after { content: '已複製'; position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); font-size: 11px; font-weight: 700; white-space: nowrap; padding: 2px 7px; border-radius: 6px; background: var(--success-color, #4caf50); color: #fff; pointer-events: none; }
+        .sm-tr { flex: none; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; white-space: nowrap; }
+        .sm-tr.market { color: #7fc99a; background: rgba(76,175,80,.12); }
+        .sm-tr.trade { color: #e0b15a; background: rgba(224,168,74,.14); }
+        .sm-tr.no { color: #ef8a8a; background: rgba(239,83,80,.14); }
+        body.light-mode .sm-tr.market { color: #2e7d32; } body.light-mode .sm-tr.trade { color: #a06a00; } body.light-mode .sm-tr.no { color: #c62828; }
+        .sm-mkt { flex-basis: 100%; display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: #999; }
+        .sm-mkt select { background: var(--card-color); color: var(--text-color); border: 1px solid rgba(255,255,255,0.15); border-radius: 7px; padding: 3px 6px; font: inherit; font-size: 12px; }
+        body.light-mode .sm-mkt select { border-color: rgba(0,0,0,0.15); }
+        .sm-mkt select option { background: #26252c; color: #f2f2f2; } body.light-mode .sm-mkt select option { background: #fff; color: #222; }
+        .sm-sortbtn { margin-left: auto; font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; cursor: pointer; background: transparent; color: #b5b5b5; border: 1px solid rgba(255,255,255,0.15); }
+        .sm-sortbtn.on { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
+        .sm-pr { margin-left: 10px; flex: none; min-width: 96px; text-align: right; font-size: 13px; font-weight: 800; color: #e9c46a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        body.light-mode .sm-pr { color: #a06a00; }
+        .sm-pr small { font-size: 10.5px; font-weight: 500; color: #888; margin-left: 4px; }
+        .sm-pr.na, .sm-pr.ld { color: #777; font-weight: 500; font-size: 11.5px; }
+        .sm-pts { margin-left: auto; flex: none; display: inline-flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 46%; }
+        .sm-help { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 3px; border-radius: 50%; font-style: normal; font-size: 9.5px; font-weight: 800; line-height: 1; vertical-align: 1px; cursor: help; color: #9aa0aa; border: 1px solid rgba(154,160,170,.55); }
+        .sm-help:hover, .sm-help:focus-visible { color: rgb(var(--accent-rgb)); border-color: rgb(var(--accent-rgb)); outline: none; }
+        .sm-pts i { font-style: normal; font-size: 11px; font-weight: 800; min-width: 18px; padding: 1px 4px; text-align: center; border-radius: 5px; color: #7d828c; background: rgba(255,255,255,0.05); }
+        body.light-mode .sm-pts i { background: rgba(0,0,0,0.05); color: #999; }
+        .sm-pts i.on { background: rgba(var(--accent-rgb), .9); color: #fff; }
+        .sm-grp { font-size: 12px; font-weight: 800; letter-spacing: 1px; padding: 12px 4px 4px; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.12); }
+        .sm-grp:first-child { padding-top: 2px; }
+        .sm-grp small { font-weight: 600; margin-left: 6px; opacity: .7; letter-spacing: 0; }
+        .sm-grp.rare { color: #c89fef; } .sm-grp.workshop { color: #5fb3e8; }
+        .sm-maps { display: flex; flex-wrap: wrap; gap: 6px; }
+        .sm-maps .map-group-tab small { font-size: 11px; opacity: .75; margin-left: 4px; }
+        .sm-cnt { margin-left: 5px; opacity: .8; }
+        #panelSeamap .map-group-tab.active small { opacity: .95; }
+        /* 淺色配色：選中的標籤、已開的海點維持白字（原本被淺色模式的灰字蓋掉）；說明文字加深 */
+        body.light-mode #panelSeamap .map-group-tab.active { color: #fff; border-color: var(--accent-color); }
+        body.light-mode .sm-node.on { border-color: var(--accent-color); background: var(--accent-color); color: #fff; }
+        body.light-mode .sm-node:hover, body.light-mode .sm-node.hl { border-color: #d99a1e; }
+        body.light-mode .sm-pts i.on { background: rgba(var(--accent-rgb), .9); color: #fff; }
+        body.light-mode .sm-mini-btn:hover { border-color: var(--accent-color); }
+        body.light-mode .sm-hint { color: #8a5a00; background: rgba(224,168,74,0.12); border-color: rgba(176,120,20,0.35); }
+        body.light-mode .sm-sortbtn { color: #555; border-color: rgba(0,0,0,0.18); }
+        body.light-mode .sm-sortbtn.on { color: #fff; border-color: var(--accent-color); }
+        body.light-mode .sm-grp { color: #666; border-bottom-color: rgba(0,0,0,0.1); }
+        body.light-mode .sm-grp.rare { color: #7a3fb5; } body.light-mode .sm-grp.workshop { color: #1f6fa8; }
+        body.light-mode .sm-row.ex .sm-nm { color: #8a5a00; }
+        body.light-mode .sm-help { color: #666; border-color: rgba(0,0,0,0.35); }
+        body.light-mode .sm-only, body.light-mode .sm-mkt, body.light-mode .sm-ship, body.light-mode #panelSeamap .sm-groups-lbl { color: #666; }
+        .sm-cat-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+        .sm-loot { display: flex; flex-direction: column; gap: 6px; max-height: 640px; overflow-y: auto; padding-right: 2px; }
+        .sm-empty { font-size: 13px; color: #888; padding: 14px 4px; text-align: center; }
+        @media (max-width: 900px) { .sm-grid { display: flex; flex-direction: column; gap: 14px; } .sm-col { display: contents; } .sm-split { display: none; } .sm-card + .sm-card { margin-top: 0; } .sm-o1 { order: 1; } .sm-o2 { order: 2; } .sm-o4 { order: 4; } .sm-loot { max-height: none; } }
+        @media (max-width: 640px) { #panelSeamap { padding: 0 10px 16px; } }
+        @media (max-width: 640px) { .sm-row { row-gap: 2px; } .sm-br { display: block; flex-basis: 100%; height: 0; margin-top: -2px; } .sm-tr { margin-left: 26px; } .sm-stat { padding-left: 0; } .sm-right { order: 5; flex-basis: calc(100% - 26px); margin-left: 26px; justify-content: space-between; } .sm-namec { flex: 0 1 auto; min-width: 0; max-width: calc(100% - 30px); } .sm-row .sm-nm { flex: 0 1 auto; max-width: none; white-space: normal; } .sm-pr { min-width: 0; } .sm-right .sm-pts { justify-content: flex-start; max-width: none; } }
+        @media (max-width: 640px) { .sm-mapbox { width: 100%; } .sm-pin { min-width: 40px; height: 40px; font-size: 16px; border-width: 2px; } .sm-legend { margin-left: 0; } }
         .map-group-tab:hover { border-color: rgba(var(--accent-rgb),0.4); color: var(--accent-color); }
         .map-group-tab.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
         body.light-mode .map-group-tab { border-color: rgba(0,0,0,0.12); color: #666; }
@@ -1659,7 +1867,6 @@ window.UI_ACTIONS = {
         #timerList.list-mode .an-mini-txt { display: none; }   /* 電腦版條列：欄位名稱已寫「自動導航」 */
         #timerList.list-mode .an-ctl { white-space: nowrap; }
         @container fleet (max-width: 1209px) { #timerList.list-mode .sub-an-line { margin: 2px 0 0; } #timerList.list-mode .an-mini-txt { display: inline; } }
-        .route-auto .an-warn { color: #ffcb6b; margin-left: 4px; }
         #timerList.list-mode .route-auto { font-size: 11.5px; }
 
         .cfg-an { display: flex; flex-direction: column; gap: 10px; }
@@ -1791,7 +1998,6 @@ window.UI_ACTIONS = {
         body.light-mode .rp-panel-tab:hover { color: var(--text-color); }
 
         /* ── 路線規劃 (Route Planner) ── */
-        .rp-outer { max-width: 1600px; margin: 0 auto 25px; }
         .rp-body { padding: 14px 16px 18px; }
 
         /* ── 文字層級系統：大 / 中 / 小 ── */
@@ -1813,7 +2019,6 @@ window.UI_ACTIONS = {
             font-size: 12px; font-weight: 800; flex-shrink: 0;
         }
         .rp-section-title { font-size: 15px; font-weight: 800; color: var(--accent-color); margin: 0; letter-spacing: 0.3px; }
-        .rp-section-hint { font-size: 11.5px; color: #888; margin: 2px 0 12px 30px; line-height: 1.5; }
         .rp-section-hint-inline { font-size: 11px; color: #888; font-weight: 400; margin-left: 6px; align-self: center; }
         body.light-mode .rp-section-hint-inline { color: #8a94a3; }
 
@@ -1873,7 +2078,6 @@ window.UI_ACTIONS = {
         .rp-chk { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-color); opacity: 0.85; cursor: pointer; }
         .rp-sector-wrap { display: flex; flex-direction: column; gap: 6px; min-width: 260px; }
         .rp-sector-map-sel { background: var(--edit-bg); color: var(--text-color); border: 1px solid var(--edit-border); padding: 7px 10px; border-radius: 7px; font-size: 13px; outline: none; }
-        .rp-sector-chk-list label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
         .rp-item-search-wrap { position: relative; }
         .rp-suggest-box { display:none; position:absolute; top: 100%; left:0; z-index: 20; background: var(--card-color); border: 1px solid var(--edit-border); border-radius: 6px; max-height: 220px; overflow-y:auto; width: 260px; box-shadow: 0 6px 12px rgba(0,0,0,0.4); margin-top:4px; }
         .rp-suggest-item { padding: 6px 10px; font-size: 12.5px; cursor: pointer; }
@@ -1902,7 +2106,6 @@ window.UI_ACTIONS = {
         #rpStatusText { font-size: 12px; color: #888; }
 
         .rp-results { margin-top: 4px; display: flex; flex-direction: column; gap: 12px; }
-        .rp-result-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
         /* 大字：路線排名 */
 
         /* 中字：海域名稱 */
@@ -2619,16 +2822,6 @@ window.UI_ACTIONS = {
         .gp-send-count { font-size: 12px; color: #888; }
         body.light-mode .gp-send-count { color: #888; }
 
-        /* 舊 pill 樣式保留供相容 */
-
-        /* ── 路線規劃按鈕（船艇小卡）── */
-        .route-plan-btn {
-            background-color: #2a3a5a; border: 1px solid #4a6fa5; color: #82aaff;
-            cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px;
-            min-height: 36px; display: inline-flex; align-items: center;
-            transition: background-color 0.15s;
-        }
-
         /* ── 使用此路線按鈕（路線結果小卡）── */
         .rp-use-route-btn {
             display: inline-flex; align-items: center; gap: 5px;
@@ -2808,7 +3001,6 @@ window.UI_ACTIONS = {
         .craft-part-qty-input {
             width: 36px !important;
         }
-        body.light-mode .craft-qty-btn { color: #444; }
 
         @media (max-width: 760px) {
             .craft-mat-cols { grid-template-columns: repeat(4, minmax(180px, 1fr)); min-width: 720px; }
@@ -2933,9 +3125,6 @@ window.UI_ACTIONS = {
         .craft-minus { position: absolute; left: 3px; bottom: 3px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.28); color: #fff; font-size: 14px; font-weight: 800; line-height: 20px; padding: 0; cursor: pointer; }
         .craft-minus:hover { background: rgba(0,0,0,0.5); }
         .craft-sel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-        .craft-sel-help { font-size: 13px; color: #999; }
-        .craft-sel-help b { color: var(--accent-color); }
-        body.light-mode .craft-sel-help { color: #666; }
         .craft-sel-actions { display: flex; align-items: center; gap: 10px; }
         .craft-total { font-size: 13px; font-weight: 700; color: var(--accent-color); font-variant-numeric: tabular-nums; }
         body.light-mode .craft-grid-cell:hover { background: rgba(var(--accent-rgb),0.12); color: var(--accent-color); }
@@ -3177,9 +3366,6 @@ window.UI_ACTIONS = {
 
             /* 計時卡片：單欄 */
             .timer-list { grid-template-columns: 1fr; padding: 8px 14px; gap: 10px; }
-
-            /* 路線規劃欄位全寬 */
-            .rp-multiselect  { min-width: 0; width: 100%; }
             .rp-sector-wrap  { min-width: 0; width: 100%; }
             .rp-row          { flex-direction: column; align-items: stretch; }
             .rp-row .rp-field { width: 100%; }
@@ -3315,6 +3501,10 @@ window.UI_ACTIONS = {
             .rail-lbl { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; }
             .rail-btn:hover { background: rgba(var(--accent-rgb),0.12); color: var(--text-color); }
             .rail-btn:hover .rail-ico { filter: none; transform: translateY(-1px); }
+            .rail-ico { position: relative; }
+            #notifBtn:not(.notif-on) .notif-dot { display: none; }
+            .notif-dot { position: absolute; top: -1px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: #8a8a8a; }
+            #notifBtn.notif-on .notif-dot { background: #4caf50; }
             .rail-btn.active { background: rgba(var(--accent-rgb),0.2); color: var(--accent-color); }
             .rail-btn.active .rail-ico { filter: none; }
             .rail-btn.active::before {
@@ -3437,17 +3627,11 @@ window.UI_ACTIONS = {
             const snap = await get(ref(db, `rooms/${roomId}`));
             return snap.exists() ? snap.val() : null;
         };
-        window._fbGetNickname = async function(uuid) {
-            const snap = await get(ref(db, `users/${uuid}/nickname`));
-            return snap.exists() ? snap.val() : uuid.slice(0, 8);
-        };
         window._getMyNickname = getMyNickname;
         window._setMyNickname = setMyNickname;
 
         window.CloudSync = {
             myUUID,
-            // 相容舊呼叫：有資料變動時交給 SubSync 處理
-            pushMyData() { window.SubSync?.changed(); },
             async getUser() {
                 const snap = await get(ref(db, `users/${myUUID}`));
                 return snap.exists() ? snap.val() : null;
@@ -3593,7 +3777,7 @@ window.SubPalette = (function () {
 </script>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><!-- 圖示：Lucide (ISC License) --><symbol id="i-alarm-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2" /><path d="M5 3 2 6" /><path d="m22 6-3-3" /><path d="M6.38 18.7 4 21" /><path d="M17.64 18.67 20 21" /></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol><symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 5v16" /><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" /></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></symbol><symbol id="i-calendar-days" viewBox="0 0 24 24"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M8 13h.01" /><path d="M12 13h.01" /><path d="M16 13h.01" /><path d="M8 17h.01" /><path d="M12 17h.01" /><path d="M16 17h.01" /></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></symbol><symbol id="i-circle-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol><symbol id="i-circle-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></symbol><symbol id="i-coins" viewBox="0 0 24 24"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48" /><path d="M15 6h1v4" /><path d="m6.134 14.768.866-.5 2 3.464" /><circle cx="16" cy="8" r="6" /></symbol><symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /></symbol><symbol id="i-fish" viewBox="0 0 24 24"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z" /><path d="M18 12v.5" /><path d="M16 17.93a9.77 9.77 0 0 1 0-11.86" /><path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33" /><path d="M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4" /><path d="m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98" /></symbol><symbol id="i-folder-open" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></symbol><symbol id="i-gem" viewBox="0 0 24 24"><path d="M10.5 3 8 9l4 13 4-13-2.5-6" /><path d="M17 3a2 2 0 0 1 1.6.8l3 4a2 2 0 0 1 .013 2.382l-7.99 10.986a2 2 0 0 1-3.247 0l-7.99-10.986A2 2 0 0 1 2.4 7.8l2.998-3.997A2 2 0 0 1 7 3z" /><path d="M2 9h20" /></symbol><symbol id="i-hammer" viewBox="0 0 24 24"><path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9" /><path d="m18 15 4-4" /><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5" /></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></symbol><symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" /><path d="M15 5.764v15" /><path d="M9 3.236v15" /></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" /><path d="M8 6v8" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></symbol><symbol id="i-notebook-pen" viewBox="0 0 24 24"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4" /><path d="M2 6h4" /><path d="M2 10h4" /><path d="M2 14h4" /><path d="M2 18h4" /><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" /></symbol><symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /></symbol><symbol id="i-party-popper" viewBox="0 0 24 24"><path d="M5.8 11.3 2 22l10.7-3.79" /><path d="M4 3h.01" /><path d="M22 8h.01" /><path d="M15 2h.01" /><path d="M22 20h.01" /><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10" /><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17" /><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7" /><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></symbol><symbol id="i-pointer" viewBox="0 0 24 24"><path d="M22 14a8 8 0 0 1-8 8" /><path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /><path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1" /><path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10" /><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></symbol><symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" /><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></symbol><symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol><symbol id="i-ship-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 2v7.5" /><path d="m19 5-5.23 5.23" /><path d="M22 12h-7.5" /><path d="m19 19-5.23-5.23" /><path d="M12 14.5V22" /><path d="M10.23 13.77 5 19" /><path d="M9.5 12H2" /><path d="M10.23 10.23 5 5" /><circle cx="12" cy="12" r="2.5" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></symbol><symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol><symbol id="i-trending-up" viewBox="0 0 24 24"><path d="M16 7h6v6" /><path d="m22 7-8.5 8.5-5-5L2 17" /></symbol><symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol><symbol id="i-volume-2" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" /></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z" /></symbol><symbol id="i-layout-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-sub" viewBox="0 0 24 24"><path d="M9.5 4h3v4"/><path d="M7.5 11V9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v2"/><path d="M5.5 11h11a3.5 3.5 0 0 1 0 7h-11a3.5 3.5 0 0 1 0-7z"/><circle cx="7.5" cy="14.5" r=".6"/><circle cx="11.5" cy="14.5" r=".6"/><path d="M20 14.5h1.5"/><path d="M22 12.5v4"/><path d="M3 21.5c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/></symbol></svg>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><!-- 圖示：Lucide (ISC License) --><symbol id="i-alarm-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2" /><path d="M5 3 2 6" /><path d="m22 6-3-3" /><path d="M6.38 18.7 4 21" /><path d="M17.64 18.67 20 21" /></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol><symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 5v16" /><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" /></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></symbol><symbol id="i-calendar-days" viewBox="0 0 24 24"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M8 13h.01" /><path d="M12 13h.01" /><path d="M16 13h.01" /><path d="M8 17h.01" /><path d="M12 17h.01" /><path d="M16 17h.01" /></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></symbol><symbol id="i-circle-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol><symbol id="i-circle-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></symbol><symbol id="i-coins" viewBox="0 0 24 24"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48" /><path d="M15 6h1v4" /><path d="m6.134 14.768.866-.5 2 3.464" /><circle cx="16" cy="8" r="6" /></symbol><symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /></symbol><symbol id="i-fish" viewBox="0 0 24 24"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z" /><path d="M18 12v.5" /><path d="M16 17.93a9.77 9.77 0 0 1 0-11.86" /><path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33" /><path d="M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4" /><path d="m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98" /></symbol><symbol id="i-folder-open" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></symbol><symbol id="i-gem" viewBox="0 0 24 24"><path d="M10.5 3 8 9l4 13 4-13-2.5-6" /><path d="M17 3a2 2 0 0 1 1.6.8l3 4a2 2 0 0 1 .013 2.382l-7.99 10.986a2 2 0 0 1-3.247 0l-7.99-10.986A2 2 0 0 1 2.4 7.8l2.998-3.997A2 2 0 0 1 7 3z" /><path d="M2 9h20" /></symbol><symbol id="i-hammer" viewBox="0 0 24 24"><path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9" /><path d="m18 15 4-4" /><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5" /></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></symbol><symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" /><path d="M15 5.764v15" /><path d="M9 3.236v15" /></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" /><path d="M8 6v8" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></symbol><symbol id="i-notebook-pen" viewBox="0 0 24 24"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4" /><path d="M2 6h4" /><path d="M2 10h4" /><path d="M2 14h4" /><path d="M2 18h4" /><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" /></symbol><symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /></symbol><symbol id="i-party-popper" viewBox="0 0 24 24"><path d="M5.8 11.3 2 22l10.7-3.79" /><path d="M4 3h.01" /><path d="M22 8h.01" /><path d="M15 2h.01" /><path d="M22 20h.01" /><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10" /><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17" /><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7" /><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></symbol><symbol id="i-pointer" viewBox="0 0 24 24"><path d="M22 14a8 8 0 0 1-8 8" /><path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /><path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1" /><path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10" /><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></symbol><symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" /><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" /><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></symbol><symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol><symbol id="i-ship-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 2v7.5" /><path d="m19 5-5.23 5.23" /><path d="M22 12h-7.5" /><path d="m19 19-5.23-5.23" /><path d="M12 14.5V22" /><path d="M10.23 13.77 5 19" /><path d="M9.5 12H2" /><path d="M10.23 10.23 5 5" /><circle cx="12" cy="12" r="2.5" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></symbol><symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol><symbol id="i-trending-up" viewBox="0 0 24 24"><path d="M16 7h6v6" /><path d="m22 7-8.5 8.5-5-5L2 17" /></symbol><symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol><symbol id="i-volume-2" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" /></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z" /></symbol><symbol id="i-layout-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-sub" viewBox="0 0 24 24"><path d="M9.5 4h3v4"/><path d="M7.5 11V9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v2"/><path d="M5.5 11h11a3.5 3.5 0 0 1 0 7h-11a3.5 3.5 0 0 1 0-7z"/><circle cx="7.5" cy="14.5" r=".6"/><circle cx="11.5" cy="14.5" r=".6"/><path d="M20 14.5h1.5"/><path d="M22 12.5v4"/><path d="M3 21.5c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/></symbol></svg>
 <script>
 // 圖示：IC('名稱') 產生線條圖示；icHtml(文字) 會跳脫 HTML，並把文字裡的 emoji 換成對應圖示
 window.IC = function (n) { return '<svg class="ic ic-' + n + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>'; };
@@ -3664,7 +3848,6 @@ window.icHtml = function (t) {
     <div class="mob-header-right">
         <a class="mob-icon-btn mob-link-btn report" href="https://forum.gamer.com.tw/C.php?bsn=17608&snA=30749&page=1&gothis=146463#146463" target="_blank" rel="noopener" title="回報問題" aria-label="回報問題"><svg class="ic ic-megaphone" aria-hidden="true"><use href="#i-megaphone"/></svg></a>
         <a class="mob-icon-btn mob-link-btn sponsor" href="https://ganknow.com/cxz089675/tip" target="_blank" rel="noopener" title="贊助貓罐頭" aria-label="贊助貓罐頭"><svg class="ic ic-fish" aria-hidden="true"><use href="#i-fish"/></svg></a>
-        <button type="button" class="mob-icon-btn" data-on-click="a4" title="啟用通知" aria-label="啟用通知"><svg class="ic ic-bell" aria-hidden="true"><use href="#i-bell"/></svg></button>
     </div>
 </div>
 
@@ -3678,6 +3861,10 @@ window.icHtml = function (t) {
     <button type="button" class="mob-nav-item active" id="mobNavFleet" data-on-click="a5">
         <span class="mob-nav-icon"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg></span>
         <span class="mob-nav-label">艦隊</span>
+    </button>
+    <button type="button" class="mob-nav-item" id="mobNavSeamap" data-on-click="a163">
+        <span class="mob-nav-icon"><svg class="ic ic-map" aria-hidden="true"><use href="#i-map"/></svg></span>
+        <span class="mob-nav-label">海圖</span>
     </button>
     <button type="button" class="mob-nav-item" id="mobNavRoute" data-on-click="a6">
         <span class="mob-nav-icon"><svg class="ic ic-compass" aria-hidden="true"><use href="#i-compass"/></svg></span>
@@ -3702,9 +3889,9 @@ window.icHtml = function (t) {
 <nav id="deskRail" aria-label="工具與設定">
     <button type="button" class="rail-btn" data-on-click="a11" title="使用說明"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-book-open" aria-hidden="true"><use href="#i-book-open"/></svg></span><span class="rail-lbl">說明</span></button>
     <button type="button" class="rail-btn" data-view="content_palette" data-title="主題" data-desc="32 種低飽和主題，眼睛舒服、適合長時間使用"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-palette" aria-hidden="true"><use href="#i-palette"/></svg></span><span class="rail-lbl">主題</span></button>
-    <button type="button" class="rail-btn" data-on-click="a4" title="開啟回港通知"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-bell" aria-hidden="true"><use href="#i-bell"/></svg></span><span class="rail-lbl">通知</span></button>
+    
     <div class="rail-sep" aria-hidden="true"></div>
-    <button type="button" class="rail-btn" data-view="sound" data-title="鬧鐘音效" data-desc="船艇回港時播放的提示音與音量"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-volume-2" aria-hidden="true"><use href="#i-volume-2"/></svg></span><span class="rail-lbl">音效</span></button>
+    <button type="button" class="rail-btn" id="notifBtn" data-view="sound" data-title="通知" data-desc="回港時的推播與音效" title="通知：推播、音效"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-bell" aria-hidden="true"><use href="#i-bell"/></svg><span class="notif-dot"></span></span><span class="rail-lbl">通知</span></button>
     <button type="button" class="rail-btn" data-view="upload" data-title="截圖辨識" data-desc="上傳或貼上遊戲截圖，自動辨識船名、等級與剩餘時間"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-camera" aria-hidden="true"><use href="#i-camera"/></svg></span><span class="rail-lbl">截圖</span></button>
     <button type="button" class="rail-btn" data-view="content1" data-title="練級表" data-desc="各等級建議的練級路線"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-trending-up" aria-hidden="true"><use href="#i-trending-up"/></svg></span><span class="rail-lbl">練級表</span></button>
     <button type="button" class="rail-btn" data-view="content2" data-title="海圖" data-desc="各海域地圖，並記錄每個標籤已開放的海點"><span class="rail-ico" aria-hidden="true"><svg class="ic ic-map" aria-hidden="true"><use href="#i-map"/></svg></span><span class="rail-lbl">海圖</span></button>
@@ -3724,20 +3911,33 @@ window.icHtml = function (t) {
             <button type="button" class="drawer-close" id="drawerClose" aria-label="關閉面板" title="關閉（Esc）"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></button>
         </div>
         <div class="header-wrapper">
-            <h1><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器2.4.4 <span>阿緋@鳳凰</span></h1>
+            <h1><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器2.4.5 <span>阿緋@鳳凰</span></h1>
             <!-- 控制列 -->
             <div class="lp-controls">
                 <button type="button" class="lp-icon-btn u1" data-on-click="a11" title="使用說明" aria-label="使用說明"><svg class="ic ic-book-open" aria-hidden="true"><use href="#i-book-open"/></svg></button>
-                <button type="button" class="lp-icon-btn" data-on-click="a4" title="啟用通知" aria-label="啟用通知"><svg class="ic ic-bell" aria-hidden="true"><use href="#i-bell"/></svg></button>
-                <div class="lp-sound-group">
-                    <span class="lp-sound-label"><svg class="ic ic-volume-2" aria-hidden="true"><use href="#i-volume-2"/></svg></span>
-                    <select id="alarmSelect" data-on-change="a12">
-                        <option value="off">關閉</option>
+                <div class="lp-push-row">
+                    <div class="lp-push-txt"><b><svg class="ic ic-bell" aria-hidden="true"><use href="#i-bell"/></svg> 推播</b><span id="pushStateTxt">回港時跳出瀏覽器通知</span></div>
+                    <button type="button" class="lp-switch" id="pushToggle" role="switch" aria-checked="false" aria-label="推播" data-on-click="a4"><span></span></button>
+                </div>
+                <div class="lp-push-row lp-sound-head">
+                    <div class="lp-push-txt"><b><svg class="ic ic-volume-2" aria-hidden="true"><use href="#i-volume-2"/></svg> 音效</b><span>回港時播放提示音</span></div>
+                    <button type="button" class="lp-switch" id="soundToggle" role="switch" aria-checked="true" aria-label="音效" data-on-click="a160"><span></span></button>
+                </div>
+                <div class="lp-sound-group" id="soundOpts">
+                    <span class="lp-sound-label">聲音</span>
+                    <select id="alarmSelect" data-on-change="a12" aria-label="提示音">
                         <option value="soft">01 柔和</option>
                         <option value="sharp">02 清脆</option>
                         <option value="ding">03 叮咚</option>
+                        <option value="bell">04 鈴聲</option>
+                        <option value="rise">05 上揚</option>
+                        <option value="gong">06 鐘響</option>
+                        <option value="beep">07 嗶嗶</option>
+                        <option value="marimba">08 木琴</option>
+                        <option value="sonar">09 聲納</option>
+                        <option value="bubble">10 氣泡</option>
                     </select>
-                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" data-on-input="a13">
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" data-on-input="a13" aria-label="音量">
                     <button type="button" class="lp-test-btn" data-on-click="a14">測試</button>
                 </div>
             </div>
@@ -3750,7 +3950,7 @@ window.icHtml = function (t) {
                 <div class="upload-zone" id="dropZone" role="button" tabindex="0" aria-label="上傳截圖：點擊選擇圖片，或拖曳／貼上截圖" data-on-click="a16">
                     <p>點擊選擇圖片、拖曳圖片至此，或直接 Ctrl + V 貼上截圖</p>
                     <input type="file" id="fileInput" accept="image/*">
-                    <div class="status" id="statusText" aria-live="polite">正在初始化引擎...</div>
+                    <div class="status" id="statusText" aria-live="polite"></div>
                 </div>
             </div>
         </div>
@@ -3761,11 +3961,11 @@ window.icHtml = function (t) {
             <div id="content1" class="content">
                 <div class="u2" style="display: flex;">
                     <div class="thumb-container">
-                        <img src="https://lh3.googleusercontent.com/d/1WCegLEryF0QmoLonxRmI5VYHKEGO710M" class="thumb-img" data-on-click="a18" alt="1-50" tabindex="0" role="button">
+                        <img loading="lazy" src="https://lh3.googleusercontent.com/d/1WCegLEryF0QmoLonxRmI5VYHKEGO710M" class="thumb-img" data-on-click="a18" alt="1-50" tabindex="0" role="button">
                         <div class="thumb-text">1-50</div>
                     </div>
                     <div class="thumb-container">
-                        <img src="https://lh3.googleusercontent.com/d/1AyZK4QKE-2Xs9TN6RUsCW1lgP_PtvlXH" class="thumb-img" data-on-click="a18" alt="50-85" tabindex="0" role="button">
+                        <img loading="lazy" src="https://lh3.googleusercontent.com/d/1AyZK4QKE-2Xs9TN6RUsCW1lgP_PtvlXH" class="thumb-img" data-on-click="a18" alt="50-85" tabindex="0" role="button">
                         <div class="thumb-text">50-85</div>
                     </div>
                 </div>
@@ -3773,13 +3973,13 @@ window.icHtml = function (t) {
             <button type="button" class="collapsible-btn" data-on-click="a19" aria-expanded="false" aria-controls="content2"><span>+</span> 海圖</button>
             <div id="content2" class="content">
                 <div class="u2" style="display: flex;">
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1rqb4ffiMkxNZNOdzfEgIgtDNci1r8AiX" class="thumb-img" data-on-click="a18" alt="1 - 溺沒海" tabindex="0" role="button"><div class="thumb-text">1 - 溺沒海</div></div>
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1jQ-fxdQApBObUD6P7Fvip-sAPwYwpr5O" class="thumb-img" data-on-click="a18" alt="2 - 灰海" tabindex="0" role="button"><div class="thumb-text">2 - 灰海</div></div>
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1kac6_l3-imrSudG-KvI89zxZXXOq9OHr" class="thumb-img" data-on-click="a18" alt="3 - 翠浪海" tabindex="0" role="button"><div class="thumb-text">3 - 翠浪海</div></div>
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1fyaK8sqprffUXwCixmJbmElUI2QABhad" class="thumb-img" data-on-click="a18" alt="4 - 賽蓮海" tabindex="0" role="button"><div class="thumb-text">4 - 賽蓮海</div></div>
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1seFiP33E4kIC9cAAIPzOV7kmXuIiE4qq" class="thumb-img" data-on-click="a18" alt="5 - 紫礁海" tabindex="0" role="button"><div class="thumb-text">5 - 紫礁海</div></div>
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1PRrj73-Xs7njm0jCgggbgl3VQtnhphXz" class="thumb-img" data-on-click="a18" alt="6 - 南蒼茫洋" tabindex="0" role="button"><div class="thumb-text">6 - 南蒼茫洋</div></div>
-                    <div class="thumb-container"><img src="https://lh3.googleusercontent.com/d/1dmXdI9zo2tqO_PRdlwd9gdadHB0KeZby" class="thumb-img" data-on-click="a18" alt="7 - 北洋海" tabindex="0" role="button"><div class="thumb-text">7 - 北洋海</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-1.jpg" class="thumb-img" data-on-click="a18" alt="1 - 溺沒海" tabindex="0" role="button"><div class="thumb-text">1 - 溺沒海</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-2.jpg" class="thumb-img" data-on-click="a18" alt="2 - 灰海" tabindex="0" role="button"><div class="thumb-text">2 - 灰海</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-3.jpg" class="thumb-img" data-on-click="a18" alt="3 - 翠浪海" tabindex="0" role="button"><div class="thumb-text">3 - 翠浪海</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-4.jpg" class="thumb-img" data-on-click="a18" alt="4 - 賽蓮海" tabindex="0" role="button"><div class="thumb-text">4 - 賽蓮海</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-5.jpg" class="thumb-img" data-on-click="a18" alt="5 - 紫礁海" tabindex="0" role="button"><div class="thumb-text">5 - 紫礁海</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-6.jpg" class="thumb-img" data-on-click="a18" alt="6 - 南蒼茫洋" tabindex="0" role="button"><div class="thumb-text">6 - 南蒼茫洋</div></div>
+                    <div class="thumb-container"><img loading="lazy" src="data/maps/guide-7.jpg" class="thumb-img" data-on-click="a18" alt="7 - 北洋海" tabindex="0" role="button"><div class="thumb-text">7 - 北洋海</div></div>
                 </div>
                 <hr class="map-divider">
                 <div class="map-block" id="mapNodeBlock"></div>
@@ -3904,6 +4104,19 @@ window.icHtml = function (t) {
             <button type="button" class="collapsible-btn" data-on-click="a36" aria-expanded="false" aria-controls="content4"><span>+</span> 開發日記</button>
             <div id="content4" class="content">
                 <div class="u38" style="color: var(--text-color);">
+                   <div class="u39" style="color: var(--accent-color);"><svg class="ic ic-calendar-days" aria-hidden="true"><use href="#i-calendar-days"/></svg> 2026/11/21　v2.4.5</div>
+                    <ul class="u40">
+                        <li>新增「海圖設定」分頁：在遊戲海圖上點海點開關，連線顯示解鎖順序</li>
+                        <li>海圖設定：列出每張海圖撈得到的物品，含遊戲分類、能不能交易、獲得機率、繁中服近 7 天市場估算價格</li>
+                        <li>海圖設定：可指定一艘船，判斷等級和探索性能夠不夠撈</li>
+                        <li>通知與音效合併成「通知」工具，推播、音效各自開關；回港音效增加到 10 種</li>
+                        <li>看共同艦隊時，自己的船回港一樣會響鈴、推播</li>
+                        <li>艦隊條列在等級後面顯示配件</li>
+                        <li>頁面最下方加上資料來源與版權標示</li>
+                        <li>截圖辨識引擎改成第一次使用才下載，左側海圖參考圖改放在網站內，打開網頁更快</li>
+                        <li>修正：淺色配色下選中的標籤看不到字</li>
+                        <li>修正：配件規劃選「不套用」沒有還原配件；左側海圖點海點時，海圖設定沒有即時更新</li>
+                    </ul>
                    <div class="u39" style="color: var(--accent-color);"><svg class="ic ic-calendar-days" aria-hidden="true"><use href="#i-calendar-days"/></svg> 2026/11/16　v2.4.4</div>
                     <ul class="u40">
                         <li>船艇設定新增「再出發方式」：上一次航線，或固定的剩餘時間；群組再出發也會照各船的設定</li>
@@ -4130,10 +4343,11 @@ window.icHtml = function (t) {
 
     <!-- ══ RIGHT PANEL ══ -->
     <div class="right-panel">
-        <div class="desk-brand" aria-hidden="true"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器 <span>2.4.4・阿緋@鳳凰</span></div>
+        <div class="desk-brand" aria-hidden="true"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> FF14 潛水艇計時器 <span>2.4.5・阿緋@鳳凰</span></div>
         <!-- 分頁切換列 -->
         <div class="rp-panel-tabs" id="rpPanelTabs" role="tablist" aria-label="主要功能">
             <button type="button" class="rp-panel-tab active" id="tabFleet" role="tab" aria-controls="panelFleet" aria-selected="true" data-on-click="a37"><svg class="ic ic-sub" aria-hidden="true"><use href="#i-sub"/></svg> 潛水艇艦隊 <span class="u43" id="fleetCount" style="background: rgba(var(--accent-rgb),0.2); color: var(--accent-color); border: 1px solid #555; border-radius: 6px; display: inline-block; min-width: 36px;">0 艘</span></button>
+            <button type="button" class="rp-panel-tab" id="tabSeamap" role="tab" aria-controls="panelSeamap" aria-selected="false" data-on-click="a162"><svg class="ic ic-map" aria-hidden="true"><use href="#i-map"/></svg> 海圖設定</button>
             <button type="button" class="rp-panel-tab" id="tabRoute" role="tab" aria-controls="panelRoute" aria-selected="false" data-on-click="a38"><svg class="ic ic-compass" aria-hidden="true"><use href="#i-compass"/></svg> 路線規劃</button>
             <button type="button" class="rp-panel-tab" id="tabGear" role="tab" aria-controls="panelGear" aria-selected="false" data-on-click="a39"><svg class="ic ic-settings" aria-hidden="true"><use href="#i-settings"/></svg> 配件規劃</button>
             <button type="button" class="rp-panel-tab" id="tabCraft" role="tab" aria-controls="panelCraft" aria-selected="false" data-on-click="a40"><svg class="ic ic-hammer" aria-hidden="true"><use href="#i-hammer"/></svg> 配件製作</button>
@@ -4504,6 +4718,32 @@ window.icHtml = function (t) {
         </div>
 
         <!-- 配件製作分頁 -->
+        <div id="panelSeamap" role="tabpanel" aria-labelledby="tabSeamap" style="display:none;">
+            <div class="sm-groups" id="smGroups"></div>
+            <div class="sm-grid">
+                <div class="sm-col">
+                    <div class="sm-card sm-o2">
+                        <div class="sm-card-head"><h3 id="smMapTitle">海圖</h3><button type="button" class="sm-mini-btn" data-on-click="a161" data-all="1">全選</button><button type="button" class="sm-mini-btn" data-on-click="a161" data-all="0">全清</button></div>
+                        <div id="smRoomHint"></div>
+                        <div class="sm-mapbox" id="smMapBox"><img id="smMapImg" alt="" decoding="async"></div>
+                        <div class="sm-nodes-head"><b>海點</b><span>點地圖上或下方的編號，切換已開／未開</span><span class="sm-legend"><span><i style="background:var(--accent-color)"></i>已開</span><span><i style="background:#3a3f4a"></i>未開</span><span><i style="background:#e9b949;border-radius:2px;transform:rotate(45deg)"></i>出發點</span><span>線：探索後解鎖的點</span></span></div>
+                        <div class="sm-nodes" id="smNodes"></div>
+                    </div>
+                </div>
+                <div class="sm-split" id="smSplit" role="separator" aria-orientation="vertical" aria-label="調整左右寬度" tabindex="0" title="拖曳調整左右寬度（雙擊恢復預設）"></div>
+                <div class="sm-col">
+                    <div class="sm-card sm-o1">
+                        <div class="sm-card-head"><h3>海圖</h3></div>
+                        <div class="sm-maps" id="smMaps"></div>
+                    </div>
+                    <div class="sm-card sm-o4">
+                        <div class="sm-card-head"><h3>可撈到的物品<span class="sm-sub" id="smLootSub"></span></h3></div>
+                        <div class="sm-cat-tabs" id="smCats" style="margin-bottom:8px;align-items:center"></div>
+                        <div class="sm-loot" id="smLoot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="panelCraft" role="tabpanel" aria-labelledby="tabCraft" style="display:none;">
             <div class="rp-body u45">
 
@@ -4529,6 +4769,12 @@ window.icHtml = function (t) {
             </div>
         </div>
 
+        <footer class="site-credits" aria-label="資料來源">
+            <div><b>資料來源</b>
+                <a href="https://v2.xivapi.com/" target="_blank" rel="noopener">XIVAPI</a>・<a href="https://docs.google.com/spreadsheets/d/1eiuGRrQTjJ5n4ogybKOBxJRT7EiJLlX93fge-Z8MmD4" target="_blank" rel="noopener">Submersible Loot Spreadsheet</a>・<a href="https://ffxiv.consolegameswiki.com/wiki/Submersibles" target="_blank" rel="noopener">Final Fantasy XIV Online Wiki</a>・<a href="https://forum.square-enix.com/ffxiv/" target="_blank" rel="noopener">SQUARE ENIX 官方論壇</a>・<a href="https://universalis.app/" target="_blank" rel="noopener">Universalis</a>
+            </div>
+            <div>FINAL FANTASY XIV &copy; SQUARE ENIX CO., LTD. All Rights Reserved. 本站為玩家自製工具，與 SQUARE ENIX 無關；遊戲圖片與資料版權屬於 SQUARE ENIX。</div>
+        </footer>
     </div><!-- end right-panel -->
 
 </div><!-- end page-layout -->
@@ -4812,12 +5058,7 @@ const MAP_NAMES=SUB_DATA.MAP_NAMES;
 
 /* ===== PARTS (TC names from msgpack) ===== */
 const PARTS=SUB_DATA.PARTS;
-const COMMON_LOOT=SUB_DATA.COMMON_LOOT;
 
-/* ── 使用者定義的「高優先」物品清單 ──────────────────────────────
- * 若路線可獲得以下物品，在結果顯示時優先排到前面
- * ─────────────────────────────────────────────────────────── */
-const PRIORITY_LOOT=new Set(Object.values(SUB_DATA.PRIORITY_LOOT_GROUPS).flat());
 
 
 /* ===== SECTOR LOOKUP MAP (O(1) ID → row) ===== */
@@ -5037,7 +5278,7 @@ self.onmessage = (e) => {
     try { self.postMessage({ id, ok: true, results: (fn === 'auto' ? subAutoRoute : subFindRoutes)(...args) }); }
     catch (err) { self.postMessage({ id, ok: false, error: String((err && err.message) || err) }); }
 };`;
-            const need = ['MAP_NAMES','SUB_HOMES','SUB_SECTORS','SUB_PATCH','SUB_TANK','SUB_DIST','SUB_RANKS','SUB_CAP','PARTS','SUB_LOOT','SUB_LOOT_TIER','COMMON_LOOT','PRIORITY_LOOT_GROUPS'];
+            const need = ['MAP_NAMES','SUB_HOMES','SUB_SECTORS','SUB_PATCH','SUB_TANK','SUB_DIST','SUB_RANKS','SUB_CAP','PARTS','SUB_LOOT','SUB_LOOT_TIER'];
             const dataJs = 'self.SUB_DATA = ' + JSON.stringify(Object.fromEntries(need.map(k => [k, SUB_DATA[k]]))) + ';\n';
             const url = URL.createObjectURL(new Blob([dataJs, core, glue], { type: 'text/javascript' }));
             worker = new Worker(url);
@@ -5233,12 +5474,59 @@ window.showConfirm = showConfirm;
     let _audioCtx = null; // 全域共用，避免每次音效都建立新的
     let currentSort = localStorage.getItem('sub_sort') || 'time_asc';
     let volume = parseFloat(localStorage.getItem('sub_volume') || '0.5');
-    document.getElementById('alarmSelect').value = alarmMode;
     document.getElementById('volumeSlider').value = volume;
+    // 音效開關：關閉時 alarmMode='off'，另外記住上次選的聲音
+    function renderSoundToggle() {
+        const on = alarmMode !== 'off';
+        const sw = document.getElementById('soundToggle'); if (sw) sw.setAttribute('aria-checked', String(on));
+        const box = document.getElementById('soundOpts');
+        if (box) { box.classList.toggle('off', !on); box.querySelectorAll('select,input,button').forEach(el => { el.disabled = !on; }); }
+        const sel = document.getElementById('alarmSelect');
+        if (sel) sel.value = on ? alarmMode : (localStorage.getItem('sub_alarm_last') || 'soft');
+    }
+    function toggleSound() {
+        if (alarmMode !== 'off') { try { localStorage.setItem('sub_alarm_last', alarmMode); } catch (e) {} changeAlarm('off'); }
+        else { changeAlarm(localStorage.getItem('sub_alarm_last') || 'soft'); }
+        renderSoundToggle();
+    }
+    renderSoundToggle();
 
-    function requestNotificationPermission() { if ("Notification" in window) { Notification.requestPermission().then(permission => { if (permission === 'granted') showAlert('通知已啟用！'); }); } }
-    function showNotification(name) { if ("Notification" in window && Notification.permission === "granted") { new Notification("潛水艇回港通知", { body: `${name} 已經回到港口了！` }); } }
-    function changeAlarm(val) { alarmMode = val; localStorage.setItem('sub_alarm_mode', val); if (val !== 'off') playSound(); }
+    // 推播開關（每台裝置各自記；沒設定過時沿用瀏覽器權限）
+    const NOTIF_KEY = 'sub_notify_on';
+    function notifSupported() { return "Notification" in window; }
+    function notifEnabled() {
+        if (!notifSupported() || Notification.permission !== 'granted') return false;
+        let v = null; try { v = localStorage.getItem(NOTIF_KEY); } catch (e) {}
+        return v === null ? true : v === '1';
+    }
+    function renderNotifBtn() {
+        const on = notifEnabled();
+        const btn = document.getElementById('notifBtn') || document.createElement('i');
+        btn.classList.toggle('notif-on', on);
+        btn.title = on ? '通知：推播已開啟' : '通知：推播、音效';
+        const sw = document.getElementById('pushToggle'); if (sw) sw.setAttribute('aria-checked', String(on));
+        const tx = document.getElementById('pushStateTxt');
+        if (tx) tx.textContent = !notifSupported() ? '這個瀏覽器不支援推播' : (Notification.permission === 'denied' ? '已被瀏覽器封鎖，需到網址列改成允許' : (on ? '已開啟：回港時跳出瀏覽器通知' : '回港時跳出瀏覽器通知'));
+    }
+    function requestNotificationPermission() {
+        if (!notifSupported()) { showAlert('這個瀏覽器不支援推播，回港時仍會播放音效。'); return; }
+        if (notifEnabled()) {
+            try { localStorage.setItem(NOTIF_KEY, '0'); } catch (e) {}
+            renderNotifBtn(); showAlert('已關閉推播（音效不受影響）。'); return;
+        }
+        if (Notification.permission === 'denied') { showAlert('推播被瀏覽器封鎖了。請點網址列左邊的圖示，把「通知」改成允許，再開一次推播。'); renderNotifBtn(); return; }
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') { try { localStorage.setItem(NOTIF_KEY, '1'); } catch (e) {} showAlert('已開啟推播！'); }
+            renderNotifBtn();
+        });
+    }
+    function showNotification(name) {
+        if (!notifEnabled()) return;
+        try { new Notification("潛水艇回港通知", { body: `${name} 已經回到港口了！` }); } catch (e) { /* 部分手機瀏覽器不支援直接建立通知 */ }
+    }
+    document.addEventListener('DOMContentLoaded', renderNotifBtn);
+    if (document.readyState !== 'loading') setTimeout(renderNotifBtn, 0);
+    function changeAlarm(val) { alarmMode = val; localStorage.setItem('sub_alarm_mode', val); if (val !== 'off') { try { localStorage.setItem('sub_alarm_last', val); } catch (e) {} playSound(); } }
     function testVolume(val) { volume = parseFloat(val); localStorage.setItem('sub_volume', val); playSound(); }
     function playSound() {
         if (alarmMode === 'off') return;
@@ -5248,13 +5536,15 @@ window.showConfirm = showConfirm;
         }
         if (_audioCtx.state === 'suspended') _audioCtx.resume();
         const ctx = _audioCtx;
-        function playNote(freq, type, duration, time) {
+        // g：相對音量；toFreq：結束時滑到的頻率（滑音用）
+        function playNote(freq, type, duration, time, g = 1, toFreq) {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain); gain.connect(ctx.destination);
             osc.type = type;
             osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
-            gain.gain.setValueAtTime(volume * 0.75, ctx.currentTime + time);
+            if (toFreq) osc.frequency.exponentialRampToValueAtTime(toFreq, ctx.currentTime + time + duration * 0.8);
+            gain.gain.setValueAtTime(Math.max(0.0011, volume * 0.75 * g), ctx.currentTime + time);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + duration);
             osc.start(ctx.currentTime + time);
             osc.stop(ctx.currentTime + time + duration);
@@ -5262,6 +5552,13 @@ window.showConfirm = showConfirm;
         if (alarmMode === 'soft') { playNote(523.25, 'triangle', 0.3, 0); playNote(659.25, 'triangle', 0.3, 0.2); }
         else if (alarmMode === 'sharp') { playNote(880, 'square', 0.1, 0); playNote(880, 'square', 0.1, 0.2); }
         else if (alarmMode === 'ding') { playNote(1046.5, 'sine', 0.5, 0); playNote(1318.5, 'sine', 0.5, 0.1); }
+        else if (alarmMode === 'bell') { [0, 0.45].forEach(t => { playNote(880, 'sine', 1.1, t); playNote(2200, 'sine', 0.5, t, 0.35); playNote(3520, 'sine', 0.25, t, 0.15); }); }
+        else if (alarmMode === 'rise') { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => playNote(f, 'triangle', 0.28, i * 0.11)); }
+        else if (alarmMode === 'gong') { playNote(196, 'sine', 2.2, 0); playNote(392, 'sine', 1.8, 0, 0.6); playNote(587.33, 'sine', 1.2, 0, 0.3); }
+        else if (alarmMode === 'beep') { [0, 0.14, 0.28, 0.6, 0.74, 0.88].forEach(t => playNote(1000, 'square', 0.09, t, 0.9)); }
+        else if (alarmMode === 'marimba') { [[783.99, 0], [659.25, 0.13], [1046.5, 0.26], [1046.5, 0.5]].forEach(([f, t]) => { playNote(f, 'sine', 0.22, t); playNote(f * 4, 'sine', 0.06, t, 0.2); }); }
+        else if (alarmMode === 'sonar') { playNote(1200, 'sine', 1.0, 0); playNote(1200, 'sine', 0.8, 0.55, 0.3); playNote(1200, 'sine', 0.6, 1.0, 0.12); }
+        else if (alarmMode === 'bubble') { [0, 0.16, 0.3].forEach((t, i) => playNote(320 + i * 90, 'sine', 0.14, t, 0.9, 1100 + i * 200)); }
     }
 
     const dropZone = document.getElementById('dropZone');
@@ -5269,7 +5566,14 @@ window.showConfirm = showConfirm;
     const statusText = document.getElementById('statusText');
     const timerList = document.getElementById('timerList');
     let savedTimers = [];
-    const _timerIntervals = new Map(); // 追蹤每個 timer 的 interval，避免重複建立
+    // 每艘船的倒數：id → { tick }。全部共用一個每秒執行一次的計時器，每艘船仍用自己的回港時間計算
+    const _timerIntervals = new Map();
+    let _timerTicker = null;
+    function _tickAllTimers() {
+        if (!_timerIntervals.size) { clearInterval(_timerTicker); _timerTicker = null; return; }
+        for (const e of [..._timerIntervals.values()]) { try { e.tick(); } catch (err) { console.error(err); } }
+    }
+    function _ensureTimerTicker() { if (!_timerTicker) _timerTicker = setInterval(_tickAllTimers, 1000); }
     let _timerIdCounter = 0;
     let worker = null;
     let workerInitPromise = null;
@@ -5283,26 +5587,30 @@ window.showConfirm = showConfirm;
     // ── 更新內容通知（每位使用者、每個瀏覽器只顯示一次）──
     // 之後要再通知：改 id 與 items，所有人就會再看到一次
     const UPDATE_NOTICE = {
-        id: '2.4.4',
-        title: '🆕 2.4.4 更新',
-        date: '2026/11/16',
+        id: '2.4.5',
+        title: '🆕 2.4.5 更新',
+        date: '2026/11/21',
         pages: [
-            { tab: '再出發方式', icon: 'refresh-cw', title: '再出發可以用固定時間',
-              lead: '船艇設定 →「再出發方式」',
-              items: ['上一次航線：照航線重算時間（預設）',
-                      '剩餘時間：填天、時、分，按「再出發」就從現在開始倒數',
-                      '群組再出發會照每艘船各自的設定',
-                      '有開自動導航時，以自動導航為準'] },
-            { tab: '開圖', icon: 'map', title: '開圖只撞開得了的點',
-              lead: '船艇設定 → 自動導航 → 開圖',
-              items: ['預設只走撞得出新地點的點，航程短、能多撞幾次',
-                      '想順便多撞或衝經驗：勾「順路撞點」「順路衝經驗」',
-                      '守回港時段撞不到時，會改走撞得到的路線並提醒'] },
-            { tab: '修正', icon: 'sparkles', title: '設定裡和船卡的航線一致了',
+            { tab: '海圖設定', icon: 'map', title: '新增「海圖設定」分頁',
+              lead: '上方分頁「潛水艇艦隊」旁邊（手機在底部「海圖」）',
+              items: ['在遊戲海圖上直接點海點開關，連線顯示解鎖順序',
+                      '右側列出這張海圖撈得到的物品：遊戲分類、能不能交易、獲得機率',
+                      '選「指定船」就知道等級、探索性能夠不夠撈',
+                      '顯示繁中服近 7 天市場估算價格，可依價格排序'] },
+            { tab: '通知', icon: 'bell', title: '通知與音效合併',
+              lead: '左側工具列 →「通知」',
+              items: ['推播、音效各自一個開關，關掉音效就不會響',
+                      '回港音效增加到 10 種',
+                      '看共同艦隊時，自己的船回港一樣會提醒'] },
+            { tab: '其他', icon: 'sparkles', title: '其他改進',
               lead: '完整內容請看左側「日記」。',
-              items: ['船艇設定裡的自動導航預覽，改用和船卡相同的「回港後等級」規劃'] }
+              items: ['艦隊條列在等級後面顯示配件（例如 4改2改5改4改）',
+                      '截圖辨識引擎改成第一次用才下載，打開網頁更快',
+                      '淺色配色下看不清楚的文字已修正',
+                      '修正：配件規劃選「不套用」沒有還原配件、左側海圖和海圖設定不同步'] }
         ]
     };
+
     let _unPage = 0;
     function renderUpdateNotice() {
         const P = UPDATE_NOTICE.pages, n = P.length, pg = P[_unPage];
@@ -5819,7 +6127,7 @@ window.showConfirm = showConfirm;
                 if (c.other) cls += ' dt-day-other';
                 if (isToday) cls += ' dt-day-today';
                 if (isSel) cls += ' dt-day-selected';
-                return `<button type="button" class="${cls}" onclick="DTPicker.pickDay(${c.date.getFullYear()},${c.date.getMonth()},${c.date.getDate()})">${c.day}</button>`;
+                return `<button type="button" class="${cls}" data-y="${c.date.getFullYear()}" data-m="${c.date.getMonth()}" data-d="${c.date.getDate()}" data-on-click="a168">${c.day}</button>`;
             }).join('');
             // 同步時間欄高度與月曆格子高度
             requestAnimationFrame(() => {
@@ -5845,10 +6153,10 @@ window.showConfirm = showConfirm;
             const mm = this.selMinute ?? 0;
 
             hourCol.innerHTML = Array.from({ length: 24 }, (_, i) => i).map(h =>
-                `<div class="dt-time-item ${h === hh ? 'active' : ''}" onclick="DTPicker.pickHour(${h})">${String(h).padStart(2, '0')}</div>`
+                `<div class="dt-time-item ${h === hh ? 'active' : ''}" data-h="${h}" data-on-click="a169">${String(h).padStart(2, '0')}</div>`
             ).join('');
             minCol.innerHTML = Array.from({ length: 60 }, (_, i) => i).map(mn =>
-                `<div class="dt-time-item ${mn === mm ? 'active' : ''}" onclick="DTPicker.pickMinute(${mn})">${String(mn).padStart(2, '0')}</div>`
+                `<div class="dt-time-item ${mn === mm ? 'active' : ''}" data-mn="${mn}" data-on-click="a170">${String(mn).padStart(2, '0')}</div>`
             ).join('');
 
             requestAnimationFrame(() => {
@@ -5986,6 +6294,12 @@ window.showConfirm = showConfirm;
         applyGroupFilter();
     }
 
+    let _groupFilterQueued = false;
+    function queueGroupFilter() {
+        if (_groupFilterQueued) return;
+        _groupFilterQueued = true;
+        queueMicrotask(() => { _groupFilterQueued = false; applyGroupFilter(); });
+    }
     function applyGroupFilter() {
         const timers = _viewTimers !== null ? _viewTimers : savedTimers;
         timers.forEach(t => {
@@ -6054,7 +6368,7 @@ window.showConfirm = showConfirm;
                 const host = linkHost(link.url);
                 const ico = escapeHtml((link.name || host).trim().charAt(0).toUpperCase());
                 return `<div class="link-item" data-link-id="${link.id}">
-                    <span class="link-drag-handle" onpointerdown="onLinkHandlePointerDown(event, '${link.id}')" title="按住拖曳排序" aria-hidden="true">⠿</span>
+                    <span class="link-drag-handle" data-lid="${link.id}" data-on-pointerdown="a171" title="按住拖曳排序" aria-hidden="true">⠿</span>
                     <a class="link-main" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(link.url)}">
                         <span class="link-ico" aria-hidden="true">${ico}</span>
                         <span class="link-text"><span class="link-name">${escapeHtml(link.name)}</span><span class="link-host">${escapeHtml(host)}</span></span>
@@ -6218,7 +6532,21 @@ window.showConfirm = showConfirm;
         if (typeof callback === 'function') callback();
     }
     function testAlarm() { playSound(); showNotification("測試潛水艇"); }
-    async function initOCR() { try { statusText.innerHTML = icHtml("⏳ 正在載入辨識引擎..."); workerInitPromise = Tesseract.createWorker('chi_tra'); worker = await workerInitPromise; statusText.innerHTML = icHtml("🟢 引擎初始化成功！請上傳截圖。"); } catch (e) { statusText.innerHTML = icHtml("❌ 初始化失敗，請重整。"); } }
+    // 文字辨識引擎很大（程式＋繁中語言檔），第一次上傳截圖時才下載
+    function initOCR() { statusText.innerHTML = icHtml("📷 第一次辨識時會先下載辨識引擎，需要等一下。"); }
+    function ensureOCR() {
+        if (workerInitPromise) return workerInitPromise;
+        statusText.innerHTML = icHtml("⏳ 正在載入辨識引擎...");
+        workerInitPromise = new Promise((resolve, reject) => {
+            if (window.Tesseract) return resolve();
+            const sc = document.createElement('script');
+            sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+            sc.onload = resolve; sc.onerror = reject;
+            document.head.appendChild(sc);
+        }).then(() => Tesseract.createWorker('chi_tra')).then(w => { worker = w; return w; })
+          .catch(e => { workerInitPromise = null; throw e; });
+        return workerInitPromise;
+    }
     fileInput.addEventListener('change', (e) => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
@@ -6251,10 +6579,11 @@ window.showConfirm = showConfirm;
         });
     }
     function handleFile(file) {
-        if (!file || !worker) return;
-        statusText.innerHTML = icHtml("🔍 正在分析圖片...");
+        if (!file) return;
         const reader = new FileReader();
         reader.onload = async function (e) {
+            try { await ensureOCR(); } catch (err) { statusText.innerHTML = icHtml("❌ 辨識引擎載入失敗，請確認網路後再試一次。"); return; }
+            statusText.innerHTML = icHtml("🔍 正在分析圖片...");
             try {
                 const prep = await ocrPrepareImage(e.target.result);
                 await worker.setParameters({ tessedit_pageseg_mode: prep.psm });
@@ -6961,19 +7290,26 @@ window.showConfirm = showConfirm;
         const summary = formatConfigSummary(t);
         el.innerHTML = summary;
         el.style.display = summary ? 'block' : 'none';
+        // 條列用的配件代碼
+        const parts = t.parts || {};
+        const code = PART_KEYS.some(k => parts[k]) ? PART_KEYS.map(k => parts[k] || '-').join('') : '';
+        const lpi = document.getElementById(`lpartsin-${id}`);
+        if (lpi) { lpi.textContent = code; lpi.title = code ? `配件：${code}（船體・船尾・船首・艦橋）` : ''; }
     }
     
     function createTimerCard(timer) { 
         const card = document.createElement('div'); 
         card.className = 'timer-card'; 
         card.id = `card-${timer.id}`; 
-        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${escapeHtml(String(timer.name||''))}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${escapeHtml(String(timer.level))}]` : ''}</span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="sub-route-line" id="route-line-${timer.id}"></div><div class="sub-an-line" id="an-line-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" onchange="changeCardGroup('${timer.id}', this.value)">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div class="card-action-btns"><button class="card-icon-btn btn-route" onclick="sendCardToRoutePlanner('${timer.id}')">路線規劃</button><button class="card-icon-btn btn-config" onclick="openSubConfigModal('${timer.id}')">船艇設定</button><button class="card-icon-btn btn-delete" onclick="deleteTimer('${timer.id}')" aria-label="刪除 ${escapeHtml(String(timer.name||''))}"><span aria-hidden="true"><svg class="ic ic-trash-2" aria-hidden="true"><use href="#i-trash-2"/></svg></span> 刪除</button></div></div>`; 
+        card.innerHTML = `<div class="timer-header" id="header-${timer.id}"><span class="timer-name"><span id="name-${timer.id}">${escapeHtml(String(timer.name||''))}</span> <span class="timer-level" id="level-${timer.id}">${timer.level ? `[${escapeHtml(String(timer.level))}]` : ''}</span><span class="list-parts-in" id="lpartsin-${timer.id}"></span></span><span class="timer-countdown" id="count-${timer.id}">計算中...</span></div><div class="progress-bar-bg" id="bg-${timer.id}"><div class="progress-bar" id="bar-${timer.id}" style="width: 100%"></div></div><div class="timer-footer"><span>出航：<span class="time-highlight">${formatDateTime(timer.startTime)}</span></span><span>回港：<span class="time-highlight target">${formatDateTime(timer.endTime)}</span></span></div><div class="sub-config-summary" id="config-summary-${timer.id}"></div><div class="sub-route-line" id="route-line-${timer.id}"></div><div class="sub-an-line" id="an-line-${timer.id}"></div><div class="delete-btn-wrapper"><select class="card-group-select" id="group-select-${timer.id}" data-tid="${timer.id}" data-on-change="a164">${groupSelectOptionsHtml(timer.group || DEFAULT_GROUP)}</select><div class="card-action-btns"><button class="card-icon-btn btn-route" data-tid="${timer.id}" data-on-click="a165">路線規劃</button><button class="card-icon-btn btn-config" data-tid="${timer.id}" data-on-click="a166">船艇設定</button><button class="card-icon-btn btn-delete" data-tid="${timer.id}" data-on-click="a167" aria-label="刪除 ${escapeHtml(String(timer.name||''))}"><span aria-hidden="true"><svg class="ic ic-trash-2" aria-hidden="true"><use href="#i-trash-2"/></svg></span> 刪除</button></div></div>`; 
         // 先停掉這艘船舊卡片的倒數，避免舊計時器把舊卡片又塞回清單（造成重複卡片）
-        if (_timerIntervals.has(timer.id)) { clearInterval(_timerIntervals.get(timer.id)); _timerIntervals.delete(timer.id); }
+        _timerIntervals.delete(timer.id);
         timerList.appendChild(card); 
         updateConfigSummary(timer.id);
         updateRouteLine(timer.id);
-        applyGroupFilter();
+        // 只先決定這張卡要不要顯示；整體的篩選、船數、標籤計數合併成一次（一次建很多張卡時不會重複跑 N 次）
+        card.style.display = (activeGroup === GROUP_ALL || (timer.group || DEFAULT_GROUP) === activeGroup) ? '' : 'none';
+        queueGroupFilter();
         if (timer.endTime - Date.now() <= 0) {
             document.getElementById(`count-${timer.id}`).innerHTML = IC('sparkles') + " 已回港！";
             document.getElementById(`bg-${timer.id}`).classList.add('finished');
@@ -6982,31 +7318,27 @@ window.showConfirm = showConfirm;
             return;
         }
 
-        // 清除舊 interval，避免同一張卡片同時跑多個倒數
-        if (_timerIntervals.has(timer.id)) {
-            clearInterval(_timerIntervals.get(timer.id));
-            _timerIntervals.delete(timer.id);
-        }
-        const interval = setInterval(() => { 
-            if (document.getElementById(`card-${timer.id}`) !== card) { clearInterval(interval); if (_timerIntervals.get(timer.id) === interval) _timerIntervals.delete(timer.id); return; } 
-            const remaining = timer.endTime - Date.now(); 
-            if (remaining <= 0) { 
-                document.getElementById(`count-${timer.id}`).innerHTML = IC('sparkles') + " 已回港！"; 
-                document.getElementById(`bg-${timer.id}`).classList.add('finished'); 
-                document.getElementById(`bar-${timer.id}`).classList.add('finished'); 
+        const entry = {};
+        entry.tick = () => {
+            if (document.getElementById(`card-${timer.id}`) !== card) { if (_timerIntervals.get(timer.id) === entry) _timerIntervals.delete(timer.id); return; }
+            const remaining = timer.endTime - Date.now();
+            if (remaining <= 0) {
+                document.getElementById(`count-${timer.id}`).innerHTML = IC('sparkles') + " 已回港！";
+                document.getElementById(`bg-${timer.id}`).classList.add('finished');
+                document.getElementById(`bar-${timer.id}`).classList.add('finished');
                 if (timerList.firstChild !== card) { timerList.prepend(card); }
                 updateRouteLine(timer.id);
-                playSound(); 
-                showNotification(timer.name); 
-                clearInterval(interval); 
                 _timerIntervals.delete(timer.id);
-                return; 
-            } 
-            const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), s = Math.floor((remaining % 60000) / 1000); 
-            document.getElementById(`count-${timer.id}`).innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; 
-            document.getElementById(`bar-${timer.id}`).style.width = `${(remaining / (timer.totalSeconds * 1000)) * 100}%`; 
-        }, 1000);
-        _timerIntervals.set(timer.id, interval); 
+                playSound();
+                showNotification(timer.name);
+                return;
+            }
+            const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), s = Math.floor((remaining % 60000) / 1000);
+            document.getElementById(`count-${timer.id}`).innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            document.getElementById(`bar-${timer.id}`).style.width = `${(remaining / (timer.totalSeconds * 1000)) * 100}%`;
+        };
+        _timerIntervals.set(timer.id, entry);
+        _ensureTimerTicker();
     }
     
     // ── 從船艇小卡送往路線規劃 ──
@@ -7084,6 +7416,8 @@ window.showConfirm = showConfirm;
             let a = JSON.parse(localStorage.getItem('sub_list_cols') || 'null');
             // 舊的欄位順序沒有「自動導航」：插在航線後面
             if (Array.isArray(a) && !a.includes('an') && a.includes('route')) { a = a.slice(); a.splice(a.indexOf('route') + 1, 0, 'an'); }
+            // 測試版曾有「配件」欄，已改成接在等級後面：移除
+            if (Array.isArray(a) && a.includes('parts')) a = a.filter(k => k !== 'parts');
             if (Array.isArray(a) && a.length === LIST_DEFAULT.length && LIST_DEFAULT.every(k => a.includes(k))) return a;
         } catch (e) {}
         return LIST_DEFAULT.slice();
@@ -7186,7 +7520,7 @@ window.showConfirm = showConfirm;
             clearTimeout(band._t); band._t = setTimeout(() => { band.classList.remove('flash'); if (!dragKey) band.style.display = 'none'; }, 1150);
         }
         // 移動後的提示（可復原）
-        function showToast(key, prev) {
+        function showColToast(key, prev) {
             toast.innerHTML = (key ? `已把「<b>${NAMES[key]}</b>」移到新位置` : '已恢復預設欄位順序') + '<button type="button">復原</button>';
             toast.querySelector('button').onclick = () => {
                 saveListOrder(prev); toast.classList.remove('on');
@@ -7194,13 +7528,13 @@ window.showConfirm = showConfirm;
             };
             toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 5000);
         }
-        window._listColToast = showToast;
+        window._listColToast = showColToast;
         function doMove(key, target, after) {
             const prev = getListOrder();
             moveListCol(key, target, after);
             if (getListOrder().join() === prev.join()) return false;
             requestAnimationFrame(() => flash(key));
-            showToast(key, prev);
+            showColToast(key, prev);
             window.dismissListColTip();
             return true;
         }
@@ -7350,8 +7684,8 @@ window.showConfirm = showConfirm;
         setActiveTimers(arr);
         saveActiveTimers();
         document.getElementById(`card-${id}`)?.remove();
-        // 清除對應的 interval
-        if (_timerIntervals.has(id)) { clearInterval(_timerIntervals.get(id)); _timerIntervals.delete(id); }
+        // 停掉這艘船的倒數
+        _timerIntervals.delete(id);
         AUTO_NAV_CACHE.delete(id);   // 自動導航的暫存也一起清掉
         updateFleetCount();
     }
@@ -7456,7 +7790,6 @@ window.showConfirm = showConfirm;
             if (sel) sel.value = savedSort;
         }
         // 清空舊卡片與所有 interval，避免重複渲染
-        _timerIntervals.forEach(iv => clearInterval(iv));
         _timerIntervals.clear();
         const list = document.getElementById('timerList');
         if (list) list.innerHTML = '';
@@ -7554,6 +7887,7 @@ window.showConfirm = showConfirm;
     }
 
     function toggleMapNode(mapId, node, el) {
+        smMaterialize();   // 還沒設定過（全部視為已開）時先寫入全開，點一下才是「關掉這個點」
         if (!mapNodeState[activeMapGroup]) mapNodeState[activeMapGroup] = {};
         if (!mapNodeState[activeMapGroup][mapId]) mapNodeState[activeMapGroup][mapId] = [];
         const arr = mapNodeState[activeMapGroup][mapId];
@@ -7561,8 +7895,7 @@ window.showConfirm = showConfirm;
         if (idx === -1) { arr.push(node); el.classList.add('on'); }
         else { arr.splice(idx, 1); el.classList.remove('on'); }
         saveMapNodeState();
-        const countEl = document.getElementById(`map-count-${mapId}`);
-        if (countEl) countEl.innerText = `(${arr.length}/${MAP_DATA.find(m=>m.id===mapId).nodes.length})`;
+        renderMapNodes();   // 左側海圖與海圖設定分頁同步更新
     }
 
     function setAllMapNodes(mapId, on) {
@@ -7577,6 +7910,8 @@ window.showConfirm = showConfirm;
     }
 
     window.renderMapNodes = function renderMapNodes() {
+        const _smPanel = document.getElementById('panelSeamap');
+        if (_smPanel && _smPanel.style.display !== 'none' && window.renderSeaMap) setTimeout(() => window.renderSeaMap(), 0);
         const block = document.getElementById('mapNodeBlock');
         if (!block) return;
         block.innerHTML = '';
@@ -7628,10 +7963,11 @@ window.showConfirm = showConfirm;
                     ${map.name} <span id="map-count-${map.id}" style="font-size:11px; color:#888; font-weight:normal;">(${count}/${total})</span>
                 </span>
                 <div class="map-entry-actions">
-                    <button class="map-node-btn" onclick="event.stopPropagation();setAllMapNodes(${map.id}, true)">全選</button>
-                    <button class="map-node-btn" onclick="event.stopPropagation();setAllMapNodes(${map.id}, false)">全清</button>
+                    <button class="map-node-btn" data-map="${map.id}" data-all="1" data-on-click="a172">全選</button>
+                    <button class="map-node-btn" data-map="${map.id}" data-all="0" data-on-click="a172">全清</button>
                 </div>`;
-            header.onclick = () => {
+            header.onclick = (e) => {
+                if (e.target.closest('.map-node-btn')) return;   // 全選／全清 不要順便收合
                 const wrap = document.getElementById(`map-nodes-${map.id}`);
                 const arrowEl = header.querySelector('.map-collapse-arrow');
                 if (_mapCollapsed.has(map.id)) {
@@ -7690,6 +8026,310 @@ window.showConfirm = showConfirm;
         renderMapNodes();
     }
 
+    // ══ 海圖設定分頁：群組標籤＋大地圖＋海點＋掉落物 ══════════════════════
+    const SUB_XY = SUB_DATA.SUB_MAP_XY || {};   // 海圖上的位置：數據表「地點」「海域」的海圖X/Y
+    let smMapId = 1, smCat = 'rare', smOnlyAvail = false;
+    const SM_CAT_LABEL = { rare: '稀有', workshop: '工坊', other: '其他' };
+    const SM_CAT_RANK = { rare: 0, workshop: 1, other: 2 };
+    function smSectors(mapId) { return SUB_SECTORS.filter(s => s[1] === mapId); }
+    function smGroupHasAny() { const g = mapNodeState[activeMapGroup] || {}; return Object.values(g).some(a => Array.isArray(a) && a.length); }
+    // 這個群組還沒設定過＝全部視為已開：先把「全開」寫進去，之後的切換才不會整組失效
+    function smMaterialize() {
+        if (smGroupHasAny()) return;
+        if (!mapNodeState[activeMapGroup]) mapNodeState[activeMapGroup] = {};
+        MAP_DATA.forEach(m => { mapNodeState[activeMapGroup][m.id] = [...m.nodes]; });
+    }
+    function smToggle(letter) {
+        const node = document.querySelector(`#smNodes .sm-node[data-l="${letter}"]`) || document.createElement('i');
+        smMaterialize();
+        toggleMapNode(smMapId, letter, node);
+    }
+    function smSetAll(on) { smMaterialize(); setAllMapNodes(smMapId, on); }
+    // 依目前地圖大小排海點按鈕：重疊的點互相推開（盡量靠近原位），再畫連結線
+    function smLayoutPins() {
+        const box = document.getElementById('smMapBox'); if (!box || !box._sm) return;
+        const { secs, onOf, edges, px, hpx } = box._sm;
+        const W = box.clientWidth; if (!W) return;
+        const pin = box.querySelector('.sm-pin');
+        const size = pin ? Math.max(pin.offsetWidth, pin.offsetHeight) : 40;
+        const k = 685 / W;                       // 像素 → 地圖座標
+        const r = (size / 2 + 2) * k;            // 兩點中心至少相距 2r
+        const base = {}, pos = {};
+        secs.forEach(s => { const p = px(s[0]); if (p) { base[s[0]] = p; pos[s[0]] = p.slice(); } });
+        const ids = Object.keys(pos);
+        for (let it = 0; it < 160; it++) {
+            let moved = false;
+            for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+                const a = pos[ids[i]], b = pos[ids[j]];
+                let dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy);
+                if (d >= 2 * r) continue;
+                if (d < 0.01) { dx = 1; dy = 0; d = 1; }
+                const push = (2 * r - d) / 2 + 0.2;
+                a[0] -= dx / d * push; a[1] -= dy / d * push; b[0] += dx / d * push; b[1] += dy / d * push; moved = true;
+            }
+            if (hpx) ids.forEach(id => {   // 也別蓋住出發點
+                const a = pos[id], dx = a[0] - hpx[0], dy = a[1] - hpx[1], d = Math.hypot(dx, dy) || 1, need = r + 12 * k;
+                if (d < need) { a[0] += dx / d * (need - d); a[1] += dy / d * (need - d); moved = true; }
+            });
+            ids.forEach(id => {   // 往原位拉回一點，並限制在地圖內
+                const a = pos[id], o = base[id];
+                a[0] += (o[0] - a[0]) * 0.04; a[1] += (o[1] - a[1]) * 0.04;
+                a[0] = Math.min(685 - r, Math.max(r, a[0])); a[1] = Math.min(705 - r, Math.max(r, a[1]));
+            });
+            if (!moved && it > 10) break;
+        }
+        box.querySelectorAll('.sm-pin').forEach(b => { const p = pos[b.dataset.id]; if (p) { b.style.left = (p[0] / 685 * 100) + '%'; b.style.top = (p[1] / 705 * 100) + '%'; } });
+        const home = box.querySelector('.sm-home');
+        if (home && hpx) { home.style.left = (hpx[0] / 685 * 100) + '%'; home.style.top = (hpx[1] / 705 * 100) + '%'; }
+        const secOn = id => { const s = secs.find(t => t[0] === id); return !!s && onOf(s); };
+        const pt = id => id === 'home' ? hpx : pos[id];
+        const lines = edges.map(([a, b]) => {
+            const p1 = pt(a), p2 = pt(b); if (!p1 || !p2) return '';
+            const on = (a === 'home' || secOn(+a)) && secOn(+b);
+            return `<line class="${on ? 'on' : ''}" x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}"/>`;
+        }).join('');
+        box.querySelector('.sm-links')?.remove();
+        box.insertAdjacentHTML('afterbegin', `<svg class="sm-links" viewBox="0 0 685 705" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>`);
+        box.querySelectorAll('img[data-m]').forEach(im => box.prepend(im));
+    }
+    if (window.ResizeObserver) {
+        let _smRaf = 0;
+        new ResizeObserver(() => { cancelAnimationFrame(_smRaf); _smRaf = requestAnimationFrame(smLayoutPins); }).observe(document.getElementById('smMapBox') || document.body);
+    }
+    // 左右欄寬度（只存在這台裝置）
+    (function initSmSplit() {
+        const grid = document.querySelector('#panelSeamap .sm-grid'), sp = document.getElementById('smSplit');
+        if (!grid || !sp) return;
+        const KEY = 'sub_sm_split', DEF = 52, MIN = 32, MAX = 75;
+        const set = (v, save) => { v = Math.round(Math.min(MAX, Math.max(MIN, v)) * 10) / 10; grid.style.setProperty('--sm-left', v + '%'); sp.setAttribute('aria-valuenow', String(Math.round(v))); if (save) { try { localStorage.setItem(KEY, String(v)); } catch (e) {} } return v; };
+        let cur = DEF; try { const v = parseFloat(localStorage.getItem(KEY)); if (v) cur = v; } catch (e) {}
+        cur = set(cur);
+        sp.setAttribute('aria-valuemin', String(MIN)); sp.setAttribute('aria-valuemax', String(MAX));
+        sp.addEventListener('pointerdown', e => {
+            e.preventDefault(); sp.setPointerCapture(e.pointerId); sp.classList.add('drag'); document.body.classList.add('sm-resizing');
+            const r = grid.getBoundingClientRect();
+            const move = ev => { cur = set((ev.clientX - r.left - 8) / r.width * 100); };
+            const up = () => { sp.removeEventListener('pointermove', move); sp.classList.remove('drag'); document.body.classList.remove('sm-resizing'); set(cur, true); };
+            sp.addEventListener('pointermove', move); sp.addEventListener('pointerup', up, { once: true }); sp.addEventListener('pointercancel', up, { once: true });
+        });
+        sp.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); cur = set(cur + (e.key === 'ArrowRight' ? 2 : -2), true); }
+            else if (e.key === 'Home' || e.key === 'Enter') { e.preventDefault(); cur = set(DEF, true); }
+        });
+        sp.addEventListener('dblclick', () => { cur = set(DEF, true); });
+    })();
+    // 物品類型：遊戲內的道具分類（數據表「物品」的遊戲分類）
+    const SM_TYPE_ORDER = ["管弦樂琴樂譜", "寵物", "家具", "桌上擺設", "壁掛", "地毯", "天花板照明", "桌子", "庭具", "部件", "雜貨", "頭部防具", "石材", "金屬", "木材", "布料", "皮革", "骨材", "鍊金術材料", "食材", "藥品", "觸媒", "魔晶石", "水晶", "其他"];
+    function smItemType(id) { return (SUB_DATA.ITEM_TYPE || {})[id] || '其他'; }
+    // 交易：數據表「物品」的交易欄（no＝不可交易、trade＝可交易但不能上市場板、沒寫＝可上市場）
+    function smTrade(id) { return (SUB_DATA.ITEM_TRADE || {})[id] || 'market'; }
+    // ── 市場價格：Universalis 最近 7 天成交（中位數單價、成交筆數）──
+    const SM_MKT_KEY = 'sub_mkt_world';
+    const SM_MKT_WORLDS = ['陸行鳥', '伊弗利特', '迦樓羅', '利維坦', '鳳凰', '奧汀', '巴哈姆特', '拉姆', '泰坦'];
+    let smMktWorld = (() => { try { return localStorage.getItem(SM_MKT_KEY) || '陸行鳥'; } catch (e) { return '陸行鳥'; } })();
+    let smSort = 'name';
+    let smShipId = (() => { try { return localStorage.getItem('sub_sm_ship') || ''; } catch (e) { return ''; } })();
+    const smPrice = {};   // `${world}|${id}` → { med, n, t } 或 { none: true }
+    const smPriceLoading = new Set();
+    function smPriceOf(id) { return smPrice[smMktWorld + '|' + id]; }
+    function smPriceHtml(id) {
+        if (smTrade(id) !== 'market') return '<span class="sm-pr na" title="不能上市場板">—</span>';
+        const p = smPriceOf(id);
+        if (!p) return `<span class="sm-pr ld" data-pid="${id}">…</span>`;
+        if (p.err) return `<span class="sm-pr na" data-pid="${id}" title="價格讀取失敗">?</span>`;
+        if (p.none) return `<span class="sm-pr na" data-pid="${id}" title="最近 7 天沒有成交">無成交</span>`;
+        return `<span class="sm-pr" data-pid="${id}" title="${smMktWorld === '陸行鳥' ? '繁中服' : smMktWorld}・最近 7 天成交 ${p.n} 筆，中位數單價 ${p.med.toLocaleString()} gil（最低 ${p.min.toLocaleString()}、最高 ${p.max.toLocaleString()}）">${p.med.toLocaleString()}<small>${p.n}筆</small></span>`;
+    }
+    async function smLoadPrices(ids) {
+        const world = smMktWorld;
+        const need = ids.filter(id => smTrade(id) === 'market' && !smPrice[world + '|' + id] && !smPriceLoading.has(world + '|' + id));
+        if (!need.length) return;
+        need.forEach(id => smPriceLoading.add(world + '|' + id));
+        for (let i = 0; i < need.length; i += 100) {
+            const chunk = need.slice(i, i + 100);
+            try {
+                const r = await fetch(`https://universalis.app/api/v2/history/${encodeURIComponent(world)}/${chunk.join(',')}?entriesWithin=604800&entriesToReturn=999`);
+                if (!r.ok) throw new Error(r.status);
+                const d = await r.json();
+                const items = d.items || (d.itemID ? { [d.itemID]: d } : {});
+                chunk.forEach(id => {
+                    const e = ((items[id] || {}).entries || []).map(x => x.pricePerUnit).filter(v => v > 0).sort((a, b) => a - b);
+                    smPrice[world + '|' + id] = e.length ? { med: e[Math.floor((e.length - 1) / 2)], n: e.length, min: e[0], max: e[e.length - 1] } : { none: true };
+                });
+            } catch (err) { chunk.forEach(id => { smPrice[world + '|' + id] = { err: true }; }); }
+            chunk.forEach(id => smPriceLoading.delete(world + '|' + id));
+        }
+        if (world !== smMktWorld) return;
+        if (smSort === 'price') renderSeaMap();
+        else document.querySelectorAll('#smLoot [data-pid]').forEach(el => { el.outerHTML = smPriceHtml(+el.dataset.pid); });
+    }
+    window.renderSeaMap = function renderSeaMap() {
+        const panel = document.getElementById('panelSeamap'); if (!panel) return;
+        const allGroups = allGroupNames();
+        if (!allGroups.includes(activeMapGroup)) activeMapGroup = DEFAULT_GROUP;
+        // 群組標籤
+        const gWrap = document.getElementById('smGroups');
+        gWrap.innerHTML = '<span class="sm-groups-lbl">群組</span>' + allGroups.map(g => `<button type="button" class="map-group-tab${g === activeMapGroup ? ' active' : ''}" data-g="${escapeHtml(g)}">${escapeHtml(g)}</button>`).join('');
+        gWrap.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { activeMapGroup = b.dataset.g; renderMapNodes(); });
+        // 房間提示
+        const room = mapRoom();
+        const hintEl = document.getElementById('smRoomHint');
+        let hint = '';
+        if (room) hint = `<div class="sm-hint">正在設定「${escapeHtml(room.name || '共同艦隊')}」的海圖${room.perm === 'view' ? '（房主設定為只能看）' : '，修改會同步給房主'}</div>`;
+        else if (!smGroupHasAny()) hint = `<div class="sm-hint">「${escapeHtml(activeMapGroup)}」還沒設定海圖，目前全部視為已開。點地點就會開始記錄。</div>`;
+        hintEl.innerHTML = hint;
+        // 海圖標籤
+        const mapsEl = document.getElementById('smMaps');
+        mapsEl.innerHTML = MAP_DATA.map(m => {
+            const on = m.nodes.filter(n => isNodeOn(m.id, n)).length;
+            return `<button type="button" class="map-group-tab${m.id === smMapId ? ' active' : ''}" data-m="${m.id}">${escapeHtml(MAP_NAMES[m.id])}<small>${on}/${m.nodes.length}</small></button>`;
+        }).join('');
+        mapsEl.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { smMapId = +b.dataset.m; renderSeaMap(); });
+        const secs = smSectors(smMapId);
+        const onOf = s => isNodeOn(smMapId, s[2]);
+        const onCount = secs.filter(onOf).length;
+        document.getElementById('smMapTitle').innerHTML = `${escapeHtml(MAP_NAMES[smMapId])}<span class="sm-sub">已開 ${onCount}/${secs.length}</span>`;
+        // 大地圖：遊戲海圖圖片＋可點的海點按鈕；按鈕太擠時自動微調位置，連結線跟著調整後的位置
+        const box = document.getElementById('smMapBox');
+        // 七張海圖一次全部載入、疊在一起，切換時只換顯示哪一張（不用等下載）
+        if (!box.querySelector('img[data-m]')) {
+            box.querySelector('#smMapImg')?.remove();
+            Object.keys(MAP_NAMES).forEach(m => {
+                const im = document.createElement('img');
+                im.dataset.m = m; im.alt = `${MAP_NAMES[m]}海圖`; im.decoding = 'async'; im.draggable = false;
+                im.src = `data/maps/${m}.jpg`;
+                box.prepend(im);
+            });
+        }
+        box.querySelectorAll('img[data-m]').forEach(im => im.classList.toggle('on', +im.dataset.m === smMapId));
+        box.querySelectorAll('.sm-pin, .sm-home, .sm-links').forEach(e => e.remove());
+        const px = id => { const p = SUB_XY[id]; return p ? [40 + p[0] * 0.602, 52 + p[1] * 0.603] : null; };
+        const secIds = new Set(secs.map(s => s[0]));
+        const homeId = SUB_HOMES[smMapId], hpx = px(homeId);
+        const edges = [];   // [來源 id（出發點用 'home'）, 目標 id]
+        secs.forEach(s => {
+            const srcs = ((SUB_DATA.SUB_UNLOCK || {})[s[0]] || []).filter(id => secIds.has(id));
+            if (srcs.length) srcs.forEach(id => edges.push([id, s[0]]));
+            else if (hpx) edges.push(['home', s[0]]);   // 這張海圖的起點（例如 A、B）
+        });
+        if (hpx) { const h = document.createElement('span'); h.className = 'sm-home'; h.title = '出發點'; box.appendChild(h); }
+        secs.forEach(s => {
+            if (!px(s[0])) return;
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'sm-pin' + (onOf(s) ? ' on' : ''); b.dataset.l = s[2]; b.dataset.id = s[0];
+            b.textContent = s[2]; b.title = `${s[2]} ${s[4]}（需要 Lv${s[5]}）`;
+            b.setAttribute('aria-pressed', String(onOf(s)));
+            b.onclick = () => smToggle(s[2]);
+            b.onmouseenter = () => document.querySelector(`#smNodes [data-l="${s[2]}"]`)?.classList.add('hl');
+            b.onmouseleave = () => document.querySelector(`#smNodes [data-l="${s[2]}"]`)?.classList.remove('hl');
+            box.appendChild(b);
+        });
+        box._sm = { secs, onOf, edges, px, hpx };
+        smLayoutPins();
+        // 海點：只顯示英文編號
+        const nodesEl = document.getElementById('smNodes');
+        nodesEl.innerHTML = secs.map(s => `<button type="button" class="sm-node${onOf(s) ? ' on' : ''}" data-l="${s[2]}" aria-pressed="${onOf(s)}" title="${s[2]} ${escapeHtml(s[4])}（需要 Lv${s[5]}）">${s[2]}</button>`).join('');
+        nodesEl.querySelectorAll('.sm-node').forEach(b => {
+            b.onclick = () => smToggle(b.dataset.l);
+            b.onmouseenter = () => box.querySelector(`.sm-pin[data-l="${b.dataset.l}"]`)?.classList.add('hl');
+            b.onmouseleave = () => box.querySelector(`.sm-pin[data-l="${b.dataset.l}"]`)?.classList.remove('hl');
+        });
+        // 掉落物：依稀有度（稀有→工坊→其他），同類再依最低機率排序
+        const probs = SUB_DATA.GP_ITEM_PROB || {};
+        const items = {};
+        secs.forEach(s => {
+            const tiers = SUB_LOOT_TIER[s[0]] || {};
+            Object.keys(tiers).forEach(tr => (tiers[tr] || []).forEach(id => {
+                const pr = (((probs[s[0]] || {})[tr] || {})[id] || {});
+                (items[id] = items[id] || []).push({ l: s[2], tr: +tr, p: pr.t == null ? null : pr.t, d: pr.d == null ? null : pr.d, on: onOf(s) });
+            }));
+        });
+        // 不顯示魔晶石、元素碎晶／水晶／晶簇、黑暗物質，以及無屬性水晶、深色／深紅／深綠／深藍的水晶與晶簇
+        const list = Object.keys(items).map(Number).filter(id => ITEM_DB[id] && !/魔晶石|之(碎晶|水晶|晶簇)$|黑暗物質|^無屬性水晶$|^深(色|紅|綠|藍)(水晶|晶簇)$/.test(ITEM_DB[id])).map(id => {
+            const where = items[id].sort((a, b) => a.l.localeCompare(b.l));
+            const ps = where.map(w => w.p).filter(v => v != null);
+            return { id, name: ITEM_DB[id], cat: itemCategoryOf(id), type: smItemType(id, ITEM_DB[id]), where, best: ps.length ? Math.max(...ps) : 999, maxTier: Math.max(...where.map(w => w.tr)) };
+        }).sort((a, b) => SM_CAT_RANK[a.cat] - SM_CAT_RANK[b.cat] || a.name.localeCompare(b.name, 'zh-Hant-TW-u-co-stroke'));   // 同類依名稱（筆畫）排序
+        // 選了船：再看等級與探索性能（T1/T2/T3 探索門檻）；沒選船只看海點有沒有開
+        const ships = getActiveTimers();
+        // 指定船：上方選了群組就只列這個群組的船；未分類列出全部
+        const shipList = activeMapGroup && activeMapGroup !== DEFAULT_GROUP ? ships.filter(t => (t.group || DEFAULT_GROUP) === activeMapGroup) : ships;
+        const ship = smShipId ? shipList.find(t => t.id === smShipId) : null;
+        if (smShipId && !ship) smShipId = '';
+        const shipStats = ship ? computeStats(ship.level, ship.parts || {}) : null;
+        const shipLv = ship ? parseInt(ship.level, 10) || 0 : 0;
+        const secBy = {}; secs.forEach(sc => { secBy[sc[2]] = sc; });
+        list.forEach(x => x.where.forEach(w => {
+            const sc = secBy[w.l];
+            if (!w.on) { w.st = 'off'; w.why = '海點未開'; return; }
+            if (!ship || !sc) { w.st = 'ok'; w.why = ''; return; }
+            if (shipLv < sc[5]) { w.st = 'lv'; w.why = `需要 Lv${sc[5]}（目前 ${shipLv}）`; return; }
+            const thr = w.tr === 3 ? sc[11] : w.tr === 2 ? sc[10] : sc[8];
+            if (shipStats.explore < thr) { w.st = 'ex'; w.why = `探索 ${shipStats.explore}／需要 ${thr}（差 ${thr - shipStats.explore}）`; return; }
+            w.st = 'ok'; w.why = '';
+        }));
+        const avail = x => x.where.some(w => w.st === 'ok');
+        // 物品後方的狀態：已開點／未開點／探索不足／等級不足＋獲得機率
+        const smStatusHtml = x => {
+            const pick = st => x.where.filter(w => w.st === st);
+            const bestD = ws => { const d = ws.filter(w => w.d != null).map(w => w.d); return d.length ? Math.max(...d) : null; };
+            let cls, txt, ws;
+            if ((ws = pick('ok')).length) { cls = 'ok'; txt = '已開點'; }
+            else if ((ws = pick('ex')).length) {
+                const gap = Math.min(...ws.map(w => parseInt((w.why.split('差 ')[1] || '0'), 10) || 0));
+                cls = 'ex'; txt = `探索不足 差${gap}`;
+            } else if ((ws = pick('lv')).length) {
+                const need = Math.min(...ws.map(w => parseInt((w.why.match(/Lv(\d+)/) || [])[1], 10) || 0));
+                cls = 'lv'; txt = `等級不足 Lv${need}`;
+            } else { ws = x.where; cls = 'off'; txt = '未開點'; }
+            const d = bestD(ws);
+            return `<span class="sm-stat ${cls}">${txt}</span><span class="sm-prob" title="撈一次拿到的機率（取最高的點）">${d != null ? `<i class="sm-prob-k">獲得機率 </i>${d}%` : '—'}</span>`;
+        };
+        const nearly = x => !avail(x) && x.where.some(w => w.st === 'ex');
+        const cats = ['rare', 'workshop', 'other', 'all'];
+        const cnt = {}; cats.forEach(c => { const xs = list.filter(x => c === 'all' || x.cat === c); cnt[c] = [xs.filter(avail).length, xs.length]; });
+        const catsEl = document.getElementById('smCats');
+        catsEl.innerHTML = cats.map(c => `<button type="button" class="map-group-tab${c === smCat ? ' active' : ''}" data-c="${c}">${c === 'all' ? '全部' : SM_CAT_LABEL[c]}<small class="sm-cnt">${cnt[c][0]}/${cnt[c][1]}</small></button>`).join('')
+            + `<label class="sm-only"><input type="checkbox" id="smOnlyAvail"${smOnlyAvail ? ' checked' : ''}> 只看撈得到的</label>`
+            + `<div class="sm-mkt"><span>市場估算價格（7 天）</span><select id="smMktWorld" aria-label="市場伺服器">${SM_MKT_WORLDS.map(w => `<option value="${w}"${w === smMktWorld ? ' selected' : ''}>${w === '陸行鳥' ? '繁中服' : w}</option>`).join('')}</select><span class="sm-ship"><span>指定船</span><select id="smShipSel" aria-label="指定船：用這艘船判斷撈不撈得到"><option value="">不指定（只看海點有沒有開）</option>${(() => { const gs = {}; shipList.forEach(t => { const g = t.group || DEFAULT_GROUP; (gs[g] = gs[g] || []).push(t); }); return Object.entries(gs).map(([g, ts]) => `<optgroup label="${escapeHtml(g)}">${ts.map(t => `<option value="${t.id}"${t.id === smShipId ? ' selected' : ''}>${escapeHtml(String(t.name || ''))}${t.level ? ` Lv${escapeHtml(String(t.level))}` : ''}</option>`).join('')}</optgroup>`).join(''); })()}</select></span><button type="button" class="sm-sortbtn${smSort === 'price' ? ' on' : ''}" id="smSortBtn" title="依價格高到低排序">依價格排序</button></div>`;
+        catsEl.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { smCat = b.dataset.c; renderSeaMap(); });
+        document.getElementById('smOnlyAvail').onchange = e => { smOnlyAvail = e.target.checked; renderSeaMap(); };
+        document.getElementById('smShipSel').onchange = e => { smShipId = e.target.value; try { localStorage.setItem('sub_sm_ship', smShipId); } catch (er) {} renderSeaMap(); };
+        document.getElementById('smMktWorld').onchange = e => { smMktWorld = e.target.value; try { localStorage.setItem(SM_MKT_KEY, smMktWorld); } catch (er) {} renderSeaMap(); };
+        document.getElementById('smSortBtn').onclick = () => { smSort = smSort === 'price' ? 'name' : 'price'; renderSeaMap(); };
+        const [ca, ct] = cnt[smCat];
+        document.getElementById('smLootSub').innerHTML = `目前撈得到 <b>${ca}</b> / ${ct} 項`;
+        const rowHtml = x => {
+            const ok = avail(x), ex = nearly(x);
+            const exW = ex ? x.where.filter(w => w.st === 'ex').sort((a, b) => (parseInt(a.why.split('差 ')[1]) || 0) - (parseInt(b.why.split('差 ')[1]) || 0))[0] : null;
+            const bestW = x.where.filter(w => w.d != null).sort((a, b) => b.d - a.d)[0];   // 獲得機率（撈一次拿到的機率）最高的點
+            return `<div class="sm-row ${ok ? 'ok' : ex ? 'ex' : 'no'} cat-${x.cat}" title="${escapeHtml(x.name)}${bestW ? `・獲得機率最高 ${bestW.l} 點約 ${bestW.d}%` : ''}${ok ? '' : ex ? `・${exW.l} 點${exW.why}` : ship ? '・海點未開或等級不足' : '・要先開海點'}"><span class="sm-st" aria-label="${ok ? '撈得到' : ex ? '探索不足' : '撈不到'}">${ok ? '✓' : ex ? '△' : ''}</span><span class="sm-namec"><span class="sm-nm">${escapeHtml(x.name)}</span><button type="button" class="sm-copy" data-copy="${escapeHtml(x.name)}" title="複製名稱" aria-label="複製「${escapeHtml(x.name)}」"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button></span><span class="sm-br"></span>${(tr => `<span class="sm-tr ${tr}" title="${tr === 'market' ? '可交易，可以上市場板' : tr === 'trade' ? '可以交易，但不能上市場板' : '不可交易'}">${tr === 'market' ? '可交易' : tr === 'trade' ? '無市場' : '不可交易'}</span>`)(smTrade(x.id))}${smStatusHtml(x)}<span class="sm-right"><span class="sm-pts">${x.where.slice().sort((a, b) => a.l.length - b.l.length || a.l.localeCompare(b.l)).map(w => `<i class="${w.st === 'ok' ? 'on' : w.st === 'ex' ? 'ex' : ''}" title="${w.l} 點・T${w.tr}${w.d != null ? '・獲得機率約 ' + w.d + '%' : w.p != null ? '・T' + w.tr + ' 內機率 ' + w.p + '%（無獲得機率資料）' : ''}${w.why ? '（' + w.why + '）' : ''}">${w.l}</i>`).join('')}</span>${smPriceHtml(x.id)}</span></div>`;
+        };
+        const pick = xs => smOnlyAvail ? xs.filter(avail) : xs;
+        // 依類型分段（沉船裝備、樂譜、家具…），每段標出撈得到／總數
+        let html = '';
+        const inCat = list.filter(x => smCat === 'all' || x.cat === smCat);
+        SM_TYPE_ORDER.forEach(t => {
+            const all = inCat.filter(x => x.type === t); if (!all.length) return;
+            let xs = pick(all); if (!xs.length) return;
+            if (smSort === 'price') { const v = x => { const p = smPriceOf(x.id); return p && p.med ? p.med : -1; }; xs = xs.slice().sort((a, b) => v(b) - v(a)); }
+            const c = all[0].cat;
+            html += `<div class="sm-grp ${c}">${t}<small>${all.filter(avail).length}/${all.length}</small></div>` + xs.map(rowHtml).join('');
+        });
+        const lootEl = document.getElementById('smLoot');
+        lootEl.className = 'sm-loot sm-cat-' + smCat;
+        if (html) html = '<div class="sm-thead"><span></span><span>物品</span><span>交易</span><span>狀態</span><span>獲得機率<i class="sm-help" tabindex="0" title="獲得機率＝撈一次拿到的機率（取最高的海點）" aria-label="說明：獲得機率＝撈一次拿到的機率">?</i></span><span>海點</span><span>估算價格</span></div>' + html;
+        lootEl.innerHTML = html || `<div class="sm-empty">${smOnlyAvail ? '目前開的海點撈不到這類物品' : '這個分類沒有物品'}</div>`;
+        lootEl.querySelectorAll('.sm-copy').forEach(b => b.onclick = e => {
+            e.stopPropagation();
+            const t = b.dataset.copy, done = () => { b.classList.add('ok'); b.title = '已複製'; setTimeout(() => { b.classList.remove('ok'); b.title = '複製名稱'; }, 900); };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => {});
+            else { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (er) {} ta.remove(); }
+        });
+        smLoadPrices(list.map(x => x.id));
+    };
+
+
     // ══ 配件規劃 (Gear Planner) ══════════════════════════════════
 
     let gpSelectedItems = []; // [{id, name}]
@@ -7713,19 +8353,12 @@ window.showConfirm = showConfirm;
         const id = document.getElementById('gpShipSelect').value;
         if (!id) return;
         const t = getActiveTimers().find(x => x.id === id);
-        if (!t) {
-            // 房間視圖下找不到對應船艦，顯示提示
-            const gpResultHint = document.getElementById('gpResultHint');
-            if (gpResultHint) gpResultHint.innerText = `ℹ️ 目前為房間視圖，海圖進度以「${activeMapGroup}」標籤為準`;
-            return;
-        }
+        if (!t) return;
         document.getElementById('gpLevel').value = subPlanLevel(t);
         const parts = t.parts || createEmptyParts();
         PART_KEYS.forEach(key => setPartVal(key, 'gp', parts[key] || ''));
         const presetSel = document.getElementById('gpPresetSelect');
         if (presetSel) presetSel.value = '';
-        const presetRow = document.getElementById('gpPresetStatRow');
-        if (presetRow) presetRow.style.display = 'none';
         // 依船艦標籤切換 activeMapGroup
         const shipGroup = t.group || '未分類';
         activeMapGroup = shipGroup;
@@ -7771,14 +8404,6 @@ window.showConfirm = showConfirm;
         // sec 欄位: [8]=T1探索, [9]=恩惠, [10]=T2探索, [11]=T3探索, [12]=一般收集, [13]=最佳收集
         // 航速、航距：地點資料中無對應門檻，顯示 --
 
-        // ── 各地點 Tier Proc 率（來源：Submersible Loot Spreadsheet + Indepth Submarine loot Drop info）
-        // 格式：{ secId: [T1proc%, T2proc%, T3proc%] }
-        // 資料來源：https://docs.google.com/spreadsheets/d/1eiuGRrQTjJ5n4ogybKOBxJRT7EiJLlX93fge-Z8MmD4
-        // 涵蓋溺沒海（地圖1）全部 30 個地點 + 灰海（地圖2）全部 20 個地點 + 翡翠海（地圖3）+ 賽蓮海（地圖4）+ 紫礁海（地圖5）+ 南蒼茫洋（地圖6）全部地點
-        const GP_TIER_PROC = SUB_DATA.GP_TIER_PROC;
-
-        // D% 直接獲得機率（來源：Submersible Loot Spreadsheet D% 欄）
-        const GP_TIER_PROC_D = SUB_DATA.GP_TIER_PROC_D;
 
 
         const GP_ITEM_PROB = SUB_DATA.GP_ITEM_PROB;
@@ -7810,7 +8435,6 @@ window.showConfirm = showConfirm;
             const tierIdx = { T1: 0, T2: 1, T3: 2 }[tier] ?? 0;
             const tierNum = tierIdx + 1;
             const itemProbSec = (GP_ITEM_PROB[secId] || {})[tierNum] || {};
-            const procDataD = GP_TIER_PROC_D[secId];
 
             // 根據目前物品ID取得 T% 和 D%（若無資料顯示 --）
             // 這裡傳入 itemId 供外層呼叫時使用，預設抓第一個有資料的物品做示範
@@ -7929,7 +8553,7 @@ window.showConfirm = showConfirm;
                     const lockedCls = locked ? ' gp-node-locked' : '';
                     const secId = l.sec[0];
                     const chkd = gpCheckedSectors.has(secId) ? 'checked' : '';
-                    const chkTd = `<td class="gp-tbl-chk-td"><input type="checkbox" class="gp-sector-chk" ${chkd} data-secid="${secId}" onchange="gpToggleSectorChk(${secId}, this.checked)"></td>`;
+                    const chkTd = `<td class="gp-tbl-chk-td"><input type="checkbox" class="gp-sector-chk" ${chkd} data-secid="${secId}" data-on-change="a173"></td>`;
                     return `<tr class="gp-tbl-spot-row${lockedCls}">${chkTd}<td class="gp-tbl-name"><span class="gp-tbl-letter">${l.letter}</span>${l.name}</td>${cells}</tr>`;
                 }).join('');
                 return mapRow + spotRows;
@@ -7970,7 +8594,7 @@ window.showConfirm = showConfirm;
             <div class="gp-item-card ${r.met ? 'met' : 'unmet'}">
                 <div class="gp-item-card-head">
                     <span class="gp-item-name">${r.item.name}</span>
-                    <span class="gp-item-remove" onclick="gpRemoveItem(${r.item.id})" title="移除"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span>
+                    <span class="gp-item-remove" data-iid="${r.item.id}" data-on-click="a174" title="移除"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span>
                 </div>
                 <div class="gp-gap-row">${r.gapHtml}</div>
                 <div class="gp-locs">${r.locHtml}</div>
@@ -7981,7 +8605,7 @@ window.showConfirm = showConfirm;
         const sendBar = `
             <div class="gp-send-bar">
                 <button class="gp-send-btn" id="gpSendRouteBtn"
-                    onclick="gpSendToRoutePlanner()"
+                    data-on-click="a175"
                     ${checkedCount === 0 ? 'disabled' : ''}>
                     <svg class="ic ic-compass" aria-hidden="true"><use href="#i-compass"/></svg> 前往路線規劃
                 </button>
@@ -8070,7 +8694,7 @@ window.showConfirm = showConfirm;
             box.innerHTML = `<div class="rp-suggest-empty">無符合結果</div>`;
         } else {
             box.innerHTML = itemsGroupedHtml(filtered.slice(0, 500), x =>
-                `<div class="rp-suggest-item" onmousedown="gpAddItemById(${x.id},'${x.name.replace(/'/g,"\\'")}'); document.getElementById('gpItemSearch').value=''; document.getElementById('gpSuggestBox').style.display='none';">${x.name}</div>`, 'rp-suggest-group');
+                `<div class="rp-suggest-item" data-iid="${x.id}" data-name="${escAttr(x.name)}" data-on-mousedown="a176">${x.name}</div>`, 'rp-suggest-group');
         }
         box.style.display = 'block';
     }
@@ -8094,7 +8718,7 @@ window.showConfirm = showConfirm;
         const el = document.getElementById('gpItemChips');
         if (!el) return;
         el.innerHTML = gpSelectedItems.map(x =>
-            `<span class="rp-chip">${x.name}<span class="rp-chip-x" onclick="gpRemoveItem(${x.id})"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`
+            `<span class="rp-chip">${x.name}<span class="rp-chip-x" data-iid="${x.id}" data-on-click="a174"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`
         ).join('');
     }
 
@@ -8229,50 +8853,20 @@ window.showConfirm = showConfirm;
     gpLoadMyPresets();
 
     function gpApplyPreset(key) {
-        const presetRow = document.getElementById('gpPresetStatRow');
-        const presetBadges = document.getElementById('gpPresetStatBadges');
         if (!key) {
-            // 還原回船艇原本的配件設定
+            // 還原回船艇原本的配件設定；手動輸入模式則清空四部位
             const shipId = document.getElementById('gpShipSelect').value;
-            if (shipId) {
-                const t = savedTimers.find(x => x.id === shipId);
-                if (t) {
-                    const parts = t.parts || createEmptyParts();
-                    PART_KEYS.forEach(k => {
-                        const sel = document.getElementById(`gp-${k}`);
-                        if (sel) sel.value = parts[k] || '';
-                    });
-                }
-            } else {
-                // 手動輸入模式：清空四部位
-                PART_KEYS.forEach(k => {
-                    const sel = document.getElementById(`gp-${k}`);
-                    if (sel) sel.value = '';
-                });
-            }
-            if (presetRow) presetRow.style.display = 'none';
+            const t = shipId ? getActiveTimers().find(x => x.id === shipId) : null;
+            const parts = (t && t.parts) || createEmptyParts();
+            PART_KEYS.forEach(k => setPartVal(k, 'gp', shipId ? (parts[k] || '') : ''));
             gpRecalc();
             return;
         }
         const preset = gpPresetParts(key);
         if (!preset) return;
-
-        // 套用到四部位下拉
+        // 套用到四部位並重新計算
         PART_KEYS.forEach(k => setPartVal(k, 'gp', preset[k] || ''));
-
-        // 重新計算並更新
         gpRecalc();
-
-        // 顯示性能預覽列
-        if (presetRow && presetBadges) {
-            const level = document.getElementById('gpLevel').value.trim();
-            const stats = computeStats(level, preset);
-            const statLabels = { explore: '探索性能', gather: '收集性能', speed: '巡航速度', range: '航行距離', favor: '恩惠' };
-            presetBadges.innerHTML = STAT_KEYS.map(k =>
-                `<span class="gp-stat-badge"><span class="gp-stat-badge-label">${statLabels[k]}</span><span class="gp-stat-badge-val">${stats[k]}</span></span>`
-            ).join('');
-            presetRow.style.display = 'block';
-        }
     }
 
     
@@ -8299,7 +8893,7 @@ const SECTOR_LOOT=SUB_DATA.SECTOR_LOOT;
 
     // ══ 右側分頁切換 ══════════════════════════════════════════════
 
-    const RP_TABS = ['fleet', 'route', 'gear', 'craft'];
+    const RP_TABS = ['fleet', 'route', 'gear', 'craft', 'seamap'];
     function switchRpTab(tab) {
         if (!RP_TABS.includes(tab)) tab = 'fleet';
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -8315,6 +8909,7 @@ const SECTOR_LOOT=SUB_DATA.SECTOR_LOOT;
         });
         if (tab === 'gear') gpRefreshShipList();
         else if (tab === 'craft') initCraftPlanner();
+        else if (tab === 'seamap') renderSeaMap();
         const toolBtn = document.getElementById('mobNavTools');
         if (toolBtn) toolBtn.classList.remove('active');
     }
@@ -8419,7 +9014,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                 const p = CRAFT_PARTS[partKey];
                 return `<td class="craft-grid-cell${cls === 6 ? ' craft-mod-start' : ''}" role="button" tabindex="0"
                     data-cls="${cls}" data-sort="${sort}" title="${p.className} ${p.part}：點一下 +1"
-                    onclick="craftSelectCell2(${cls},${sort})"><span class="craft-lbl">${craftGradeLabel(cls)}</span></td>`;
+                    data-on-click="a177"><span class="craft-lbl">${craftGradeLabel(cls)}</span></td>`;
             }).join('');
             return `<tr><th class="craft-row-head">${partName}</th>${cells}</tr>`;
         }).join('');
@@ -8499,14 +9094,6 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         craftRenderResult();
     }
 
-    function craftRemovePart(name) {
-        craftSelectedParts = craftSelectedParts.filter(x => x.name !== name);
-        craftRenderChips();
-        craftRenderResult();
-        craftPersist();
-    }
-
-
     function craftSetPartQty(name, val) {
         const v = parseInt(val, 10);
         const existing = craftSelectedParts.find(x => x.name === name);
@@ -8531,28 +9118,10 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
     }
 
     function craftRenderChips() {
+        // 數量已直接顯示在上方表格，這裡只更新表格的選取標示
         craftRefreshGridHighlight();
         const el = document.getElementById('craftChips');
-        if (!el) return;
-        el.innerHTML = '';
-        if (true) return;   // 數量已直接顯示在上方表格
-        if (craftSelectedParts.length === 0) {
-            el.innerHTML = '';
-            return;
-        }
-        const CHIP_SORT = { '船體': 1, '船尾': 2, '船首': 3, '艦橋': 4 };
-        el.innerHTML = [...craftSelectedParts]
-            .sort((a, b) => {
-                const pa = CRAFT_PARTS[a.name], pb = CRAFT_PARTS[b.name];
-                const sa = pa ? (CHIP_SORT[pa.part] || 9) * 100 + (pa.class || 0) : 999;
-                const sb = pb ? (CHIP_SORT[pb.part] || 9) * 100 + (pb.class || 0) : 999;
-                return sa - sb;
-            })
-            .map(x => {
-            const p = CRAFT_PARTS[x.name];
-            const label = p ? `${p.part} ${p.className} ×${x.qty}` : `${x.name} ×${x.qty}`;
-            return `<span class="rp-chip">${label}<span class="rp-chip-x" onclick="craftRemovePart('${x.name.replace(/'/g, "\\'")}')"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`;
-        }).join('');
+        if (el) el.innerHTML = '';
     }
 
     // 遞迴展開單一材料的所有需求，累加進 leafTotals（原礦/基礎素材）與 midTotals（半成品／中間素材）
@@ -8744,7 +9313,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         // 半成品（isTransition）仍需顯示製作數量，shortage 永遠計算
         const shortage = Math.max(0, needed - owned);
         const isDone = owned >= needed && needed > 0;
-        const safeName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const attrName = escAttr(name);
         const label = displayLabel || name;
 
         // 目標欄顯示值：優先用 displayTarget（直接需求量），沒有就用 needed
@@ -8758,12 +9327,10 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                 <div class="num-spinner" style="border-radius:5px;">
                     <input type="text" class="craft-inv-owned craft-part-qty-input" style="width:32px; padding:2px 2px; font-size:13px;"
                         value="${needed}"
-                        onchange="craftSetPartQty('${safeName}', this.value)"
-                        oninput="craftSetPartQty('${safeName}', this.value)"
-                        onclick="event.stopPropagation()">
-                    <div class="num-spinner-btns" onclick="event.stopPropagation()">
-                        <button onclick="craftSpinnerStep('${safeName}', 1)" title="增加">▲</button>
-                        <button onclick="craftSpinnerStep('${safeName}', -1)" title="減少">▼</button>
+                        data-name="${attrName}" data-on-change="a179" data-on-input="a179" data-on-click="a180">
+                    <div class="num-spinner-btns" data-on-click="a180">
+                        <button data-name="${attrName}" data-step="1" data-on-click="a181" title="增加">▲</button>
+                        <button data-name="${attrName}" data-step="-1" data-on-click="a181" title="減少">▼</button>
                     </div>
                 </div>
                </td>`
@@ -8780,19 +9347,17 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         }
 
         return `<tr class="craft-inv-row${isDone ? ' craft-inv-row-done' : ''}"
-                    data-mat="${safeName}" data-needed="${needed}" data-transition="${isTransition ? 1 : 0}">
-            <td class="craft-inv-name" onclick="craftCopyName('${safeName}', this)" title="${label}（點擊複製）">${label}</td>
+                    data-mat="${attrName}" data-needed="${needed}" data-transition="${isTransition ? 1 : 0}">
+            <td class="craft-inv-name" data-name="${attrName}" data-on-click="a182" title="${label}（點擊複製）">${label}</td>
             <td class="craft-inv-check-cell">
                 <input type="checkbox" class="craft-inv-check" ${isDone ? 'checked' : ''}
                     title="標記全部完成"
-                    onchange="craftToggleDone('${safeName}', this.checked, ${needed}); event.stopPropagation()"
-                    onclick="event.stopPropagation()">
+                    data-name="${attrName}" data-needed="${needed}" data-on-change="a183" data-on-click="a180">
             </td>
             <td class="craft-inv-owned-cell">
                 <input type="number" min="0" class="craft-inv-owned"
                     value="${owned > 0 ? owned : ''}" placeholder="0"
-                    oninput="craftSaveOwned('${safeName}', this.value)"
-                    onclick="event.stopPropagation()">
+                    data-name="${attrName}" data-on-input="a184" data-on-click="a180">
             </td>
             ${targetCell}
             <td class="craft-inv-short ${shortClass}">${shortText}</td>
@@ -8938,10 +9503,10 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             </div>
             <div class="craft-mat-cols-wrap">
             <div class="craft-mob-tabs" style="display:none;">
-                <button class="craft-mob-tab active" onclick="craftMobTab(this,0)">配件</button>
-                <button class="craft-mob-tab" onclick="craftMobTab(this,1)">成品素材</button>
-                <button class="craft-mob-tab" onclick="craftMobTab(this,2)">半成品</button>
-                <button class="craft-mob-tab" onclick="craftMobTab(this,3)">基礎素材</button>
+                <button class="craft-mob-tab active" data-tab="0" data-on-click="a185">配件</button>
+                <button class="craft-mob-tab" data-tab="1" data-on-click="a185">成品素材</button>
+                <button class="craft-mob-tab" data-tab="2" data-on-click="a185">半成品</button>
+                <button class="craft-mob-tab" data-tab="3" data-on-click="a185">基礎素材</button>
             </div>
             <div class="craft-mat-cols">
                 <div class="craft-mat-col mob-col-active">
@@ -9136,80 +9701,10 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         rpRefreshStatPreview();
     }
 
-    /* ── 道具分類（依據 SE 論壇 Submersible Information Thread 定義）──────────
-     * 工坊材料（Workshop Materials）：
-     *   用於自由部隊製作（潛水艇/飛空艇/住宅/以太之輪）的素材或半成品
-     *   包含：水晶、魔晶石、礦石、木材、纖維、皮革素材（原石/礦砂）、
-     *         半成品（精梳毛布、鍊金樹脂、玻璃板等）
-     * 稀有物品（Rare Items）：
-     *   低掉率珍稀品，包含沉船裝備、寵物/坐騎部件、家具、庭院裝飾、
-     *   樂譜、眼鏡傘、特殊道具
-     * 其他材料（Other Materials）：
-     *   食材、海洋素材、現成皮革布料（已加工）、雜項
-     * ─────────────────────────────────────────────────────────────────── */
-
-    // ── 稀有物品 ──────────────────────────────────────────
-    // 依據 wiki 掉落表「稀有物品」欄分類
-    const RARE_IDS = new Set([
-        9298, 9733, 12657, 14934, 15976, 17019, 18018, 18019, 18020, 18021,
-        18028, 18029, 20270, 20791, 21921, 22441, 22442, 22500, 22501, 22502,
-        22503, 22504, 22505, 22506, 22507, 23222, 23337, 23875, 24490, 24503,
-        24505, 24902, 24908, 25186, 25187, 25188, 25189, 25190, 25197, 25198,
-        26802, 27287, 27293, 28136, 28621, 28980, 30034, 30093, 30386, 31322,
-        31671, 32205, 32214, 32223, 32248, 32848, 33120, 33287, 33695, 33848,
-        33871, 33872, 33873, 37485, 37487, 37489, 37490, 38580, 38607, 38608,
-        38619, 38684, 38685, 39382, 39387, 39476, 39585, 39586, 39587, 39588,
-        39618, 40381, 40638, 40659, 40696, 40697, 40698, 40699, 41103, 41143,
-        41427, 41651, 41652, 41664, 41665, 41806, 41818, 41820, 41821, 44261,
-        44326, 44327, 44486, 44488, 44895, 44900, 44911, 45037, 45073, 46089,
-        46104, 46110, 46121, 46146, 46262, 46836, 46837, 46846, 48099, 48102,
-        48131, 48149, 48224, 48731, 49853, 50456, 50457, 50794, 50796, 51264,
-        51269, 52358, 52442, 52443, 52444, 52445, 52632
-    ]);
-
-    // ── 工坊材料（Workshop Materials）─────────────────────
-    // 用於自由部隊製作的原料、素材（含水晶、魔晶石、礦石木材、紡織纖維原料）
-    const WORKSHOP_IDS = new Set([
-        2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-        12, 13, 14, 15, 16, 17, 18, 19, 5630, 5631,
-        5632, 5633, 5665, 5666, 5667, 5668, 5671, 5672, 5673, 5675,
-        5676, 5677, 5678, 5680, 5681, 5682, 5683, 5690, 5691, 5695,
-        5696, 5698, 5700, 5701, 5705, 5706, 5707, 5710, 5711, 5712,
-        5715, 5716, 5717, 5718, 5720, 5721, 5722, 5723, 10099, 10335,
-        10386, 12220, 12222, 12223, 12224, 12225, 12226, 12227, 12228, 12229,
-        12230, 12920, 12921, 12922, 12923, 12924, 12925, 12926, 12927, 12928,
-        12929, 17837, 26528, 26529, 26531, 29590, 37083
-    ]);
-
-    // ── 其他材料（Other Materials）────────────────────────
-    // 食材、礦砂、石材、金屬錠、雜項（wiki 掉落表「其他材料」欄）
-    const OTHER_IDS = new Set([
-        5066, 5067, 5069, 5113, 5116, 5118, 5120, 5121, 5187, 5188,
-        5189, 5192, 5226, 5230, 5231, 5232, 5365, 5384, 5391, 5392,
-        5395, 5512, 5563, 5564, 7008, 7009, 7010, 7040, 7047, 7588,
-        7589, 7590, 7621, 7671, 8028, 9360, 12221, 12520, 12531, 12532,
-        12533, 12534, 12537, 12538, 12539, 12544, 12545, 12551, 12578, 12579,
-        12585, 12586, 12606, 12610, 14151, 14955, 14957, 16706, 16725, 16906,
-        16908, 19930, 19932, 19933, 19934, 19938, 19952, 19953, 19956, 19957,
-        19962, 19964, 19967, 19980, 20014, 21800, 25008, 27683, 27684, 27685,
-        27686, 27687, 27696, 27697, 27698, 27699, 27700, 27701, 27702, 27703,
-        27708, 27709, 27736, 27753, 27759, 27773, 27774, 27801, 27803, 27817,
-        36083, 36086, 36087, 36089, 36094, 36096, 36097, 36164, 36165, 36174,
-        36175, 36176, 36177, 36178, 36180, 36181, 36190, 36193, 36194, 36205,
-        36206, 43974, 43976, 43977, 43978, 43979, 43981, 43982, 43985, 43986,
-        43987, 43988, 43992, 43993, 43994, 43995, 43996, 43997, 43998, 43999,
-        44000, 44001, 44002, 44003, 44004, 44005, 44006, 44007, 44009, 44010,
-        44011, 44012, 44014, 44015, 44016, 44017, 44018, 44021, 44022, 44023,
-        44024, 44025, 44026, 44029, 44030, 44031, 44053, 44054, 44055, 44058,
-        44059, 44060
-    ]);
-
-    // 物品類別（路線規劃、配件規劃、自動導航挖寶共用同一套判斷）
+    // 物品類別（路線規劃、配件規劃、自動導航挖寶、海圖設定共用）：數據表「物品」的掉落分類
+    //   稀有＝低掉率珍稀品（沉船裝備、寵物、家具、樂譜…）；工坊＝自由部隊製作用的素材；其他＝食材、海洋素材、雜項
     function itemCategoryOf(id) {
-        if (RARE_IDS.has(id)) return 'rare';
-        if (WORKSHOP_IDS.has(id)) return 'workshop';
-        if (OTHER_IDS.has(id)) return 'other';
-        return 'other';   // 尚未分類的新物品先歸在其他材料
+        return (SUB_DATA.ITEM_LOOT_CAT || {})[id] || 'other';   // 沒填的新物品先歸在其他
     }
 
     let rpItemCategories = { all: [], workshop: [], other: [], rare: [] };
@@ -9251,7 +9746,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
     function rpRenderMapChips(mode) {
         const chipsEl = document.getElementById(mode === 'inc' ? 'rpMapIncChips' : 'rpMapExclChips');
         chipsEl.innerHTML = [...rpMapSel[mode]].map(id =>
-            `<span class="rp-chip ${mode}">${id} - ${MAP_NAMES[id]}<span class="rp-chip-x" onclick="rpRemoveMap('${mode}',${id})"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`
+            `<span class="rp-chip ${mode}">${id} - ${MAP_NAMES[id]}<span class="rp-chip-x" data-mode="${mode}" data-id="${id}" data-on-click="a186"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`
         ).join('');
     }
 
@@ -9307,7 +9802,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                 const secs = SUB_SECTORS.filter(s => s[1] === id).sort((a, b) => a[0] - b[0]);
                 const items = secs.map(s => {
                     const selected = rpSectorSel[mode].has(s[0]);
-                    return `<div class="sector-item${selected ? ' selected' : ''}" data-id="${s[0]}" onclick="SectorPicker.toggle(this, ${s[0]})">
+                    return `<div class="sector-item${selected ? ' selected' : ''}" data-id="${s[0]}" data-on-click="a187">
                         <span class="sector-item-check">${selected ? '✓' : ''}</span>
                         <span>${s[2]} ${s[4]}（Lv${s[5] ?? '?'}${SUB_PATCH[s[0]] ? '・' + SUB_PATCH[s[0]] : ''}）</span>
                     </div>`;
@@ -9345,7 +9840,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         chipsEl.innerHTML = [...rpSectorSel[mode]].map(id => {
             const s = SUB_SECTORS.find(x => x[0] === id);
             const label = s ? `${s[2]} ${s[4]}` : id;
-            return `<span class="rp-chip ${mode}">${label}<span class="rp-chip-x" onclick="rpRemoveSector('${mode}',${id})"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`;
+            return `<span class="rp-chip ${mode}">${label}<span class="rp-chip-x" data-mode="${mode}" data-id="${id}" data-on-click="a188"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`;
         }).join('');
     }
 
@@ -9386,7 +9881,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             box.innerHTML = `<div class="rp-suggest-empty">無符合結果</div>`;
         } else {
             box.innerHTML = filtered.slice(0, 500).map(x =>
-                `<div class="rp-suggest-item" onmousedown="rpAddItemById(${x.id},'${x.name.replace(/'/g,"\\'")}'); document.getElementById('rpItemSearch').value=''; document.getElementById('rpSuggestBox').style.display='none';">${x.name}</div>`
+                `<div class="rp-suggest-item" data-iid="${x.id}" data-name="${escAttr(x.name)}" data-on-mousedown="a189">${x.name}</div>`
             ).join('');
         }
         box.style.display = 'block';
@@ -9484,7 +9979,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             const tooltipHtml = maps.length
                 ? `<span class="rp-chip-tooltip"><svg class="ic ic-map-pin" aria-hidden="true"><use href="#i-map-pin"/></svg> ${maps.join('・')}</span>`
                 : '';
-            return `<span class="rp-chip" style="position:relative">${i.name}${tooltipHtml}<span class="rp-chip-x" onclick="rpRemoveItem(${i.id})"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`;
+            return `<span class="rp-chip" style="position:relative">${i.name}${tooltipHtml}<span class="rp-chip-x" data-iid="${i.id}" data-on-click="a190"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span></span>`;
         }).join('');
     }
 
@@ -10519,7 +11014,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             : (lvTxt ? `<span class="route-line-txt">${lvTxt.replace(' · ', '')}</span>` : '');
         updateAnLine(t, plan);
         el.innerHTML = `<div class="route-line-info">${lastTxt}${nextTxt}</div>`
-            + `<button type="button" class="card-icon-btn btn-redepart${returned ? ' ready' : ''}" onclick="subRedepart('${t.id}')">再出發</button>`;
+            + `<button type="button" class="card-icon-btn btn-redepart${returned ? ' ready' : ''}" data-tid="${t.id}" data-on-click="a191">再出發</button>`;
         el.style.display = 'flex';
         subRefreshGroupRedepart();
     }
@@ -10783,8 +11278,6 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         rpRenderChips();
         const catSel = document.getElementById('rpItemCategory');
         if (catSel) { catSel.value = ''; rpOnCategoryChange(); }
-        const itemSel = document.getElementById('rpItemSelect');
-        if (itemSel) { itemSel.value = ''; }
         const lootStrict = document.getElementById('rpLootStrict');
         if (lootStrict) lootStrict.checked = false;
 
@@ -10834,7 +11327,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
         const th = (label, mode, cls) => {
             const on = sortMode === mode || (mode === 'eta' && sortMode.startsWith('eta'));
             const arrow = on ? (sortMode === 'eta_asc' ? ' ▲' : ' ▼') : '';
-            return mode ? `<button type="button" class="rp-th ${cls}${on ? ' on' : ''}" onclick="rpSortBy('${mode}')">${label}${arrow}</button>`
+            return mode ? `<button type="button" class="rp-th ${cls}${on ? ' on' : ''}" data-mode="${mode}" data-on-click="a192">${label}${arrow}</button>`
                         : `<span class="rp-th ${cls}">${label}</span>`;
         };
         const headHtml = `<div class="rp-list-title"><span class="rp-list-map">${mapTitle}</span><span class="rp-list-sub">${list.length} 條 · 依 ${sortLbl} 排序 · 點一行展開／收起掉落物</span></div>
@@ -10900,8 +11393,8 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                     const unmet = playerExplore < minThr;
                     let cls = 'rp-loot-tag rp-has-tip';
                     if (isTarget) cls += ' rp-loot-target';
-                    else if (RARE_IDS.has(id)) cls += ' rp-loot-rare';
-                    else if (WORKSHOP_IDS.has(id)) cls += ' rp-loot-workshop';
+                    else if (itemCategoryOf(id) === 'rare') cls += ' rp-loot-rare';
+                    else if (itemCategoryOf(id) === 'workshop') cls += ' rp-loot-workshop';
                     if (unmet) cls += ' rp-unmet';
                     const tipContent = sources.map(s => `${s.letter} 點　探索 ${s.explore}`).join('<br>');
                     return `<span class="${cls}" data-tip="${tipContent.replace(/"/g,'&quot;')}">${name}</span>`;
@@ -10925,7 +11418,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
             }).join('');
             const mapTag = multiMap ? `<span class="rp-li-map">${mapNameOnly}</span>` : '';
             return `<div class="rp-li${idx === 0 ? ' rp-li-top' : ''}">
-                <div class="rp-li-row" role="button" tabindex="0" aria-expanded="false" onclick="rpToggleRow(this)" title="點一下展開或收起掉落物">
+                <div class="rp-li-row" role="button" tabindex="0" aria-expanded="false" data-on-click="a193" title="點一下展開或收起掉落物">
                     <span class="rp-li-rank">${idx + 1}</span>
                     <span class="rp-li-route">${mapTag}${routeHtml}</span>
                     <span class="rp-li-epm">${r.epm.toLocaleString()}<span class="rp-li-unit">EXP/分</span></span>
@@ -10936,7 +11429,7 @@ const CRAFT_BASE = SUB_DATA.CRAFT_BASE;
                     <span class="rp-li-cnt">${r.secCount}</span>
                     <span class="rp-li-rank-req">≥ ${r.minRank}</span>
                     <span class="rp-li-meta">${r.timeStr} · 回港 ${etaStr} · 航距 ${r.range}</span>
-                    <span class="rp-li-act"><button type="button" class="rp-use-route-btn" onclick="event.stopPropagation();applyRouteToCard(${r.timeMins},'${r.secIds.join(',')}',${r.exp})">使用</button></span>
+                    <span class="rp-li-act"><button type="button" class="rp-use-route-btn" data-mins="${r.timeMins}" data-secs="${r.secIds.join(',')}" data-exp="${r.exp}" data-on-click="a194">使用</button></span>
                 </div>
                 <div class="rp-li-detail rp-result-loot rp-tiered-loot">${tieredLootHtml}</div>
             </div>`;
@@ -11245,7 +11738,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') window.close
     }
 
     window.switchMobileTab = function(tab) {
-        ['fleet','route','gear','craft','tools'].forEach(t => {
+        ['fleet','route','gear','craft','seamap','tools'].forEach(t => {
             const id = 'mobNav' + t.charAt(0).toUpperCase() + t.slice(1);
             const btn = document.getElementById(id);
             if (btn) { btn.classList.toggle('active', t === tab); if (t === tab) btn.setAttribute('aria-current', 'page'); else btn.removeAttribute('aria-current'); }
@@ -11293,7 +11786,6 @@ window.toggleUploadZone = function(btn) {
         const list = document.getElementById('timerList');
         if (!list) return;
         // 清空 interval 再清空卡片
-        _timerIntervals.forEach(iv => clearInterval(iv));
         _timerIntervals.clear();
         list.innerHTML = '';
 
@@ -11315,6 +11807,7 @@ window.toggleUploadZone = function(btn) {
             (_viewTimers).forEach(t => createTimerCard(t));
             applyGroupFilter();
         }
+        if (view === 'mine') stopMineWatch(); else startMineWatch();
         updateRoomBanner();
         if (typeof updateFleetCount === 'function') updateFleetCount();
         if (typeof loadMapNodeState === 'function') { loadMapNodeState(); renderMapNodes(); }
@@ -11322,6 +11815,27 @@ window.toggleUploadZone = function(btn) {
         if (typeof refreshRpShipSelect === 'function') refreshRpShipSelect();
         if (typeof gpRefreshShipList === 'function') gpRefreshShipList();
     };
+
+    // 看共同艦隊時，自己的船沒有卡片在倒數；改由這裡在回港時響鈴、推播
+    let _mineWatch = null;
+    function stopMineWatch() { if (_mineWatch) { clearInterval(_mineWatch); _mineWatch = null; } }
+    function startMineWatch() {
+        stopMineWatch();
+        const since = Date.now(), fired = new Set();
+        _mineWatch = setInterval(() => {
+            const now = Date.now();
+            for (const t of savedTimers) {
+                const end = Number(t.endTime) || 0;
+                if (!end || end > now || end < since) continue;   // 還沒回港，或開始看房間前就已經回港
+                const key = t.id + '|' + end;
+                if (fired.has(key)) continue;
+                fired.add(key);
+                if (document.getElementById(`card-${t.id}`)) continue;   // 房間裡也有這艘船：卡片自己會提醒
+                playSound();
+                showNotification(t.name);
+            }
+        }, 1000);
+    }
 
     // 房間視圖提示：正在看誰的艦隊、修改會不會同步給房主
     function updateRoomBanner() {
@@ -11363,8 +11877,8 @@ window.toggleUploadZone = function(btn) {
         const btn = document.createElement('button');
         btn.className = 'fleet-view-tab';
         btn.dataset.view = roomId;
-        btn.innerHTML = `${roomName}<span class="fleet-view-badge">即時</span><span class="fleet-view-close" onclick="cloudLeaveRoomById(event,'${roomId}')"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span>`;
-        btn.onclick = () => switchFleetView(roomId);
+        btn.innerHTML = `${roomName}<span class="fleet-view-badge">即時</span><span class="fleet-view-close" data-rid="${roomId}" data-on-click="a195"><svg class="ic ic-x" aria-hidden="true"><use href="#i-x"/></svg></span>`;
+        btn.onclick = (e) => { if (e.target.closest('.fleet-view-close')) return; switchFleetView(roomId); };   // 按 × 是離開房間，不要先切過去
         seg.appendChild(btn);
         const mineTab = document.getElementById('fleetTabMine');
         if (mineTab) mineTab.dataset.view = 'mine';
@@ -11542,7 +12056,7 @@ window.toggleUploadZone = function(btn) {
             members.map(([uuid, name]) =>
                 `<div style="display:flex; align-items:center; justify-content:space-between; padding:3px 0;">
                     <span style="font-size:12px; color:var(--text-color);">${name || uuid.slice(0,8)}</span>
-                    <button onclick="kickRoomMember('${roomId}','${uuid}')" style="background:transparent; border:1px solid rgba(255,83,112,0.3); color:#e06070; border-radius:5px; padding:2px 8px; font-size:11px; cursor:pointer;">移除</button>
+                    <button data-rid="${roomId}" data-uid="${uuid}" data-on-click="a196" style="background:transparent; border:1px solid rgba(255,83,112,0.3); color:#e06070; border-radius:5px; padding:2px 8px; font-size:11px; cursor:pointer;">移除</button>
                 </div>`
             ).join('');
     };
@@ -11679,8 +12193,8 @@ window.toggleUploadZone = function(btn) {
                     ${room.owner !== (window.CloudSync?.myUUID || '') ? `<br><strong>權限：</strong>${room.perm === 'view' ? '只能看' : '可以修改'}` : ''}
                 </div>
                 <div class="room-card-actions">
-                    ${room.owner !== (window.CloudSync?.myUUID || '') ? `<button class="room-card-btn enter" onclick="switchFleetView('${roomId}'); switchRpTab('fleet');">切換視圖</button>` : ''}
-                    <button class="room-card-btn leave" onclick="cloudLeaveRoomById(event,'${roomId}')">離開房間</button>
+                    ${room.owner !== (window.CloudSync?.myUUID || '') ? `<button class="room-card-btn enter" data-rid="${roomId}" data-on-click="a197">切換視圖</button>` : ''}
+                    <button class="room-card-btn leave" data-rid="${roomId}" data-on-click="a195">離開房間</button>
                 </div>`;
             wrap.appendChild(card);
         });
